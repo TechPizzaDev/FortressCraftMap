@@ -5,43 +5,50 @@ importScripts("/helper.js");
 const canvas = new OffscreenCanvas(segmentResolution, segmentResolution);
 const ctx = canvas.getContext("2d");
 
-let offset = 100;
+const delay = 15;
+let delayOffset = delay;
 
 self.onmessage = async (e) => {
-	doHttpRequest({ url: "/randombuffer", type: "arraybuffer" }).then(response => {
-		if (response.status === 200) {
-			const dataArray = new Uint16Array(response.data);
+	setTimeout(async () => {
+		doHttpRequest({ url: "/randombuffer", type: "arraybuffer" }).then(response => {
+			if (response.status === 200) {
+				const dataArray = new Uint16Array(response.data);
+				renderSegment(dataArray);
 
-			ctx.clearRect(0, 0, segmentResolution, segmentResolution);
-			for (let x = 0; x < 16; x++) {
-				for (let y = 0; y < 16; y++) {
-					const value = dataArray[x + y * 16];
+				const result = canvas.transferToImageBitmap();
+				postMessage({ key: e.data, result }, [result]);
+			}
+			else {
+				console.warn("Failed to get random data:", response);
+			}
+		}).catch(err => {
+			console.warn("Rendering segment failed:", err);
+		});
+	}, delayOffset);
+	delayOffset += delay;
+};
 
-					switch (value) {
-						case 0:
-							ctx.fillStyle = "red";
-							break;
+function renderSegment(dataArray) {
+	ctx.clearRect(0, 0, segmentResolution, segmentResolution);
+	for (let x = 0; x < 16; x++) {
+		for (let y = 0; y < 16; y++) {
+			const value = dataArray[x + y * 16];
 
-						case 1:
-							ctx.fillStyle = "green";
-							break;
+			switch (value) {
+				case 0:
+					ctx.fillStyle = "red";
+					break;
 
-						case 2:
-							ctx.fillStyle = "blue";
-							break;
-					}
+				case 1:
+					ctx.fillStyle = "green";
+					break;
 
-					ctx.fillRect(x * tileResolution, y * tileResolution, tileResolution, tileResolution);
-				}
+				case 2:
+					ctx.fillStyle = "blue";
+					break;
 			}
 
-			const result = canvas.transferToImageBitmap();
-			postMessage({ key: e.data, result }, [result]);
+			ctx.fillRect(x * tileResolution, y * tileResolution, tileResolution, tileResolution);
 		}
-		else {
-			console.warn("Failed to get random data:", response);
-		}
-	}).catch(err => {
-		console.warn("Rendering segment failed:", err);
-	});
-};
+	}
+}

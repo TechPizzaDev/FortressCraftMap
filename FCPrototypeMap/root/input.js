@@ -1,13 +1,13 @@
 ﻿"use strict";
 
-const minMapZoom = 0.5;
+const minMapZoom = 0.25;
 const maxMapZoom = 2;
 
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
 
 let mapOffset = createVector2(0, 0);
-let mapZoom = minMapZoom;
+let mapZoom = 0.5;
 let smoothMapZoom = mapZoom;
 
 function updateMousePos(e) {

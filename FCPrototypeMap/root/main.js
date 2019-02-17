@@ -14,6 +14,10 @@ worker.addEventListener('message', handleWorkerMessage);
 
 const drawDistance = 15;
 
+function handleWorkerMessage(e) {
+	segmentSet[e.data.key].bitmap = e.data.result;
+}
+
 function frameLoop(totalTime) {
 	// store the ID so we can cancel the request
 	animationID = requestAnimationFrame(frameLoop);
@@ -35,36 +39,12 @@ function frameLoop(totalTime) {
 	frame(delta);
 }
 
-for (let x = 0; x < drawDistance; x++) {
-	for (let y = 0; y < drawDistance; y++) {
-		const segment = createSegment(x, y);
-		const key = getSegmentKey(x, y);
-		segmentSet[key] = segment;
-
-		worker.postMessage(key);
-	}
-}
-
-function handleWorkerMessage(e) {
-	segmentSet[e.data.key].bitmap = e.data.result;
-}
-
-function createSegment(x, y) {
-	const segmentObj = {
-		basePosition: createVector2(x, y),
-		drawPosition: createVector2(x * segmentResolution, y * segmentResolution),
-		bitmap: null
-	};
-
-	return segmentObj;
-}
-
 // main update and draw method
 function frame(delta) {
 	for (let x = 0; x < drawDistance; x++) {
 		for (let y = 0; y < drawDistance; y++) {
 			const segment = segmentSet[getSegmentKey(x, y)];
-			if (!segment.bitmap)
+			if (!segment || !segment.bitmap)
 				continue;
 
 			const dx = mapOffset.x + segment.drawPosition.x;
@@ -78,19 +58,21 @@ function frame(delta) {
 	for (let x = 0; x < drawDistance; x++) {
 		for (let y = 0; y < drawDistance; y++) {
 			const segment = segmentSet[getSegmentKey(x, y)];
+			if (!segment)
+				continue;
+
 			const sx = Math.floor(mapOffset.x + segment.drawPosition.x) * smoothMapZoom;
 			const sy = Math.floor(mapOffset.y + segment.drawPosition.y) * smoothMapZoom;
-
 			const ox = Math.floor(sx + presentTranslation.x);
 			const oy = Math.floor(sy + presentTranslation.y);
 			const dx = Math.floor(ox + segmentResolution * smoothMapZoom);
 			const dy = Math.floor(oy + segmentResolution * smoothMapZoom);
 
 			gridCtx.moveTo(ox + 0.5, oy);
-			gridCtx.lineTo(ox + 0.5, dy); // move to bottom-left corner
+			gridCtx.lineTo(ox + 0.5, dy); // line to bottom-left corner
 
 			gridCtx.moveTo(ox, oy + 0.5);
-			gridCtx.lineTo(dx, oy + 0.5); // move to top-right corner
+			gridCtx.lineTo(dx, oy + 0.5); // line to top-right corner
 		}
 	}
 	gridCtx.strokeStyle = "white";
@@ -139,6 +121,46 @@ mapOffset.y = -drawDistance * segmentResolution / 2;
 
 // start the draw loop
 frameLoop();
+
+function createSegment(x, y) {
+	return {
+		key: getSegmentKey(x, y),
+		drawPosition: createVector2(x * segmentResolution, y * segmentResolution),
+		bitmap: null
+	};
+}
+
+for (let x = 0; x < drawDistance; x++) {
+	for (let y = 0; y < drawDistance; y++) {
+		const segment = createSegment(x, y);
+		segmentSet[segment.key] = segment;
+	}
+}
+
+// dirty method for loading from center
+// this will get removed after
+const tmpSegmentKeys = new Array(drawDistance * drawDistance);
+for (let x = 0; x < drawDistance; x++) {
+	for (let y = 0; y < drawDistance; y++) {
+		tmpSegmentKeys[x + y * drawDistance] = { x, y };
+	}
+}
+
+function enqueueByDistance(origin, keys) {
+	function getSqDist(p1, p2) {
+		return Math.abs((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+	}
+
+	keys.sort(function (a, b) {
+		a.sqDist = getSqDist(origin, a);
+		b.sqDist = getSqDist(origin, b);
+		return a.sqDist - b.sqDist;
+	});
+
+	keys.forEach((item) => { worker.postMessage(getSegmentKey(item.x, item.y)); });
+}
+
+enqueueByDistance(createVector2(drawDistance / 2 - 0.5, drawDistance / 2 - 0.5), tmpSegmentKeys);
 
 
 // use only for compatibility
