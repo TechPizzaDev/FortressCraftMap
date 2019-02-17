@@ -16,8 +16,13 @@ function cloneVector2(vec) {
 	return createVector2(vec.x, vec.y);
 }
 
-function getSegmentKey(x, y) {
+function coordsToSegmentKey(x, y) {
 	return x + "," + y;
+}
+
+function segmentKeyToCoords(key) {
+	const split = key.split(",");
+	return createVector2(parseInt(split[0]), parseInt(split[1]));
 }
 
 // options:

@@ -5,12 +5,20 @@ importScripts("/helper.js");
 const canvas = new OffscreenCanvas(segmentResolution, segmentResolution);
 const ctx = canvas.getContext("2d");
 
-const delay = 15;
+const delay = 10;
 let delayOffset = delay;
 
 self.onmessage = async (e) => {
 	setTimeout(async () => {
-		doHttpRequest({ url: "/randombuffer", type: "arraybuffer" }).then(response => {
+		const position = segmentKeyToCoords(e.data);
+		const requestOptions = {
+			method: "POST",
+			url: "/randombuffer",
+			type: "arraybuffer",
+			body: JSON.stringify({ position })
+		};
+
+		doHttpRequest(requestOptions).then(response => {
 			if (response.status === 200) {
 				const dataArray = new Uint16Array(response.data);
 				renderSegment(dataArray);
@@ -22,7 +30,7 @@ self.onmessage = async (e) => {
 				console.warn("Failed to get random data:", response);
 			}
 		}).catch(err => {
-			console.warn("Rendering segment failed:", err);
+			console.warn("Failed to render segment:", err);
 		});
 	}, delayOffset);
 	delayOffset += delay;

@@ -43,7 +43,7 @@ function frameLoop(totalTime) {
 function frame(delta) {
 	for (let x = 0; x < drawDistance; x++) {
 		for (let y = 0; y < drawDistance; y++) {
-			const segment = segmentSet[getSegmentKey(x, y)];
+			const segment = segmentSet[coordsToSegmentKey(x, y)];
 			if (!segment || !segment.bitmap)
 				continue;
 
@@ -57,7 +57,7 @@ function frame(delta) {
 	gridCtx.beginPath();
 	for (let x = 0; x < drawDistance; x++) {
 		for (let y = 0; y < drawDistance; y++) {
-			const segment = segmentSet[getSegmentKey(x, y)];
+			const segment = segmentSet[coordsToSegmentKey(x, y)];
 			if (!segment)
 				continue;
 
@@ -124,7 +124,7 @@ frameLoop();
 
 function createSegment(x, y) {
 	return {
-		key: getSegmentKey(x, y),
+		key: coordsToSegmentKey(x, y),
 		drawPosition: createVector2(x * segmentResolution, y * segmentResolution),
 		bitmap: null
 	};
@@ -157,7 +157,7 @@ function enqueueByDistance(origin, keys) {
 		return a.sqDist - b.sqDist;
 	});
 
-	keys.forEach((item) => { worker.postMessage(getSegmentKey(item.x, item.y)); });
+	keys.forEach((item) => { worker.postMessage(coordsToSegmentKey(item.x, item.y)); });
 }
 
 enqueueByDistance(createVector2(drawDistance / 2 - 0.5, drawDistance / 2 - 0.5), tmpSegmentKeys);
