@@ -29,27 +29,9 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="root\constants.js">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="root\helper.js" />
-    <Compile Include="root\input.js">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="root\main.js">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="root\worker.js">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="server.js" />
     <Content Include="package.json" />
     <Content Include="README.md" />
-    <Content Include="root\favicon.png" />
-    <Content Include="root\index.html" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="root\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.targets" Condition="False" />

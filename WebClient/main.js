@@ -1,25 +1,27 @@
 ﻿"use strict";
 const presentCtx = presentationCanvas.getContext("2d");
-const gridCtx = gridCanvas.getContext("2d");
-gridCtx.imageSmoothingEnabled = false;
 
 const viewport = { w: 0, h: 0 };
 const presentTranslation = createVector2();
+const updatables = [];
 let animationID;
 let lastTime = 0;
 
-const segmentSet = {};
-const worker = new Worker("/worker.js");
-worker.addEventListener('message', handleWorkerMessage);
-
+let mapOffset = createVector2(0, 0);
+let mapZoom = 0.5;
+let smoothMapZoom = mapZoom;
 const drawDistance = 15;
+
+const segmentSet = {};
+const worker = new Worker("/segmentWorker.js");
+worker.addEventListener('message', handleWorkerMessage);
 
 function handleWorkerMessage(e) {
 	segmentSet[e.data.key].bitmap = e.data.result;
 }
 
 function frameLoop(totalTime) {
-	// store the ID so we can cancel the request
+	// store the ID so we can cancel the animation request
 	animationID = requestAnimationFrame(frameLoop);
 
 	presentCtx.save();
@@ -33,8 +35,10 @@ function frameLoop(totalTime) {
 		lastTime = totalTime;
 	}
 
-	// update external factors
-	updateInput(delta);
+	// update "modules"
+	for (let i = 0; i < updatables.length; i++) {
+		updatables[i](delta);
+	}
 
 	frame(delta);
 }
@@ -52,31 +56,6 @@ function frame(delta) {
 			presentCtx.drawImage(segment.bitmap, Math.floor(dx), Math.floor(dy));
 		}
 	}
-
-	gridCtx.clearRect(0, 0, viewport.w, viewport.h);
-	gridCtx.beginPath();
-	for (let x = 0; x < drawDistance; x++) {
-		for (let y = 0; y < drawDistance; y++) {
-			const segment = segmentSet[coordsToSegmentKey(x, y)];
-			if (!segment)
-				continue;
-
-			const sx = Math.floor(mapOffset.x + segment.drawPosition.x) * smoothMapZoom;
-			const sy = Math.floor(mapOffset.y + segment.drawPosition.y) * smoothMapZoom;
-			const ox = Math.floor(sx + presentTranslation.x);
-			const oy = Math.floor(sy + presentTranslation.y);
-			const dx = Math.floor(ox + segmentResolution * smoothMapZoom);
-			const dy = Math.floor(oy + segmentResolution * smoothMapZoom);
-
-			gridCtx.moveTo(ox + 0.5, oy);
-			gridCtx.lineTo(ox + 0.5, dy); // line to bottom-left corner
-
-			gridCtx.moveTo(ox, oy + 0.5);
-			gridCtx.lineTo(dx, oy + 0.5); // line to top-right corner
-		}
-	}
-	gridCtx.strokeStyle = "white";
-	gridCtx.stroke();
 }
 
 function updatePresentationTransform() {
@@ -161,7 +140,6 @@ function enqueueByDistance(origin, keys) {
 }
 
 enqueueByDistance(createVector2(drawDistance / 2 - 0.5, drawDistance / 2 - 0.5), tmpSegmentKeys);
-
 
 // use only for compatibility
 //if (!CanvasRenderingContext2D.prototype.resetTransform) {

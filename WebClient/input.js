@@ -1,14 +1,9 @@
 ﻿"use strict";
-
-const minMapZoom = 0.25;
+const minMapZoom = 0.4;
 const maxMapZoom = 2;
 
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
-
-let mapOffset = createVector2(0, 0);
-let mapZoom = 0.5;
-let smoothMapZoom = mapZoom;
 
 function updateMousePos(e) {
 	currentMousePos.x = e.clientX;
@@ -49,19 +44,19 @@ function handleScrollWheel(e) {
 	mapZoom = Math.clamp(mapZoom, minMapZoom, maxMapZoom);
 }
 
-function updateInput(delta) {
+updatables.push(delta => {
 	const newSmoothMapZoom = Math.lerp(smoothMapZoom, mapZoom, delta * 20);
 	if (newSmoothMapZoom !== smoothMapZoom) {
 		smoothMapZoom = newSmoothMapZoom;
-
+		
 		if (onMapZoomChanged)
 			onMapZoomChanged();
 	}
-}
+});
 
 // TODO: add touch events (should be as simple as subscribing to respective touch event)
-presentationCanvas.addEventListener("mousemove", handleMouseMove, true);
-presentationCanvas.addEventListener("mousedown", handleMouseDown, true);
-presentationCanvas.addEventListener("mouseup", handleMouseEnd, true);
-presentationCanvas.addEventListener("mouseout", handleMouseEnd, true);
-presentationCanvas.addEventListener("wheel", handleScrollWheel, true);
+presentationCanvas.addEventListener("mousemove", handleMouseMove);
+presentationCanvas.addEventListener("mousedown", handleMouseDown);
+presentationCanvas.addEventListener("mouseup", handleMouseEnd);
+presentationCanvas.addEventListener("mouseout", handleMouseEnd);
+presentationCanvas.addEventListener("wheel", handleScrollWheel, { passive: true });

@@ -1,2 +1,2 @@
-﻿const tileResolution = 16;
+﻿const tileResolution = 8;
 const segmentResolution = tileResolution * 16;

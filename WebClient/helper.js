@@ -12,10 +12,6 @@ function createVector2(x, y) {
 	return { x, y };
 }
 
-function cloneVector2(vec) {
-	return createVector2(vec.x, vec.y);
-}
-
 function coordsToSegmentKey(x, y) {
 	return x + "," + y;
 }
@@ -25,12 +21,17 @@ function segmentKeyToCoords(key) {
 	return createVector2(parseInt(split[0]), parseInt(split[1]));
 }
 
-// options:
-//  * method
-//  * url
-//  * headers
-//  * type
-//  * body
+/**
+ * Sends a HTTP request.
+ * @param {*} options 
+ *  "method": controls the HTTP method (defaults to GET)
+ *  "url": the request URL
+ *  "headers": custom HTTP headers
+ *  "type": the XHR response type
+ *  "body": an optional request body (ignored if method is GET or HEAD)
+ *  
+ * @returns {Promise<T>} A Promise that resolves with the response.
+ */
 async function doHttpRequest(options) {
 	return new Promise((resolve, reject) => {
 		const xhr = new XMLHttpRequest();
