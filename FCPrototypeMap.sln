@@ -13,12 +13,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{
 		WebClient\constants.js = WebClient\constants.js
 		WebClient\EventEmitter.js = WebClient\EventEmitter.js
 		WebClient\favicon.png = WebClient\favicon.png
-		WebClient\grid.js = WebClient\grid.js
 		WebClient\helper.js = WebClient\helper.js
 		WebClient\index.html = WebClient\index.html
 		WebClient\input.js = WebClient\input.js
 		WebClient\main.js = WebClient\main.js
-		WebClient\segmentWorker.js = WebClient\segmentWorker.js
+		WebClient\mainRenderer.js = WebClient\mainRenderer.js
+		WebClient\mainShader.js = WebClient\mainShader.js
+		WebClient\shaderHelper.js = WebClient\shaderHelper.js
 	EndProjectSection
 EndProject
 Global

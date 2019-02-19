@@ -1,123 +1,57 @@
 ﻿"use strict";
-const presentCtx = presentationCanvas.getContext("2d");
 
 const viewport = { w: 0, h: 0 };
-const presentTranslation = createVector2();
 const updatables = [];
 let animationID;
 let lastTime = 0;
 
-let mapOffset = createVector2(0, 0);
-let mapZoom = 0.5;
-let smoothMapZoom = mapZoom;
-const drawDistance = 15;
-
-const segmentSet = {};
-const worker = new Worker("/segmentWorker.js");
-worker.addEventListener('message', handleWorkerMessage);
-
-function handleWorkerMessage(e) {
-	segmentSet[e.data.key].bitmap = e.data.result;
-}
+const rendererWorker = new Worker("/mainRenderer.js");
 
 function frameLoop(totalTime) {
 	// store the ID so we can cancel the animation request
 	animationID = requestAnimationFrame(frameLoop);
-
-	presentCtx.save();
-	presentCtx.resetTransform();
-	presentCtx.clearRect(0, 0, viewport.w, viewport.h);
-	presentCtx.restore();
-
 	let delta = 0;
 	if (totalTime) {
 		delta = (totalTime - lastTime) / 1000;
 		lastTime = totalTime;
 	}
 
-	// update "modules"
+	// update registered objects, TODO: change this to a interval 
+	// with 20ups instead as it's not called while tab is minimized
 	for (let i = 0; i < updatables.length; i++) {
 		updatables[i](delta);
 	}
 
-	frame(delta);
+	rendererWorker.postMessage({ type: "draw", delta });
 }
 
-// main update and draw method
-function frame(delta) {
-	for (let x = 0; x < drawDistance; x++) {
-		for (let y = 0; y < drawDistance; y++) {
-			const segment = segmentSet[coordsToSegmentKey(x, y)];
-			if (!segment || !segment.bitmap)
-				continue;
-
-			const dx = mapOffset.x + segment.drawPosition.x;
-			const dy = mapOffset.y + segment.drawPosition.y;
-			presentCtx.drawImage(segment.bitmap, Math.floor(dx), Math.floor(dy));
-		}
-	}
-}
-
-function updatePresentationTransform() {
-	// the center of the canvas should be coord 0,0
-	presentTranslation.x = viewport.w / 2;
-	presentTranslation.y = viewport.h / 2;
-
-	// TODO: maybe add rotation/camera follow based on a focused entity
-	presentCtx.setTransform(
-		smoothMapZoom,
-		0, 0,
-		smoothMapZoom,
-		presentTranslation.x, presentTranslation.y);
-}
-
-function onMapZoomChanged() {
-	updatePresentationTransform();
-}
-
-function setCanvasSizeToViewport(canvas) {
-	canvas.width = viewport.w;
-	canvas.height = viewport.h;
+function onMapZoomChanged(zoom) {
+	rendererWorker.postMessage({ type: "zoom", zoom });
 }
 
 function onWindowResize() {
 	viewport.w = Math.floor(window.innerWidth * window.devicePixelRatio);
 	viewport.h = Math.floor(window.innerHeight * window.devicePixelRatio);
 
-	setCanvasSizeToViewport(presentationCanvas);
-	setCanvasSizeToViewport(gridCanvas);
-
-	updatePresentationTransform();
+	rendererWorker.postMessage({ type: "viewport", viewport });
 }
 
-// call onWindowResize on start
-onWindowResize();
-window.addEventListener("resize", onWindowResize, false);
+function main() {
+	const offscreen = mainCanvas.transferControlToOffscreen();
+	rendererWorker.postMessage({ type: "init", canvas: offscreen }, [offscreen]);
 
-// center on current segments
-mapOffset.x = -drawDistance * segmentResolution / 2;
-mapOffset.y = -drawDistance * segmentResolution / 2;
+	// call onWindowResize() on start
+	onWindowResize();
+	window.addEventListener("resize", onWindowResize);
 
-// start the draw loop
-frameLoop();
-
-function createSegment(x, y) {
-	return {
-		key: coordsToSegmentKey(x, y),
-		drawPosition: createVector2(x * segmentResolution, y * segmentResolution),
-		bitmap: null
-	};
+	frameLoop();
 }
 
-for (let x = 0; x < drawDistance; x++) {
-	for (let y = 0; y < drawDistance; y++) {
-		const segment = createSegment(x, y);
-		segmentSet[segment.key] = segment;
-	}
-}
+main();
+
 
 // dirty method for loading from center
-// this will get removed after
+// this will get removed later
 const tmpSegmentKeys = new Array(drawDistance * drawDistance);
 for (let x = 0; x < drawDistance; x++) {
 	for (let y = 0; y < drawDistance; y++) {
@@ -136,14 +70,9 @@ function enqueueByDistance(origin, keys) {
 		return a.sqDist - b.sqDist;
 	});
 
-	keys.forEach((item) => { worker.postMessage(coordsToSegmentKey(item.x, item.y)); });
+	keys.forEach((item) => {
+		rendererWorker.postMessage({ type: "request", key: coordsToSegmentKey(item.x, item.y) });
+	});
 }
 
 enqueueByDistance(createVector2(drawDistance / 2 - 0.5, drawDistance / 2 - 0.5), tmpSegmentKeys);
-
-// use only for compatibility
-//if (!CanvasRenderingContext2D.prototype.resetTransform) {
-//	CanvasRenderingContext2D.prototype.resetTransform = function () {
-//		this.setTransform(1, 0, 0, 1, 0, 0);
-//	};
-//}

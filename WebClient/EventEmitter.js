@@ -76,7 +76,7 @@ class EventEmitter {
 		return -1;
 	}
 
-	_checkIfEventIsDefined() {
+	_checkIfEventIsDefined(name) {
 		if (!this.isEventDefined(name)) {
 			return new Error(`The event '${name}' is not defined.`);
 		}

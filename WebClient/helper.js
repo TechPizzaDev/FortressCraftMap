@@ -21,6 +21,11 @@ function segmentKeyToCoords(key) {
 	return createVector2(parseInt(split[0]), parseInt(split[1]));
 }
 
+function getDelta(lastTime, totalTime) {
+	
+	return delta;
+}
+
 /**
  * Sends a HTTP request.
  * @param {*} options 

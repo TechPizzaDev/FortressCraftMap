@@ -15,7 +15,7 @@ namespace WebSocketServer
         
         public void OnGetRequest(JToken request)
         {
-            if (Missing(request, "position"))
+            if (Missing(request, "pos"))
                 return;
 
             ushort[] data = new ushort[16 * 16];
@@ -24,7 +24,7 @@ namespace WebSocketServer
             
             Send(JsonConvert.SerializeObject(new
             {
-                position = request["position"],
+                pos = request["pos"],
                 data
             }));
         }
