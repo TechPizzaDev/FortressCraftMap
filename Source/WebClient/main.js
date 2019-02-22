@@ -60,6 +60,10 @@ function handleSegmentRendererMessage(e) {
 			});
 			break;
 
+		case "ready":
+			startRequestingSegments();
+			break;
+
 		default:
 			if (!e.data.type)
 				throw new Error(`Missing property 'type' on event data.`);
@@ -94,36 +98,38 @@ function main() {
 main();
 
 
-// dirty method for loading from center
-// this will get removed later
-const tmpSegmentKeys = new Array(drawDistance * drawDistance);
-for (let x = 0; x < drawDistance; x++) {
-	for (let y = 0; y < drawDistance; y++) {
-		const xx = x - drawDistance / 2;
-		const yy = y - drawDistance / 2;
-
-		tmpSegmentKeys[x + y * drawDistance] = { x: xx, y: yy };
-	}
-}
-
-function enqueueByDistance(origin, keys) {
-	function getSqDist(p1, p2) {
-		return Math.abs((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+function startRequestingSegments() {
+	// dirty method for loading from center
+	// this will get removed later
+	const tmpSegmentKeys = new Array(drawDistance * drawDistance);
+	for (let x = 0; x < drawDistance; x++) {
+		for (let y = 0; y < drawDistance; y++) {
+			const xx = x - Math.floor(drawDistance / 2);
+			const yy = y - Math.floor(drawDistance / 2);
+			
+			tmpSegmentKeys[x + y * drawDistance] = { x: xx, y: yy };
+		}
 	}
 
-	keys.sort(function (a, b) {
-		a.sqDist = getSqDist(origin, a);
-		b.sqDist = getSqDist(origin, b);
-		return a.sqDist - b.sqDist;
-	});
+	function enqueueByDistance(origin, keys) {
+		function getSqDist(p1, p2) {
+			return Math.abs((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+		}
 
-	let time = 0;
-	keys.forEach((item) => {
-		setTimeout(() => {
-			segmentManager.postMessage({ type: "request", key: coordsToSegmentKey(item.x, item.y) });
-		}, time);
-		time += 2;
-	});
+		keys.sort(function (a, b) {
+			a.sqDist = getSqDist(origin, a);
+			b.sqDist = getSqDist(origin, b);
+			return a.sqDist - b.sqDist;
+		});
+
+		let time = 0;
+		keys.forEach((item) => {
+			setTimeout(() => {
+				segmentManager.postMessage({ type: "request", key: coordsToSegmentKey(item.x, item.y) });
+			}, time);
+			time += loadDelayMs;
+		});
+	}
+
+	enqueueByDistance(createVector2(0, 0), tmpSegmentKeys);
 }
-
-enqueueByDistance(createVector2(0, 0), tmpSegmentKeys);

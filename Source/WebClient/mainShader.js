@@ -6,14 +6,12 @@ const mainShaderData = [
 			attribute vec2 aVertexPosition;
 			attribute vec2 aTexCoord;
 
-			uniform mat4 uViewMatrix;
-			uniform mat4 uWorldMatrix;
-			uniform mat4 uTransformMatrix;
+			uniform mat4 uMVP;
 
 			varying vec2 vTexCoord;
 		
 			void main() {
-				gl_Position = uViewMatrix * uWorldMatrix * uTransformMatrix * vec4(aVertexPosition.x, aVertexPosition.y, -0.5, 1.0);
+				gl_Position = uMVP * vec4(aVertexPosition.x, aVertexPosition.y, -1.0, 1.0);
 				vTexCoord = aTexCoord;
 			}
 		`

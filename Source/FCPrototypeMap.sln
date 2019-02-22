@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{
 		WebClient\constants.js = WebClient\constants.js
 		WebClient\EventEmitter.js = WebClient\EventEmitter.js
 		WebClient\favicon.png = WebClient\favicon.png
+		WebClient\gl-matrix-min.js = WebClient\gl-matrix-min.js
 		WebClient\glHelper.js = WebClient\glHelper.js
 		WebClient\helper.js = WebClient\helper.js
 		WebClient\index.html = WebClient\index.html

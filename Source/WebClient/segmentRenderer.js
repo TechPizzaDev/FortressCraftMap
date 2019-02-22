@@ -6,15 +6,11 @@ importScripts("/mainShader.js");
 importScripts("/gl-matrix-min.js");
 importScripts("/vertexDataGen.js");
 
-const mat4 = glMatrix.mat4;
-const vec3 = glMatrix.vec3;
-
+const viewport = { w: 0, h: 0 }; 
 let canvas = null;
 let GL = null;
 let glFailed = false;
 let mainShader = null;
-
-let viewport = { w: 0, h: 0 }; 
 
 //////////////////////////////////////////////////
 let tileTex = null;
@@ -24,27 +20,22 @@ let segmentQuads = null;
 let vertexPositionLocation;
 let texCoordLocation;
 
-let uViewMatrix;
-let uWorldMatrix;
-let uTransformMatrix;
-
+let uMVP;
 let uTextureSampler;
 let uGlobalColor;
 
 // shader matrices
-let viewMatrix = mat4.create();
-let worldMatrix = mat4.create();
+let viewMatrix = glMatrix.mat4.create();
+let projectionMatrix = glMatrix.mat4.create();
+const vpMatrix = glMatrix.mat4.create();
+const tmpMvpMatrix = glMatrix.mat4.create();
 
-let userTranslation = vec3.create();
-let initTranslation = vec3.create();
+// matrix components
+const translation = glMatrix.vec3.create();
+const scale = glMatrix.vec3.fromValues(1, 1, 1);
 
-let rotation = glMatrix.quat.create();
-let translation = vec3.create();
-
-let zoom = 1;
-const scaleMul = 64;
-let scale = vec3.create();
-scale[0] = scale[1] = scale[2] = scaleMul;
+const projMul = glMatrix.vec3.fromValues(64, 64, 1);
+const projScale = glMatrix.vec3.create();
 //////////////////////////////////////////////////
 
 const segmentMap = new Map();
@@ -57,23 +48,21 @@ self.onmessage = (e) => {
 			break;
 
 		case "zoom":
-			scale[0] = e.data.zoom * scaleMul;
-			scale[1] = e.data.zoom * scaleMul;
-			zoom = e.data.zoom;
+			const newScale = e.data.zoom;
+			scale[0] = newScale;
+			scale[1] = newScale;
 			break;
 
 		case "translation":
-			userTranslation[0] = Math.round(e.data.translation.x);
-			userTranslation[1] = Math.round(e.data.translation.y);
+			translation[0] = Math.round(e.data.translation.x);
+			translation[1] = Math.round(e.data.translation.y);
 			break;
 
 		case "viewport":
-			viewport = e.data.viewport;
+			viewport.w = e.data.viewport.w;
+			viewport.h = e.data.viewport.h;
 			canvas.width = viewport.w;
 			canvas.height = viewport.h;
-
-			initTranslation[0] = viewport.w / 2;
-			initTranslation[1] = viewport.h / 2;
 			break;
 
 		case "texture":
@@ -130,6 +119,8 @@ function init() {
 
 	prepareSegmentShader();
 	segmentQuads = prepareSegmentQuads();
+
+	postMessage({ type: "ready" });
 }
 
 function prepareSegmentShader() {
@@ -138,9 +129,7 @@ function prepareSegmentShader() {
 	vertexPositionLocation = GL.getAttribLocation(mainShader, "aVertexPosition");
 	texCoordLocation = GL.getAttribLocation(mainShader, "aTexCoord");
 
-	uViewMatrix = GL.getUniformLocation(mainShader, "uViewMatrix");
-	uWorldMatrix = GL.getUniformLocation(mainShader, "uWorldMatrix");
-	uTransformMatrix = GL.getUniformLocation(mainShader, "uTransformMatrix");
+	uMVP = GL.getUniformLocation(mainShader, "uMVP");
 	uGlobalColor = GL.getUniformLocation(mainShader, "uGlobalColor");
 	uTextureSampler = GL.getUniformLocation(mainShader, "uTextureSampler");
 }
@@ -164,10 +153,11 @@ function prepareSegmentQuads() {
 }
 
 function draw(delta) {
-	vec3.add(translation, userTranslation, initTranslation);
-
-	mat4.ortho(viewMatrix, 0, viewport.w, viewport.h, 0, 0.001, 100);
-	mat4.fromRotationTranslationScale(worldMatrix, rotation, translation, scale);
+	glMatrix.mat4.ortho(viewMatrix, 0, viewport.w, viewport.h, 0, 0.001, 10);
+	
+	glMatrix.mat4.fromTranslation(projectionMatrix, translation);
+	glMatrix.vec3.multiply(projScale, scale, projMul);
+	glMatrix.mat4.scale(projectionMatrix, projectionMatrix, projScale);
 
 	GL.viewport(0, 0, canvas.width, canvas.height);
 	GL.clearColor(0, 0, 0, 0);
@@ -178,6 +168,8 @@ function draw(delta) {
 
 function drawSegments() {
 	GL.useProgram(mainShader);
+	
+	glMatrix.mat4.multiply(vpMatrix, viewMatrix, projectionMatrix);
 
 	// bind tile texture
 	GL.activeTexture(GL.TEXTURE0);
@@ -186,8 +178,6 @@ function drawSegments() {
 
 	// upload fields
 	GL.uniform4fv(uGlobalColor, [1.0, 1.0, 1.0, 1.0]);
-	GL.uniformMatrix4fv(uViewMatrix, false, viewMatrix);
-	GL.uniformMatrix4fv(uWorldMatrix, false, worldMatrix);
 
 	// bind vertices
 	GL.bindBuffer(GL.ARRAY_BUFFER, segmentQuads.vertexBuffer);
@@ -208,7 +198,8 @@ function drawSegments() {
  * @param {DrawableSegment} segment The segment to draw.
  */
 function drawSegment(segment) {
-	GL.uniformMatrix4fv(uTransformMatrix, false, segment.transformMatrix);
+	glMatrix.mat4.multiply(tmpMvpMatrix, vpMatrix, segment.modelMatrix);
+	GL.uniformMatrix4fv(uMVP, false, tmpMvpMatrix);
 
 	GL.bindBuffer(GL.ARRAY_BUFFER, segment.texCoordBuffer);
 	GL.enableVertexAttribArray(texCoordLocation);
@@ -226,8 +217,8 @@ class DrawableSegment {
 		translation[0] = x * segmentSize;
 		translation[1] = y * segmentSize;
 
-		this.transformMatrix = glMatrix.mat4.create();
-		glMatrix.mat4.fromTranslation(this.transformMatrix, translation);
+		this.modelMatrix = glMatrix.mat4.create();
+		glMatrix.mat4.fromTranslation(this.modelMatrix, translation);
 	}
 
 	uploadTexCoords(gl, data) {

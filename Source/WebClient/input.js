@@ -1,7 +1,4 @@
 ﻿"use strict";
-const minMapZoom = 0.025;
-const maxMapZoom = 2;
-
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
 
@@ -20,13 +17,16 @@ function handleMouseMove(e) {
 	if (isMouseDragging) {
 		const xDiff = e.clientX - currentMousePos.x;
 		const yDiff = e.clientY - currentMousePos.y;
-		mapTranslation.x += xDiff * window.devicePixelRatio;
-		mapTranslation.y += yDiff * window.devicePixelRatio;
-
-		if (onMapTranslationChanged)
-			onMapTranslationChanged(mapTranslation);
+		moveMap(xDiff * window.devicePixelRatio, yDiff * window.devicePixelRatio);
 	}
 	updateMousePos(e);
+}
+
+function moveMap(x, y) {
+	mapTranslation.x += x;
+	mapTranslation.y += y;
+	if (onMapTranslationChanged)
+		onMapTranslationChanged(mapTranslation);
 }
 
 function handleMouseDown(e) {
@@ -54,15 +54,16 @@ function handleScrollWheel(e) {
 }
 
 updatables.push(delta => {
-	const newSmoothMapZoom = Math.lerp(smoothMapZoom, mapZoom, delta * 20);
+	const newSmoothMapZoom = mapZoom; // Math.lerp(smoothMapZoom, mapZoom, delta * 20);
 	if (newSmoothMapZoom !== smoothMapZoom) {
 		smoothMapZoom = newSmoothMapZoom;
 
 		let lastRoundedZoom = roundedSmoothMapZoom;
 		roundedSmoothMapZoom = Math.round(smoothMapZoom * 100000) / 100000;
 
-		if (onMapZoomChanged && lastRoundedZoom !== roundedSmoothMapZoom)
+		if (onMapZoomChanged && lastRoundedZoom !== roundedSmoothMapZoom) {
 			onMapZoomChanged(roundedSmoothMapZoom);
+		}
 	}
 });
 
