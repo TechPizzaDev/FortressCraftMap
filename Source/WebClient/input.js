@@ -1,5 +1,5 @@
 ﻿"use strict";
-const minMapZoom = 0.1;
+const minMapZoom = 0.025;
 const maxMapZoom = 2;
 
 let isMouseDragging = false;

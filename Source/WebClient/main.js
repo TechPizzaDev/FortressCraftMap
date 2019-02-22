@@ -99,7 +99,10 @@ main();
 const tmpSegmentKeys = new Array(drawDistance * drawDistance);
 for (let x = 0; x < drawDistance; x++) {
 	for (let y = 0; y < drawDistance; y++) {
-		tmpSegmentKeys[x + y * drawDistance] = { x, y };
+		const xx = x - drawDistance / 2;
+		const yy = y - drawDistance / 2;
+
+		tmpSegmentKeys[x + y * drawDistance] = { x: xx, y: yy };
 	}
 }
 
@@ -114,9 +117,13 @@ function enqueueByDistance(origin, keys) {
 		return a.sqDist - b.sqDist;
 	});
 
+	let time = 0;
 	keys.forEach((item) => {
-		segmentManager.postMessage({ type: "request", key: coordsToSegmentKey(item.x, item.y) });
+		setTimeout(() => {
+			segmentManager.postMessage({ type: "request", key: coordsToSegmentKey(item.x, item.y) });
+		}, time);
+		time += 2;
 	});
 }
 
-enqueueByDistance(createVector2(drawDistance / 2 - 0.5, drawDistance / 2 - 0.5), tmpSegmentKeys);
+enqueueByDistance(createVector2(0, 0), tmpSegmentKeys);

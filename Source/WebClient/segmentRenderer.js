@@ -35,9 +35,13 @@ let uGlobalColor;
 let viewMatrix = mat4.create();
 let worldMatrix = mat4.create();
 
+let userTranslation = vec3.create();
+let initTranslation = vec3.create();
+
 let rotation = glMatrix.quat.create();
 let translation = vec3.create();
 
+let zoom = 1;
 const scaleMul = 64;
 let scale = vec3.create();
 scale[0] = scale[1] = scale[2] = scaleMul;
@@ -55,17 +59,21 @@ self.onmessage = (e) => {
 		case "zoom":
 			scale[0] = e.data.zoom * scaleMul;
 			scale[1] = e.data.zoom * scaleMul;
+			zoom = e.data.zoom;
 			break;
 
 		case "translation":
-			translation[0] = Math.round(e.data.translation.x);
-			translation[1] = Math.round(e.data.translation.y);
+			userTranslation[0] = Math.round(e.data.translation.x);
+			userTranslation[1] = Math.round(e.data.translation.y);
 			break;
 
 		case "viewport":
 			viewport = e.data.viewport;
 			canvas.width = viewport.w;
 			canvas.height = viewport.h;
+
+			initTranslation[0] = viewport.w / 2;
+			initTranslation[1] = viewport.h / 2;
 			break;
 
 		case "texture":
@@ -120,10 +128,6 @@ function init() {
 	tileTex = createTexture2D(GL);
 	requestTexture(tileTex.id, "/blocks_64.png");
 
-	// center on current segments
-	//translation[0] = -drawDistance * segmentSize * 32 / 2;
-	//translation[1] = -drawDistance * segmentSize * 32 / 2;
-
 	prepareSegmentShader();
 	segmentQuads = prepareSegmentQuads();
 }
@@ -160,6 +164,8 @@ function prepareSegmentQuads() {
 }
 
 function draw(delta) {
+	vec3.add(translation, userTranslation, initTranslation);
+
 	mat4.ortho(viewMatrix, 0, viewport.w, viewport.h, 0, 0.001, 100);
 	mat4.fromRotationTranslationScale(worldMatrix, rotation, translation, scale);
 
