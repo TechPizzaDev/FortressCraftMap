@@ -11,11 +11,9 @@ namespace WebSocketServer
             {
                 int read;
                 while ((read = src.Read(buffer, 0, buffer.Length)) != 0)
+                {
                     destination.Write(buffer, 0, read);
-            }
-            catch
-            {
-                throw;
+                }
             }
             finally
             {

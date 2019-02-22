@@ -1,13 +1,15 @@
 ﻿"use strict";
-const minMapZoom = 0.4;
+const minMapZoom = 0.1;
 const maxMapZoom = 2;
 
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
 
-let mapZoom = 0.5;
+let mapZoom = minMapZoom;
 let smoothMapZoom = mapZoom;
 let roundedSmoothMapZoom = smoothMapZoom;
+
+let mapTranslation = createVector2(0, 0);
 
 function updateMousePos(e) {
 	currentMousePos.x = e.clientX;
@@ -18,8 +20,11 @@ function handleMouseMove(e) {
 	if (isMouseDragging) {
 		const xDiff = e.clientX - currentMousePos.x;
 		const yDiff = e.clientY - currentMousePos.y;
-		//mapOffset.x += xDiff / mapZoom * window.devicePixelRatio;
-		//mapOffset.y += yDiff / mapZoom * window.devicePixelRatio;
+		mapTranslation.x += xDiff * window.devicePixelRatio;
+		mapTranslation.y += yDiff * window.devicePixelRatio;
+
+		if (onMapTranslationChanged)
+			onMapTranslationChanged(mapTranslation);
 	}
 	updateMousePos(e);
 }
@@ -67,3 +72,6 @@ mainCanvas.addEventListener("mousedown", handleMouseDown);
 mainCanvas.addEventListener("mouseup", handleMouseEnd);
 mainCanvas.addEventListener("mouseout", handleMouseEnd);
 mainCanvas.addEventListener("wheel", handleScrollWheel, { passive: true });
+
+// trigger with default zoom
+onMapZoomChanged(mapZoom);

@@ -1,9 +1,0 @@
-{
-  "name": "fc-prototypemap",
-  "version": "0.0.0",
-  "description": "FCPrototypeMap",
-  "main": "server.js",
-  "author": {
-    "name": ""
-  }
-}

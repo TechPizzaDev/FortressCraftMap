@@ -3,23 +3,24 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.329
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "FCPrototypeMap", "FCPrototypeMap\FCPrototypeMap.njsproj", "{9CB540EA-EF15-44A8-B23F-A8DD871E8B1D}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketServer", "WebSocketServer\WebSocketServer.csproj", "{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{9573C94E-77BF-4709-BB89-753EADCCE279}"
 	ProjectSection(SolutionItems) = preProject
+		WebClient\block.png = WebClient\block.png
 		WebClient\ChannelSocket.js = WebClient\ChannelSocket.js
 		WebClient\constants.js = WebClient\constants.js
 		WebClient\EventEmitter.js = WebClient\EventEmitter.js
 		WebClient\favicon.png = WebClient\favicon.png
+		WebClient\glHelper.js = WebClient\glHelper.js
 		WebClient\helper.js = WebClient\helper.js
 		WebClient\index.html = WebClient\index.html
 		WebClient\input.js = WebClient\input.js
 		WebClient\main.js = WebClient\main.js
-		WebClient\mainRenderer.js = WebClient\mainRenderer.js
 		WebClient\mainShader.js = WebClient\mainShader.js
-		WebClient\shaderHelper.js = WebClient\shaderHelper.js
+		WebClient\segmentManager.js = WebClient\segmentManager.js
+		WebClient\segmentRenderer.js = WebClient\segmentRenderer.js
+		WebClient\vertexDataGen.js = WebClient\vertexDataGen.js
 	EndProjectSection
 EndProject
 Global
@@ -28,10 +29,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9CB540EA-EF15-44A8-B23F-A8DD871E8B1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9CB540EA-EF15-44A8-B23F-A8DD871E8B1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9CB540EA-EF15-44A8-B23F-A8DD871E8B1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9CB540EA-EF15-44A8-B23F-A8DD871E8B1D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Release|Any CPU.ActiveCfg = Release|Any CPU

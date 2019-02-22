@@ -5,8 +5,8 @@ namespace WebSocketServer
     public class BufferPool
     {
         private static List<byte[]> _pool = new List<byte[]>();
-        private const int DefaultBufferSize = 1024 * 8; 
-
+        public const int DefaultBufferSize = 1024 * 8;
+        
         public static byte[] Rent()
         {
             lock (_pool)
@@ -26,7 +26,7 @@ namespace WebSocketServer
         {
             lock (_pool)
             {
-                if(_pool.Count < 32)
+                if(_pool.Count < 16)
                     _pool.Add(buffer);
             }
         }
