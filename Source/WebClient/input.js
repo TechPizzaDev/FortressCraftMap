@@ -15,9 +15,9 @@ function updateMousePos(e) {
 
 function handleMouseMove(e) {
 	if (isMouseDragging) {
-		const xDiff = e.clientX - currentMousePos.x;
-		const yDiff = e.clientY - currentMousePos.y;
-		moveMap(xDiff * window.devicePixelRatio, yDiff * window.devicePixelRatio);
+		const xDiff = (e.clientX - currentMousePos.x) * window.devicePixelRatio;
+		const yDiff = (e.clientY - currentMousePos.y) * window.devicePixelRatio;
+		moveMap(xDiff, yDiff);
 	}
 	updateMousePos(e);
 }
@@ -49,12 +49,25 @@ function handleMouseEnd(e) {
 }
 
 function handleScrollWheel(e) {
+	let oldZoom = mapZoom;
 	mapZoom -= e.deltaY / 1500;
+	clampZoom();
+
+	const toX = currentMousePos.x;
+	const toY = currentMousePos.y;
+	const a = (toX - viewport.w / 2) * (oldZoom - mapZoom);
+	const b = (-toY + viewport.h / 2) * (oldZoom - mapZoom);
+	//moveMap(a, b);
+}
+
+function clampZoom() {
 	mapZoom = Math.clamp(mapZoom, minMapZoom, maxMapZoom);
 }
 
 updatables.push(delta => {
-	const newSmoothMapZoom = mapZoom; // Math.lerp(smoothMapZoom, mapZoom, delta * 20);
+	clampZoom();
+
+	const newSmoothMapZoom = mapZoom; //Math.lerp(smoothMapZoom, mapZoom, delta * 20);
 	if (newSmoothMapZoom !== smoothMapZoom) {
 		smoothMapZoom = newSmoothMapZoom;
 
