@@ -1,3 +1,5 @@
+"use strict";
+
 class SegmentRenderData {
 	constructor(x, y) {
 		this.texCoordBuffer = null;

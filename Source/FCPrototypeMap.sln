@@ -7,23 +7,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketServer", "WebSocke
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{9573C94E-77BF-4709-BB89-753EADCCE279}"
 	ProjectSection(SolutionItems) = preProject
-		WebClient\block.png = WebClient\block.png
 		WebClient\ChannelSocket.js = WebClient\ChannelSocket.js
-		WebClient\constants.js = WebClient\constants.js
+		WebClient\Constants.js = WebClient\Constants.js
 		WebClient\EventEmitter.js = WebClient\EventEmitter.js
 		WebClient\favicon.png = WebClient\favicon.png
 		WebClient\gl-matrix-min.js = WebClient\gl-matrix-min.js
-		WebClient\glHelper.js = WebClient\glHelper.js
-		WebClient\helper.js = WebClient\helper.js
+		WebClient\GLHelper.js = WebClient\GLHelper.js
+		WebClient\Helper.js = WebClient\Helper.js
 		WebClient\index.html = WebClient\index.html
-		WebClient\input.js = WebClient\input.js
-		WebClient\main.js = WebClient\main.js
-		WebClient\mainShader.js = WebClient\mainShader.js
-		WebClient\segmentManager.js = WebClient\segmentManager.js
+		WebClient\InputManager.js = WebClient\InputManager.js
+		WebClient\Main.js = WebClient\Main.js
+		WebClient\MainShader.js = WebClient\MainShader.js
+		WebClient\SegmentManagerWorker.js = WebClient\SegmentManagerWorker.js
 		WebClient\SegmentRenderData.js = WebClient\SegmentRenderData.js
-		WebClient\segmentRenderer.js = WebClient\segmentRenderer.js
-		WebClient\vertexDataGen.js = WebClient\vertexDataGen.js
+		WebClient\SegmentRendererWorker.js = WebClient\SegmentRendererWorker.js
+		WebClient\VertexDataGen.js = WebClient\VertexDataGen.js
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebMapMod", "WebMapMod\WebMapMod.csproj", "{82D81769-FF87-4727-9570-03C233EA59D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +36,10 @@ Global
 		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,8 +1,8 @@
 "use strict";
-const mainShaderData = [
+const mainShaderSource = [
 	{
 		type: "VERTEX",
-		code: `
+		data: `
 			attribute vec2 aVertexPosition;
 			attribute vec2 aTexCoord;
 
@@ -18,7 +18,7 @@ const mainShaderData = [
 	},
 	{
 		type: "FRAGMENT",
-		code: `
+		data: `
 			#ifdef GL_ES
 				precision highp float;
 			#elif

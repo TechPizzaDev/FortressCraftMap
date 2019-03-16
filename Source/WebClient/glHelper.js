@@ -1,4 +1,5 @@
 "use strict";
+
 const textures = [];
 
 function createTexture2D(gl) {
@@ -58,11 +59,11 @@ function getGlType(gl, type) {
 	throw new Error(`Unknown shader type '${type}'`);
 }
 
-function compileShader(gl, code, type) {
+function compileShader(gl, data, type) {
 	const glType = getGlType(gl, type);
 	const shader = gl.createShader(glType);
 
-	gl.shaderSource(shader, code);
+	gl.shaderSource(shader, data);
 	gl.compileShader(shader);
 
 	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -75,7 +76,7 @@ function buildShaderProgram(gl, shaderInfo) {
 	const program = gl.createProgram();
 
 	shaderInfo.forEach(desc => {
-		const shader = compileShader(gl, desc.code, desc.type);
+		const shader = compileShader(gl, desc.data, desc.type);
 		if (shader)
 			gl.attachShader(program, shader);
 		else

@@ -1,6 +1,6 @@
 ﻿"use strict";
-importScripts("/constants.js");
-importScripts("/helper.js");
+importScripts("/Constants.js");
+importScripts("/Helper.js");
 importScripts("/EventEmitter.js");
 importScripts("/ChannelSocket.js");
 
@@ -18,8 +18,8 @@ self.onmessage = (e) => {
 				}
 				clearInterval(intervalID);
 
-				const pos = segmentKeyToCoords(e.data.key);
-				segmentChannel.sendRequest("get", { pos });
+				const position = segmentKeyToCoords(e.data.key);
+				segmentChannel.sendRequest("get", { position });
 			}, 25 + Math.floor(Math.random() * 25));
 			break;
 
@@ -32,5 +32,14 @@ self.onmessage = (e) => {
 
 function handleSegmentChannelMessage(msg) {
 	const response = JSON.parse(msg.data);
-	postMessage({ type: "segment", position: response.pos, tiles: response.data });
+	switch (response.type) {
+		case "segment":
+		case "blockorders":
+			postMessage(response);
+			break;
+
+		default:
+			console.warn(`Unknown message type '${response.type}'.`, response);
+			break;
+	}
 }

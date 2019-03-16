@@ -1,30 +1,24 @@
 ﻿"use strict";
+
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
 
 let mapZoom = defaultMapZoom;
 let smoothMapZoom = mapZoom;
-let roundedSmoothMapZoom = smoothMapZoom;
 
 function updateMousePos(e) {
 	currentMousePos.x = e.clientX;
 	currentMousePos.y = e.clientY;
-	if (onMouseMove)
-		onMouseMove(currentMousePos.x, currentMousePos.y);
+	onMouseMove(currentMousePos.x, currentMousePos.y);
 }
 
 function handleMouseMove(e) {
 	if (isMouseDragging) {
-		const xDiff = (e.clientX - currentMousePos.x) * window.devicePixelRatio;
-		const yDiff = (e.clientY - currentMousePos.y) * window.devicePixelRatio;
-		moveMap(xDiff, yDiff);
+		const diffX = (e.clientX - currentMousePos.x) * window.devicePixelRatio;
+		const diffY = (e.clientY - currentMousePos.y) * window.devicePixelRatio;
+		onMapMove(diffX, diffY);
 	}
 	updateMousePos(e);
-}
-
-function moveMap(x, y) {
-	if (onMapMove)
-		onMapMove(x, y);
 }
 
 function handleMouseDown(e) {
@@ -48,8 +42,6 @@ function handleMouseEnd(e) {
 
 function handleScrollWheel(e) {
 	const factor = 1 - 1 / (mapZoom + 1);
-	console.log(factor);
-
 	mapZoom -= e.deltaY / 750 * factor;
 	clampZoom();
 }
@@ -61,17 +53,10 @@ function clampZoom() {
 updatables.push(delta => {
 	clampZoom();
 
-	const newSmoothMapZoom = Math.lerp(smoothMapZoom, mapZoom, delta * 18);
+	const newSmoothMapZoom = Math.lerp(smoothMapZoom, mapZoom, delta * 30);
 	if (newSmoothMapZoom !== smoothMapZoom) {
+		onMapZoomChanged(smoothMapZoom);
 		smoothMapZoom = newSmoothMapZoom;
-
-		let lastRoundedZoom = roundedSmoothMapZoom;
-		roundedSmoothMapZoom = Math.round(smoothMapZoom * 1000) / 1000;
-
-		if (onMapZoomChanged && lastRoundedZoom !== roundedSmoothMapZoom) {
-			onMapZoomChanged(newSmoothMapZoom);
-			console.log(newSmoothMapZoom);
-		}
 	}
 });
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WebSocketSharp;
 using WebSocketSharp.Server;
@@ -66,11 +67,12 @@ namespace WebSocketServer
             return list;
         }
 
-        protected bool Missing(JToken token, string name)
+        protected bool Missing(JToken token, string name, out JToken value)
         {
-            if (token == null || token[name] == null)
+            if (token == null || (value = token[name]) == null)
             {
                 Send("Missing property '" + name + "'.");
+                value = null;
                 return true;
             }
             return false;
@@ -78,8 +80,14 @@ namespace WebSocketServer
 
         protected override void OnMessage(MessageEventArgs e)
         {
-            if (!e.IsText)
+            if (e.IsPing)
                 return;
+
+            if (!e.IsText)
+            {
+                Send("Only text messages are supported.");
+                return;
+            }
 
             var msg = JObject.Parse(e.Data);
             var codeToken = msg["code"];
@@ -101,7 +109,15 @@ namespace WebSocketServer
                 handler.Invoke(msg["request"]);
             }
             else
+            {
                 Send($"Unknown request code '{code}'");
+            }
+        }
+
+        protected void SendAsJson(object value)
+        {
+            string str = JsonConvert.SerializeObject(value, Formatting.None);
+            Send(str);
         }
 
         private class CachedHandlerInfo

@@ -5,10 +5,10 @@ const updatables = [];
 let animationID;
 let lastTime = 0;
 
-const segmentManager = new Worker("/segmentManager.js");
+const segmentManager = new Worker("/SegmentManagerWorker.js");
 segmentManager.addEventListener("message", handleSegmentManagerMessage);
 
-const segmentRenderer = new Worker("/segmentRenderer.js");
+const segmentRenderer = new Worker("/SegmentRendererWorker.js");
 segmentRenderer.addEventListener("message", handleSegmentRendererMessage);
 
 function frameLoop(totalTime) {
@@ -19,7 +19,6 @@ function frameLoop(totalTime) {
 		delta = (totalTime - lastTime) / 1000;
 		lastTime = totalTime;
 	}
-
 	// update registered objects, TODO: change this to a interval 
 	// with 20ups instead as it's not called while tab is minimized
 	for (let i = 0; i < updatables.length; i++) {
@@ -78,7 +77,8 @@ function handleSegmentRendererMessage(e) {
 function handleSegmentManagerMessage(e) {
 	switch (e.data.type) {
 		case "segment":
-			segmentRenderer.postMessage({ type: "segment", position: e.data.position, tiles: e.data.tiles });
+		case "blockorders":
+			segmentRenderer.postMessage(e.data);
 			break;
 
 		default:

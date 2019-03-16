@@ -1,10 +1,10 @@
 "use strict";
-importScripts("/constants.js");
-importScripts("/helper.js");
-importScripts("/glHelper.js");
-importScripts("/mainShader.js");
+importScripts("/Constants.js");
+importScripts("/Helper.js");
+importScripts("/GLHelper.js");
+importScripts("/MainShader.js");
 importScripts("/gl-matrix-min.js");
-importScripts("/vertexDataGen.js");
+importScripts("/VertexDataGen.js");
 importScripts("/SegmentRenderData.js");
 
 const mat4 = glMatrix.mat4;
@@ -53,7 +53,7 @@ let zoom = defaultMapZoom;
 const segmentMap = new Map();
 
 function prepareSegmentShader() {
-	mainShader = buildShaderProgram(GL, mainShaderData);
+	mainShader = buildShaderProgram(GL, mainShaderSource);
 
 	mainLocations.vertexPosition = GL.getAttribLocation(mainShader, "aVertexPosition");
 	mainLocations.texCoord = GL.getAttribLocation(mainShader, "aTexCoord");
@@ -131,7 +131,7 @@ self.onmessage = (e) => {
 		case "zoom":
 			const oldZoom = zoom;
 			zoom = e.data.zoom;
-			zoomChanged(zoom, oldZoom);
+			//zoomChanged(zoom, oldZoom);
 			break;
 
 		case "mousepos":
@@ -164,11 +164,10 @@ self.onmessage = (e) => {
 			draw(e.data.delta);
 			break;
 
-		case "segment":
+		case "segment": {
 			const x = e.data.position.x;
 			const y = e.data.position.y;
 			const key = coordsToSegmentKey(x, y);
-
 			let segment = segmentMap.get(key);
 			if (!segment) {
 				segment = new SegmentRenderData(x, y);
@@ -181,6 +180,23 @@ self.onmessage = (e) => {
 			}
 			segment.updateTexCoords(GL);
 			break;
+		}
+
+		case "blockorders": {
+			for (let i = 0; i < e.data.orders.length; i++) {
+				const order = e.data.orders[i];
+
+				const key = coordsToSegmentKey(order.segment.x, order.segment.y);
+				let segment = segmentMap.get(key);
+				if (segment) {
+					const index = order.position.y * segmentSize + order.position.x;
+					segment.tiles[index] = order.tile;
+
+					segment.updateTexCoords(GL);
+				}
+			}
+			break;
+		}
 
 		default:
 			if (!e.data.type)
@@ -192,7 +208,6 @@ self.onmessage = (e) => {
 function zoomChanged(newZoom, oldZoom) {
 	const newScale = vec3.fromValues(newZoom, newZoom, 1);
 	const oldScale = vec3.fromValues(oldZoom, oldZoom, 1);
-
 }
 
 function requestTexture(id, url) {

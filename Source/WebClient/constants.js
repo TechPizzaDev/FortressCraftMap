@@ -6,7 +6,7 @@ const resolution = 64;
 // TODO: change 'drawDistance' behavior
 const drawDistance = 10;
 
-const loadDelayMs = 2;
+const loadDelayMs = 3;
 
 const minMapZoom = 0.125 / 2;
 const maxMapZoom = 1;
