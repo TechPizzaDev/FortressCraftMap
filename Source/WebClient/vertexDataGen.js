@@ -11,17 +11,17 @@ function generateQuads(size) {
 
 			// vertices per quad
 			const vi = i * 8;
-			vertices[vi + 0] = x;
-			vertices[vi + 1] = y;
+			vertices[vi + 0] = x * resolution;
+			vertices[vi + 1] = y * resolution;
 
-			vertices[vi + 2] = x + 1;
-			vertices[vi + 3] = y;
+			vertices[vi + 2] = x * resolution + resolution;
+			vertices[vi + 3] = y * resolution;
 
-			vertices[vi + 4] = x;
-			vertices[vi + 5] = y + 1;
+			vertices[vi + 4] = x * resolution;
+			vertices[vi + 5] = y * resolution + resolution;
 
-			vertices[vi + 6] = x + 1;
-			vertices[vi + 7] = y + 1;
+			vertices[vi + 6] = x * resolution + resolution;
+			vertices[vi + 7] = y * resolution + resolution;
 
 			// indices per quad
 			const ii = i * 6;
@@ -49,7 +49,12 @@ function generateTexCoords(tiles, size) {
 			const tile = tiles[i];
 
 			const tileName = tileToNameMap[tile];
-			const uv = nameToCoordMap[tileName];
+			let uv = nameToCoordMap[tileName];
+
+			if (!uv) {
+				console.warn(`Invalid tile "${tile}" at ${x},${y}`);
+				uv = cornersFromRect(0, 0, 0, 0);
+			}
 
 			const ti = i * 8;
 			texCoords[ti + 0] = uv.TL[0];
@@ -71,8 +76,8 @@ function generateTexCoords(tiles, size) {
 
 const tileToNameMap = {
 	0: "lithium",
-	1: "titanium",
-	2: "gold"
+	1: "gold",
+	2: "titanium"
 };
 
 const nameToCoordMap = {

@@ -33,8 +33,12 @@ function onMapZoomChanged(zoom) {
 	segmentRenderer.postMessage({ type: "zoom", zoom });
 }
 
-function onMapTranslationChanged(translation) {
-	segmentRenderer.postMessage({ type: "translation", translation });
+function onMapMove(x, y) {
+	segmentRenderer.postMessage({ type: "move", x, y });
+}
+
+function onMouseMove(x, y) {
+	segmentRenderer.postMessage({ type: "mousepos", x, y });
 }
 
 function onWindowResize() {

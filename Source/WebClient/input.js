@@ -2,15 +2,15 @@
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
 
-let mapZoom = minMapZoom;
+let mapZoom = defaultMapZoom;
 let smoothMapZoom = mapZoom;
 let roundedSmoothMapZoom = smoothMapZoom;
-
-let mapTranslation = createVector2(0, 0);
 
 function updateMousePos(e) {
 	currentMousePos.x = e.clientX;
 	currentMousePos.y = e.clientY;
+	if (onMouseMove)
+		onMouseMove(currentMousePos.x, currentMousePos.y);
 }
 
 function handleMouseMove(e) {
@@ -23,10 +23,8 @@ function handleMouseMove(e) {
 }
 
 function moveMap(x, y) {
-	mapTranslation.x += x;
-	mapTranslation.y += y;
-	if (onMapTranslationChanged)
-		onMapTranslationChanged(mapTranslation);
+	if (onMapMove)
+		onMapMove(x, y);
 }
 
 function handleMouseDown(e) {
@@ -37,7 +35,7 @@ function handleMouseDown(e) {
 			break;
 
 		case 2:
-			mapZoom = 1;
+			mapZoom = defaultMapZoom;
 			break;
 	}
 	e.preventDefault();
@@ -49,15 +47,11 @@ function handleMouseEnd(e) {
 }
 
 function handleScrollWheel(e) {
-	let oldZoom = mapZoom;
-	mapZoom -= e.deltaY / 1500;
-	clampZoom();
+	const factor = 1 - 1 / (mapZoom + 1);
+	console.log(factor);
 
-	const toX = currentMousePos.x;
-	const toY = currentMousePos.y;
-	const a = (toX - viewport.w / 2) * (oldZoom - mapZoom);
-	const b = (-toY + viewport.h / 2) * (oldZoom - mapZoom);
-	//moveMap(a, b);
+	mapZoom -= e.deltaY / 750 * factor;
+	clampZoom();
 }
 
 function clampZoom() {
@@ -67,15 +61,16 @@ function clampZoom() {
 updatables.push(delta => {
 	clampZoom();
 
-	const newSmoothMapZoom = mapZoom; //Math.lerp(smoothMapZoom, mapZoom, delta * 20);
+	const newSmoothMapZoom = Math.lerp(smoothMapZoom, mapZoom, delta * 18);
 	if (newSmoothMapZoom !== smoothMapZoom) {
 		smoothMapZoom = newSmoothMapZoom;
 
 		let lastRoundedZoom = roundedSmoothMapZoom;
-		roundedSmoothMapZoom = Math.round(smoothMapZoom * 100000) / 100000;
+		roundedSmoothMapZoom = Math.round(smoothMapZoom * 1000) / 1000;
 
 		if (onMapZoomChanged && lastRoundedZoom !== roundedSmoothMapZoom) {
-			onMapZoomChanged(roundedSmoothMapZoom);
+			onMapZoomChanged(newSmoothMapZoom);
+			console.log(newSmoothMapZoom);
 		}
 	}
 });
