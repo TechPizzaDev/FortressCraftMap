@@ -42,23 +42,25 @@ function handleMouseEnd(e) {
 
 function handleScrollWheel(e) {
 	const factor = 1 - 1 / (mapZoom + 1);
-	mapZoom -= e.deltaY / 750 * factor;
-	mapZoom = clampZoom(mapZoom);
-}
-
-function clampZoom(zoom) {
-	return Math.clamp(zoom, minMapZoom, maxMapZoom);
+	const scroll = e.deltaY / 750 * factor;
+	mapZoom = clampZoom(mapZoom - scroll);
 }
 
 updatables.push(delta => {
-	mapZoom = clampZoom(mapZoom);
-	const newSmoothMapZoom = clampZoom(Math.lerp(smoothMapZoom, mapZoom, delta * 30));
+	let lerpValue = delta * 25;
+	if (lerpValue > 0.5)
+		lerpValue = 0.5;
 
+	const newSmoothMapZoom = clampZoom(Math.lerp(smoothMapZoom, mapZoom, lerpValue));
 	if (newSmoothMapZoom !== smoothMapZoom) {
 		onMapZoomChanged(smoothMapZoom);
 		smoothMapZoom = newSmoothMapZoom;
 	}
 });
+
+function clampZoom(zoom) {
+	return Math.clamp(zoom, minMapZoom, maxMapZoom);
+}
 
 // TODO: add touch events (should be as simple as subscribing to respective touch event)
 mainCanvas.addEventListener("mousemove", handleMouseMove);

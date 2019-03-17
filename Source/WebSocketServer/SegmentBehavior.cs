@@ -129,7 +129,7 @@ namespace WebSocketServer
             _endpoint = Context.UserEndPoint;
             Console.WriteLine("SegmentBehavior connected at " + _endpoint);
 
-            _timer = new Timer(CallBack, null, 1000, 16);
+            _timer = new Timer(CallBack, null, 1000, 50);
         }
 
         protected override void OnClose(CloseEventArgs e)
