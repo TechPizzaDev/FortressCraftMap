@@ -39,7 +39,7 @@ namespace WebSocketServer
                 {
                     int index = y * 16 + x;
                     float noise = _noise.CalcPixel2D(segX + x, segY + y, 0.04f) / 256f;
-                    _tileArray[index] = (ushort)(noise * 3);
+                    _tileArray[index] = (ushort)(noise * 11 + 210);
                 }
             }
 
@@ -63,7 +63,7 @@ namespace WebSocketServer
                 SegmentPosition randomPos = _loadedSegments[_rng.Next(_loadedSegments.Count)];
 
                 var orders = new BlockOrder[32];
-                int tile = _rng.Next(3);
+                int tile = _rng.Next(11) + 210;
                 for (int i = 0; i < orders.Length; i++)
                 {
                     int x = _rng.Next(16);

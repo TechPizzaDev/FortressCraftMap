@@ -93,11 +93,6 @@ function cornersFromRect(x, y, w, h) {
 	const texelW = 1.0 / 896.0;
 	const texelH = 1.0 / 1792.0;
 
-	x += 1;
-	y += 1;
-	w -= 2;
-	h -= 2;
-
 	x *= texelW;
 	y *= texelH;
 	w *= texelW;
@@ -109,8 +104,8 @@ function cornersFromRect(x, y, w, h) {
 	};
 }
 const indexToCoordMap = {
-	0: cornersFromRect(1, 1, 64, 64),
-	1: cornersFromRect(65, 1, 64, 64),
+	0: cornersFromRect(0, 0, 64, 64),
+	1: cornersFromRect(64, 0, 64, 64),
 	2: cornersFromRect(128, 0, 64, 64),
 	3: cornersFromRect(192, 0, 64, 64),
 	4: cornersFromRect(256, 0, 64, 64),

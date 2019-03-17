@@ -4,7 +4,7 @@ const segmentSize = 16;
 const resolution = 64;
 
 // TODO: change 'drawDistance' behavior
-const drawDistance = 10;
+const drawDistance = 20;
 
 const loadDelayMs = 3;
 
