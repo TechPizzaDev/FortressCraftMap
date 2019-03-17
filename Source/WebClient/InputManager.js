@@ -43,7 +43,7 @@ function handleMouseEnd(e) {
 function handleScrollWheel(e) {
 	const factor = 1 - 1 / (mapZoom + 1);
 	mapZoom -= e.deltaY / 750 * factor;
-	clampZoom();
+	mapZoom = clampZoom(mapZoom);
 }
 
 function clampZoom(zoom) {
