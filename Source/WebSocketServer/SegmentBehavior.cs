@@ -62,7 +62,7 @@ namespace WebSocketServer
             {
                 SegmentPosition randomPos = _loadedSegments[_rng.Next(_loadedSegments.Count)];
 
-                var orders = new BlockOrder[8];
+                var orders = new BlockOrder[32];
                 int tile = _rng.Next(3);
                 for (int i = 0; i < orders.Length; i++)
                 {
@@ -102,8 +102,8 @@ namespace WebSocketServer
         {
             return new
             {
-                segment = order.Segment,
-                position = new { x = order.X, y = order.Y },
+                s = new[] { order.Segment.X, order.Segment.Y },
+                p = new[] { order.X, order.Y },
                 tile = order.Tile
             };
         }
@@ -129,12 +129,14 @@ namespace WebSocketServer
             _endpoint = Context.UserEndPoint;
             Console.WriteLine("SegmentBehavior connected at " + _endpoint);
 
-            _timer = new Timer(CallBack, null, 1000, 50);
+            _timer = new Timer(CallBack, null, 1000, 16);
         }
 
         protected override void OnClose(CloseEventArgs e)
         {
             Console.WriteLine($"SegmentBehavior at {_endpoint} disconnected");
+
+            _timer.Dispose();
         }
     }
 }

@@ -186,10 +186,10 @@ self.onmessage = (e) => {
 			for (let i = 0; i < e.data.orders.length; i++) {
 				const order = e.data.orders[i];
 
-				const key = coordsToSegmentKey(order.segment.x, order.segment.y);
+				const key = coordsToSegmentKey(order.s[0], order.s[1]);
 				let segment = segmentMap.get(key);
 				if (segment) {
-					const index = order.position.y * segmentSize + order.position.x;
+					const index = order.p[1] * segmentSize + order.p[0];
 					segment.tiles[index] = order.tile;
 
 					segment.updateTexCoords(GL);
@@ -225,7 +225,7 @@ function init() {
 	}
 
 	tileTexture = createTexture2D(GL);
-	requestTexture(tileTexture.id, "/blocks_64.png");
+	requestTexture(tileTexture.id, "TB_diffuse_64.png"); //"/blocks_64.png");
 
 	prepareSegmentShader();
 	staticSegmentQuads = prepareSegmentQuads();

@@ -46,14 +46,14 @@ function handleScrollWheel(e) {
 	clampZoom();
 }
 
-function clampZoom() {
-	mapZoom = Math.clamp(mapZoom, minMapZoom, maxMapZoom);
+function clampZoom(zoom) {
+	return Math.clamp(zoom, minMapZoom, maxMapZoom);
 }
 
 updatables.push(delta => {
-	clampZoom();
+	mapZoom = clampZoom(mapZoom);
+	const newSmoothMapZoom = clampZoom(Math.lerp(smoothMapZoom, mapZoom, delta * 30));
 
-	const newSmoothMapZoom = Math.lerp(smoothMapZoom, mapZoom, delta * 30);
 	if (newSmoothMapZoom !== smoothMapZoom) {
 		onMapZoomChanged(smoothMapZoom);
 		smoothMapZoom = newSmoothMapZoom;
