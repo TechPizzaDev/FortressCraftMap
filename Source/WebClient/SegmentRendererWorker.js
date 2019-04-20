@@ -15,13 +15,11 @@ const viewport = { w: 0, h: 0 };
 let canvas = null;
 let GL = null;
 let glFailed = false;
+let totalTime = 0;
 
 ///////////////// rendering stuff /////////////////
-const slaveRenderer = new Worker("/SegmentRendererSlaveWorker.js");
-slaveRenderer.addEventListener("message", handleSlaveRendererMessage);
-
-
 let tileTexture = null;
+let tileTextureReady = false;
 let staticSegmentQuads = null;
 const texCoordBuffer = generateTexCoordBuffer(segmentSize);
 const colorBuffer = generateColorBuffer(segmentSize);
@@ -37,7 +35,7 @@ const texturedSegmentShader = {
 	uniforms: {
 		modelViewProjection: null,
 		textureSampler: null,
-		globalColor: null
+		tint: null
 	}
 };
 
@@ -51,7 +49,7 @@ const coloredSegmentShader = {
 	},
 	uniforms: {
 		modelViewProjection: null,
-		globalColor: null
+		tint: null
 	}
 };
 
@@ -80,17 +78,19 @@ function prepareSegmentShaders() {
 	texturedSegmentShader.locations.vertexPosition = GL.getAttribLocation(texturedProgram, "aVertexPosition");
 	texturedSegmentShader.locations.texCoord = GL.getAttribLocation(texturedProgram, "aTexCoord");
 	texturedSegmentShader.uniforms.modelViewProjection = GL.getUniformLocation(texturedProgram, "uModelViewProjection");
-	texturedSegmentShader.uniforms.globalColor = GL.getUniformLocation(texturedProgram, "uGlobalColor");
+	texturedSegmentShader.uniforms.tint = GL.getUniformLocation(texturedProgram, "uTint");
 	texturedSegmentShader.uniforms.textureSampler = GL.getUniformLocation(texturedProgram, "uTextureSampler");
 
 	const coloredProgram = coloredSegmentShader.program = buildShaderProgram(GL, coloredSegmentShaderSource);
 	coloredSegmentShader.locations.vertexPosition = GL.getAttribLocation(coloredProgram, "aVertexPosition");
 	coloredSegmentShader.locations.color = GL.getAttribLocation(coloredProgram, "aColor");
 	coloredSegmentShader.uniforms.modelViewProjection = GL.getUniformLocation(coloredProgram, "uModelViewProjection");
-	coloredSegmentShader.uniforms.globalColor = GL.getUniformLocation(coloredProgram, "uGlobalColor");
+	coloredSegmentShader.uniforms.tint = GL.getUniformLocation(coloredProgram, "uTint");
 }
 
 function draw(delta) {
+	totalTime += delta;
+
 	GL.viewport(0, 0, canvas.width, canvas.height);
 	GL.clearColor(0, 0, 0, 0);
 	GL.clear(GL.COLOR_BUFFER_BIT);
@@ -99,8 +99,8 @@ function draw(delta) {
 	const w = viewport.w;
 	const h = viewport.h;
 	mat4.ortho(pMatrix, z * -w / 2, z * w / 2, z * h / 2, z * -h / 2, 0.001, 10);
-	
-	drawSegments();
+
+	drawSegments(delta);
 }
 
 function bindTexturedSegmentShader() {
@@ -110,7 +110,7 @@ function bindTexturedSegmentShader() {
 
 	// prepare shader
 	GL.useProgram(texturedSegmentShader.program);
-	GL.uniform4fv(texturedSegmentShader.uniforms.globalColor, [1.0, 1.0, 1.0, 1.0]);
+	GL.uniform4fv(texturedSegmentShader.uniforms.tint, [1.0, 1.0, 1.0, 1.0]);
 	GL.uniform1i(texturedSegmentShader.uniforms.textureSampler, 0); // texture unit 0
 
 	// bind vertices
@@ -127,7 +127,7 @@ function bindTexturedSegmentShader() {
 function bindColoredSegmentShader() {
 	// prepare shader
 	GL.useProgram(coloredSegmentShader.program);
-	GL.uniform4fv(coloredSegmentShader.uniforms.globalColor, [1.0, 1.0, 1.0, 1.0]);
+	GL.uniform4fv(coloredSegmentShader.uniforms.tint, [1.0, 1.0, 1.0, 1.0]);
 
 	// bind vertices
 	GL.bindBuffer(GL.ARRAY_BUFFER, staticSegmentQuads.vertexBuffer);
@@ -140,7 +140,7 @@ function bindColoredSegmentShader() {
 	return coloredSegmentShader;
 }
 
-function drawSegments() {
+function drawSegments(delta) {
 	mat4.identity(vMatrix);
 	mat4.translate(vMatrix, vMatrix, viewTranslation);
 	mat4.multiply(pvMatrix, pMatrix, vMatrix);
@@ -149,73 +149,50 @@ function drawSegments() {
 	if (isMapTextured !== isTextured) {
 		isMapTextured = isTextured;
 		for (const segment of segmentMap.values())
-			segment.markDirty(true);
+			segment.markDirty();
 	}
 
 	const shader = isTextured ? bindTexturedSegmentShader() : bindColoredSegmentShader();
 	const locationName = isTextured ? "texCoord" : "color";
 	GL.enableVertexAttribArray(shader.locations[locationName]);
 
-	let chunkUploadsLeft = maxChunkUploadsPerFrame;
-
-	// draw and rebuild segments on this worker
-	for (const segment of segmentMap.values()) {
+	let chunkUploadsLeft = immediateUploads ? maxChunkUploadsPerFrame : chunkUploadsPerFrame;
+	for (const segment of getVisibleSegments()) {
 		if (segment.isDirty && chunkUploadsLeft > 0) {
-			if (threadedUploads) {
-				buildSegmentThreaded(segment, isTextured);
-			}
-			else {
-				if (isTextured)
-					segment.buildAndUploadTextured(GL, texCoordBuffer);
-				else
-					segment.buildAndUploadColored(GL, colorBuffer);
-				chunkUploadsLeft--;
-			}
+			if (isTextured)
+				segment.buildAndUploadTextured(GL, texCoordBuffer);
+			else
+				segment.buildAndUploadColored(GL, colorBuffer);
+			chunkUploadsLeft--;
 		}
 
-		if (!segment.isDirty || (threadedUploads && !segment.isTypeUpdate))
-			drawSegment(shader, segment, locationName);
+		if (!segment.isDirty) {
+			segment.alpha += delta;
+			drawSegment(segment, shader, locationName);
+		}
 	}
+}
+
+function getVisibleSegments() {
+	return segmentMap.values();
 }
 
 /**
  * Partially prepares state and draws a segment.
- * @param {Object} shader The shader to use.
  * @param {SegmentRenderData} segment The segment to draw.
+ * @param {Object} shader The shader to use.
  * @param {Boolean} locationName The name of the attribute location for data.
  */
-function drawSegment(shader, segment, locationName) {
+function drawSegment(segment, shader, locationName) {
 	mat4.multiply(mvpMatrix, pvMatrix, segment.matrix);
 	GL.uniformMatrix4fv(shader.uniforms.modelViewProjection, false, mvpMatrix);
+
+	const clampedAlpha = Math.clamp(segment.alpha * 5, 0, 1);
+	GL.uniform4f(shader.uniforms.tint, 1, 1, 1, clampedAlpha);
 
 	GL.bindBuffer(GL.ARRAY_BUFFER, segment._glDataBuffer);
 	GL.vertexAttribPointer(shader.locations[locationName], shader.locationSizes[locationName], GL.FLOAT, false, 0, 0);
 	GL.drawElements(GL.TRIANGLES, staticSegmentQuads.indexCount, GL.UNSIGNED_SHORT, 0);
-}
-
-function handleSlaveRendererMessage(e) {
-	const key = coordsToSegmentKey(e.data.x, e.data.y);
-	const segment = segmentMap.get(key);
-	if (segment) {
-		switch (e.data.type) {
-			case "texturedResult":
-				segment.uploadData(GL, e.data.buffer);
-				break;
-
-			case "coloredResult":
-				segment.uploadData(GL, e.data.buffer);
-				break;
-		}
-	}
-}
-
-function buildSegmentThreaded(segment, isTextured) {
-	slaveRenderer.postMessage({
-		type: isTextured ? "textured" : "colored",
-		tiles: segment.tiles,
-		x: segment.x,
-		y: segment.y
-	});
 }
 
 self.onmessage = (e) => {
@@ -226,9 +203,11 @@ self.onmessage = (e) => {
 			break;
 
 		case "zoom":
-			const oldZoom = zoom;
+			//const oldZoom = zoom;
 			zoom = e.data.zoom;
-			//zoomChanged(zoom, oldZoom);
+
+			//const newScale = vec3.fromValues(newZoom, newZoom, 1);
+			//const oldScale = vec3.fromValues(oldZoom, oldZoom, 1);
 			break;
 
 		case "mousepos":
@@ -255,11 +234,11 @@ self.onmessage = (e) => {
 			const tex = getTexture2D(e.data.id);
 			uploadTextureData(GL, tex, e.data.bitmap);
 
-			const offscreen = new OffscreenCanvas(64, 64);
-			var ofCtx = offscreen.getContext("2d");
-
 			const bW = e.data.bitmap.width;
 			const bH = e.data.bitmap.height;
+
+			const offscreen = new OffscreenCanvas(64, 64);
+			var ofCtx = offscreen.getContext("2d");
 
 			for (const key in Object.keys(indexToTileDescriptionMap)) {
 				const dataEntry = indexToTileDescriptionMap[key];
@@ -283,11 +262,6 @@ self.onmessage = (e) => {
 				const div = imageData.width * imageData.height * 255;
 				dataEntry.color = [r / div, g / div, b / div];
 			}
-
-			slaveRenderer.postMessage({
-				type: "tileDescriptionMap",
-				map: indexToTileDescriptionMap
-			});
 
 			e.data.bitmap.close();
 			break;
@@ -342,11 +316,6 @@ self.onmessage = (e) => {
 	}
 };
 
-function zoomChanged(newZoom, oldZoom) {
-	const newScale = vec3.fromValues(newZoom, newZoom, 1);
-	const oldScale = vec3.fromValues(oldZoom, oldZoom, 1);
-}
-
 function requestTexture(id, url) {
 	postMessage({ type: "texture", id, url });
 }
@@ -360,6 +329,9 @@ function init() {
 		glFailed = true;
 		console.warn("WebGL is not supported");
 	}
+
+	GL.enable(GL.BLEND);
+	GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
 
 	tileTexture = createTexture2D(GL);
 	requestTexture(tileTexture.id, "TB_diffuse_64.png"); //"/blocks_64.png");

@@ -26,12 +26,12 @@ const texturedSegmentShaderSource = [
 			#endif
 
 			uniform sampler2D uTextureSampler;
-			uniform vec4 uGlobalColor;
+			uniform vec4 uTint;
 
 			varying vec2 vTexCoord;
 			
 			void main() {
-				gl_FragColor = texture2D(uTextureSampler, vTexCoord) * uGlobalColor;
+				gl_FragColor = texture2D(uTextureSampler, vTexCoord) * uTint;
 			}
 		`
 	}
@@ -63,12 +63,12 @@ const coloredSegmentShaderSource = [
 				precision mediump float;
 			#endif
 
-			uniform vec4 uGlobalColor;
+			uniform vec4 uTint;
 
 			varying vec3 vColor;
 			
 			void main() {
-				gl_FragColor = vec4(vColor, 1) * uGlobalColor;
+				gl_FragColor = vec4(vColor, 1) * uTint;
 			}
 		`
 	}

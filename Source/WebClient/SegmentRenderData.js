@@ -6,7 +6,7 @@ class SegmentRenderData {
 		this.y = y;
 		this.tiles = new Uint16Array(segmentSize * segmentSize);
 		this.isDirty = false;
-		this.isTypeUpdate = true;
+		this.alpha = 0;
 		this._glDataBuffer = null;
 
 		const translation = vec3.create();
@@ -17,9 +17,7 @@ class SegmentRenderData {
 		mat4.fromTranslation(this.matrix, translation);
 	}
 
-	markDirty(typeUpdate) {
-		if (typeUpdate)
-			this.isTypeUpdate = typeUpdate;
+	markDirty() {
 		this.isDirty = true;
 	}
 
@@ -40,6 +38,5 @@ class SegmentRenderData {
 		gl.bindBuffer(gl.ARRAY_BUFFER, this._glDataBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
 		this.isDirty = false;
-		this.isTypeUpdate = false;
 	}
 }
