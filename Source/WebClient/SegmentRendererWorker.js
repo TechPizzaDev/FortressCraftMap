@@ -17,6 +17,10 @@ let GL = null;
 let glFailed = false;
 
 ///////////////// rendering stuff /////////////////
+const slaveRenderer = new Worker("/SegmentRendererSlaveWorker.js");
+slaveRenderer.addEventListener("message", handleSlaveRendererMessage);
+
+
 let tileTexture = null;
 let staticSegmentQuads = null;
 const texCoordBuffer = generateTexCoordBuffer(segmentSize);
@@ -26,6 +30,9 @@ const texturedSegmentShader = {
 	locations: {
 		vertexPosition: null,
 		texCoord: null
+	},
+	locationSizes: {
+		texCoord: 2
 	},
 	uniforms: {
 		modelViewProjection: null,
@@ -38,6 +45,9 @@ const coloredSegmentShader = {
 	locations: {
 		vertexPosition: null,
 		color: null
+	},
+	locationSizes: {
+		color: 3
 	},
 	uniforms: {
 		modelViewProjection: null,
@@ -137,47 +147,75 @@ function drawSegments() {
 
 	const isTextured = zoom > 1 / 12;
 	if (isMapTextured !== isTextured) {
-		for (const segment of segmentMap.values()) {
-			segment.markDirty();
-		}
 		isMapTextured = isTextured;
+		for (const segment of segmentMap.values())
+			segment.markDirty(true);
 	}
 
 	const shader = isTextured ? bindTexturedSegmentShader() : bindColoredSegmentShader();
-	if (isTextured)
-		GL.enableVertexAttribArray(shader.locations.texCoord);
-	else
-		GL.enableVertexAttribArray(shader.locations.color);
+	const locationName = isTextured ? "texCoord" : "color";
+	GL.enableVertexAttribArray(shader.locations[locationName]);
 
-	// draw segments in batch
+	let chunkUploadsLeft = maxChunkUploadsPerFrame;
+
+	// draw and rebuild segments on this worker
 	for (const segment of segmentMap.values()) {
-		if (segment.isDirty) {
-			if (isTextured)
-				segment.buildAndUploadTextured(GL, texCoordBuffer);
-			else
-				segment.buildAndUploadColored(GL, colorBuffer);
+		if (segment.isDirty && chunkUploadsLeft > 0) {
+			if (threadedUploads) {
+				buildSegmentThreaded(segment, isTextured);
+			}
+			else {
+				if (isTextured)
+					segment.buildAndUploadTextured(GL, texCoordBuffer);
+				else
+					segment.buildAndUploadColored(GL, colorBuffer);
+				chunkUploadsLeft--;
+			}
 		}
-		drawSegment(shader, segment, isTextured);
+
+		if (!segment.isDirty || (threadedUploads && !segment.isTypeUpdate))
+			drawSegment(shader, segment, locationName);
 	}
 }
 
 /**
- * Prepares GL state and draws a segment.
+ * Partially prepares state and draws a segment.
  * @param {Object} shader The shader to use.
  * @param {SegmentRenderData} segment The segment to draw.
- * @param {Boolean} isTextured Is the segment textured or not.
+ * @param {Boolean} locationName The name of the attribute location for data.
  */
-function drawSegment(shader, segment, isTextured) {
+function drawSegment(shader, segment, locationName) {
 	mat4.multiply(mvpMatrix, pvMatrix, segment.matrix);
 	GL.uniformMatrix4fv(shader.uniforms.modelViewProjection, false, mvpMatrix);
 
 	GL.bindBuffer(GL.ARRAY_BUFFER, segment._glDataBuffer);
-	if (isTextured)
-		GL.vertexAttribPointer(shader.locations.texCoord, 2, GL.FLOAT, false, 0, 0);
-	else
-		GL.vertexAttribPointer(shader.locations.color, 3, GL.FLOAT, false, 0, 0);
-
+	GL.vertexAttribPointer(shader.locations[locationName], shader.locationSizes[locationName], GL.FLOAT, false, 0, 0);
 	GL.drawElements(GL.TRIANGLES, staticSegmentQuads.indexCount, GL.UNSIGNED_SHORT, 0);
+}
+
+function handleSlaveRendererMessage(e) {
+	const key = coordsToSegmentKey(e.data.x, e.data.y);
+	const segment = segmentMap.get(key);
+	if (segment) {
+		switch (e.data.type) {
+			case "texturedResult":
+				segment.uploadData(GL, e.data.buffer);
+				break;
+
+			case "coloredResult":
+				segment.uploadData(GL, e.data.buffer);
+				break;
+		}
+	}
+}
+
+function buildSegmentThreaded(segment, isTextured) {
+	slaveRenderer.postMessage({
+		type: isTextured ? "textured" : "colored",
+		tiles: segment.tiles,
+		x: segment.x,
+		y: segment.y
+	});
 }
 
 self.onmessage = (e) => {
@@ -246,6 +284,11 @@ self.onmessage = (e) => {
 				dataEntry.color = [r / div, g / div, b / div];
 			}
 
+			slaveRenderer.postMessage({
+				type: "tileDescriptionMap",
+				map: indexToTileDescriptionMap
+			});
+
 			e.data.bitmap.close();
 			break;
 
@@ -277,7 +320,7 @@ self.onmessage = (e) => {
 				const order = e.data.orders[i];
 
 				const key = coordsToSegmentKey(order.s[0], order.s[1]);
-				let segment = segmentMap.get(key);
+				const segment = segmentMap.get(key);
 				if (segment) {
 					const x = order.p[0];
 					const y = order.p[1];
