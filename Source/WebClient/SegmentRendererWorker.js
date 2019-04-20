@@ -2,7 +2,7 @@
 importScripts("/Constants.js");
 importScripts("/Helper.js");
 importScripts("/GLHelper.js");
-importScripts("/MainShader.js");
+importScripts("/SegmentShaders.js");
 importScripts("/gl-matrix-min.js");
 importScripts("/VertexDataGen.js");
 importScripts("/SegmentRenderData.js");
@@ -15,22 +15,34 @@ const viewport = { w: 0, h: 0 };
 let canvas = null;
 let GL = null;
 let glFailed = false;
-let mainShader = null;
 
 ///////////////// rendering stuff /////////////////
 let tileTexture = null;
 let staticSegmentQuads = null;
+const texCoordBuffer = generateTexCoordBuffer(segmentSize);
+const colorBuffer = generateColorBuffer(segmentSize);
 
-// shader fields (they are written out here for reference)
-const mainLocations = {
-	vertexPosition: null,
-	texCoord: null
+const texturedSegmentShader = {
+	locations: {
+		vertexPosition: null,
+		texCoord: null
+	},
+	uniforms: {
+		modelViewProjection: null,
+		textureSampler: null,
+		globalColor: null
+	}
 };
 
-const mainUniforms = {
-	modelViewProjection: null,
-	textureSampler: null,
-	globalColor: null
+const coloredSegmentShader = {
+	locations: {
+		vertexPosition: null,
+		color: null
+	},
+	uniforms: {
+		modelViewProjection: null,
+		globalColor: null
+	}
 };
 
 // shader matrices
@@ -48,19 +60,24 @@ const viewTranslation = vec3.create();
 const mousePos = vec3.create();
 
 let zoom = defaultMapZoom;
+let isMapTextured = true;
 /////////////////////////////////////////////////
 
 const segmentMap = new Map();
 
-function prepareSegmentShader() {
-	mainShader = buildShaderProgram(GL, mainShaderSource);
+function prepareSegmentShaders() {
+	const texturedProgram = texturedSegmentShader.program = buildShaderProgram(GL, texturedSegmentShaderSource);
+	texturedSegmentShader.locations.vertexPosition = GL.getAttribLocation(texturedProgram, "aVertexPosition");
+	texturedSegmentShader.locations.texCoord = GL.getAttribLocation(texturedProgram, "aTexCoord");
+	texturedSegmentShader.uniforms.modelViewProjection = GL.getUniformLocation(texturedProgram, "uModelViewProjection");
+	texturedSegmentShader.uniforms.globalColor = GL.getUniformLocation(texturedProgram, "uGlobalColor");
+	texturedSegmentShader.uniforms.textureSampler = GL.getUniformLocation(texturedProgram, "uTextureSampler");
 
-	mainLocations.vertexPosition = GL.getAttribLocation(mainShader, "aVertexPosition");
-	mainLocations.texCoord = GL.getAttribLocation(mainShader, "aTexCoord");
-
-	mainUniforms.modelViewProjection = GL.getUniformLocation(mainShader, "uModelViewProjection");
-	mainUniforms.globalColor = GL.getUniformLocation(mainShader, "uGlobalColor");
-	mainUniforms.textureSampler = GL.getUniformLocation(mainShader, "uTextureSampler");
+	const coloredProgram = coloredSegmentShader.program = buildShaderProgram(GL, coloredSegmentShaderSource);
+	coloredSegmentShader.locations.vertexPosition = GL.getAttribLocation(coloredProgram, "aVertexPosition");
+	coloredSegmentShader.locations.color = GL.getAttribLocation(coloredProgram, "aColor");
+	coloredSegmentShader.uniforms.modelViewProjection = GL.getUniformLocation(coloredProgram, "uModelViewProjection");
+	coloredSegmentShader.uniforms.globalColor = GL.getUniformLocation(coloredProgram, "uGlobalColor");
 }
 
 function draw(delta) {
@@ -76,47 +93,89 @@ function draw(delta) {
 	drawSegments();
 }
 
-function drawSegments() {
+function bindTexturedSegmentShader() {
 	// bind tile texture
 	GL.activeTexture(GL.TEXTURE0);
 	GL.bindTexture(GL.TEXTURE_2D, tileTexture.texture);
 
 	// prepare shader
-	GL.useProgram(mainShader);
-	GL.uniform4fv(mainUniforms.globalColor, [1.0, 1.0, 1.0, 1.0]);
-	GL.uniform1i(mainUniforms.textureSampler, 0); // texture unit 0
+	GL.useProgram(texturedSegmentShader.program);
+	GL.uniform4fv(texturedSegmentShader.uniforms.globalColor, [1.0, 1.0, 1.0, 1.0]);
+	GL.uniform1i(texturedSegmentShader.uniforms.textureSampler, 0); // texture unit 0
 
 	// bind vertices
 	GL.bindBuffer(GL.ARRAY_BUFFER, staticSegmentQuads.vertexBuffer);
-	GL.enableVertexAttribArray(mainLocations.vertexPosition);
-	GL.vertexAttribPointer(mainLocations.vertexPosition, 2, GL.FLOAT, false, 0, 0);
+	GL.enableVertexAttribArray(texturedSegmentShader.locations.vertexPosition);
+	GL.vertexAttribPointer(texturedSegmentShader.locations.vertexPosition, 2, GL.FLOAT, false, 0, 0);
 
 	// bind indices
 	GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, staticSegmentQuads.indexBuffer);
 
+	return texturedSegmentShader;
+}
+
+function bindColoredSegmentShader() {
+	// prepare shader
+	GL.useProgram(coloredSegmentShader.program);
+	GL.uniform4fv(coloredSegmentShader.uniforms.globalColor, [1.0, 1.0, 1.0, 1.0]);
+
+	// bind vertices
+	GL.bindBuffer(GL.ARRAY_BUFFER, staticSegmentQuads.vertexBuffer);
+	GL.enableVertexAttribArray(coloredSegmentShader.locations.vertexPosition);
+	GL.vertexAttribPointer(coloredSegmentShader.locations.vertexPosition, 2, GL.FLOAT, false, 0, 0);
+
+	// bind indices
+	GL.bindBuffer(GL.ELEMENT_ARRAY_BUFFER, staticSegmentQuads.indexBuffer);
+
+	return coloredSegmentShader;
+}
+
+function drawSegments() {
 	mat4.identity(vMatrix);
 	mat4.translate(vMatrix, vMatrix, viewTranslation);
-
 	mat4.multiply(pvMatrix, pMatrix, vMatrix);
+
+	const isTextured = zoom > 1 / 12;
+	if (isMapTextured !== isTextured) {
+		for (const segment of segmentMap.values()) {
+			segment.markDirty();
+		}
+		isMapTextured = isTextured;
+	}
+
+	const shader = isTextured ? bindTexturedSegmentShader() : bindColoredSegmentShader();
+	if (isTextured)
+		GL.enableVertexAttribArray(shader.locations.texCoord);
+	else
+		GL.enableVertexAttribArray(shader.locations.color);
 
 	// draw segments in batch
 	for (const segment of segmentMap.values()) {
-		drawSegment(segment);
+		if (segment.isDirty) {
+			if (isTextured)
+				segment.buildAndUploadTextured(GL, texCoordBuffer);
+			else
+				segment.buildAndUploadColored(GL, colorBuffer);
+		}
+		drawSegment(shader, segment, isTextured);
 	}
 }
 
 /**
- * Draws a segment (needs preparation of WebGL state beforehand).
+ * Prepares GL state and draws a segment.
+ * @param {Object} shader The shader to use.
  * @param {SegmentRenderData} segment The segment to draw.
+ * @param {Boolean} isTextured Is the segment textured or not.
  */
-function drawSegment(segment) {
+function drawSegment(shader, segment, isTextured) {
 	mat4.multiply(mvpMatrix, pvMatrix, segment.matrix);
+	GL.uniformMatrix4fv(shader.uniforms.modelViewProjection, false, mvpMatrix);
 
-	GL.uniformMatrix4fv(mainUniforms.modelViewProjection, false, mvpMatrix);
-
-	GL.bindBuffer(GL.ARRAY_BUFFER, segment.texCoordBuffer);
-	GL.enableVertexAttribArray(mainLocations.texCoord);
-	GL.vertexAttribPointer(mainLocations.texCoord, 2, GL.FLOAT, false, 0, 0);
+	GL.bindBuffer(GL.ARRAY_BUFFER, segment._glDataBuffer);
+	if (isTextured)
+		GL.vertexAttribPointer(shader.locations.texCoord, 2, GL.FLOAT, false, 0, 0);
+	else
+		GL.vertexAttribPointer(shader.locations.color, 3, GL.FLOAT, false, 0, 0);
 
 	GL.drawElements(GL.TRIANGLES, staticSegmentQuads.indexCount, GL.UNSIGNED_SHORT, 0);
 }
@@ -157,6 +216,36 @@ self.onmessage = (e) => {
 		case "texture":
 			const tex = getTexture2D(e.data.id);
 			uploadTextureData(GL, tex, e.data.bitmap);
+
+			const offscreen = new OffscreenCanvas(64, 64);
+			var ofCtx = offscreen.getContext("2d");
+
+			const bW = e.data.bitmap.width;
+			const bH = e.data.bitmap.height;
+
+			for (const key in Object.keys(indexToTileDescriptionMap)) {
+				const dataEntry = indexToTileDescriptionMap[key];
+				const x = dataEntry.corners.TL[0] * bW;
+				const y = dataEntry.corners.TL[1] * bH;
+				const w = dataEntry.corners.BR[0] * bW - x;
+				const h = dataEntry.corners.BR[1] * bH - y;
+
+				ofCtx.drawImage(e.data.bitmap, x, y, w, h, 0, 0, w, h);
+				const imageData = ofCtx.getImageData(0, 0, w, h);
+				const pixelArray = imageData.data;
+
+				let r = 0.0, g = 0.0, b = 0.0;
+				for (let i = 0; i < pixelArray.length; i += 4) {
+					const alpha = pixelArray[i + 3] / 255;
+					r += pixelArray[i + 0] * alpha;
+					g += pixelArray[i + 1] * alpha;
+					b += pixelArray[i + 2] * alpha;
+				}
+
+				const div = imageData.width * imageData.height * 255;
+				dataEntry.color = [r / div, g / div, b / div];
+			}
+
 			e.data.bitmap.close();
 			break;
 
@@ -178,23 +267,28 @@ self.onmessage = (e) => {
 			for (let i = 0; i < dataTiles.length; i++) {
 				segment.tiles[i] = dataTiles[i];
 			}
-			segment.updateTexCoords(GL);
+			segment.markDirty();
 			break;
 		}
 
 		case "blockorders": {
+			const dirtySegments = [];
 			for (let i = 0; i < e.data.orders.length; i++) {
 				const order = e.data.orders[i];
 
 				const key = coordsToSegmentKey(order.s[0], order.s[1]);
 				let segment = segmentMap.get(key);
 				if (segment) {
-					const index = order.p[1] * segmentSize + order.p[0];
-					segment.tiles[index] = order.tile;
-
-					segment.updateTexCoords(GL);
+					const x = order.p[0];
+					const y = order.p[1];
+					const index = y * segmentSize + x;
+					segment.tiles[index] = order.t;
+					dirtySegments.push(segment);
 				}
 			}
+
+			for (const segment of dirtySegments)
+				segment.markDirty();
 			break;
 		}
 
@@ -227,7 +321,7 @@ function init() {
 	tileTexture = createTexture2D(GL);
 	requestTexture(tileTexture.id, "TB_diffuse_64.png"); //"/blocks_64.png");
 
-	prepareSegmentShader();
+	prepareSegmentShaders();
 	staticSegmentQuads = prepareSegmentQuads();
 
 	postMessage({ type: "ready" });

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -12,8 +11,6 @@ namespace WebSocketServer
     {
         private static SimplexNoise _noise = new SimplexNoise(42);
         private static Random _rng = new Random();
-
-        private readonly object _thonk = new object();
 
         private IPEndPoint _endpoint;
         private ushort[] _tileArray;
@@ -32,13 +29,12 @@ namespace WebSocketServer
 
             int segX = position["x"].ToObject<int>() * 16;
             int segY = position["y"].ToObject<int>() * 16;
-
             for (int y = 0; y < 16; y++)
             {
                 for (int x = 0; x < 16; x++)
                 {
                     int index = y * 16 + x;
-                    float noise = _noise.CalcPixel2D(segX + x, segY + y, 0.04f) / 256f;
+                    float noise = _noise.CalcPixel2D(segX + x, segY + y, 0.0075f) / 256f;
                     _tileArray[index] = (ushort)(noise * 11 + 210);
                 }
             }
@@ -50,29 +46,35 @@ namespace WebSocketServer
                 tiles = _tileArray
             });
 
-            lock (_thonk)
+            lock (_loadedSegments)
                 _loadedSegments.Add(new SegmentPosition(segX / 16, segY / 16));
         }
 
         private Timer _timer;
 
-        private void CallBack(object state)
+        private void TimerCallBack(object state)
         {
-            lock (_thonk)
+            lock (_loadedSegments)
             {
-                SegmentPosition randomPos = _loadedSegments[_rng.Next(_loadedSegments.Count)];
+                if (_loadedSegments.Count <= 0)
+                    return;
 
-                var orders = new BlockOrder[32];
-                int tile = _rng.Next(11) + 210;
-                for (int i = 0; i < orders.Length; i++)
+                var orders = new BlockOrder[8];
+                for (int j = 0; j < 2; j++)
                 {
-                    int x = _rng.Next(16);
-                    int y = _rng.Next(16);
+                    SegmentPosition randomPos = _loadedSegments[_rng.Next(_loadedSegments.Count)];
 
-                    orders[i] = new BlockOrder(randomPos, x, y, (ushort)tile);
+                    int tile = _rng.Next(11) + 210;
+                    for (int i = 0; i < orders.Length; i++)
+                    {
+                        int x = _rng.Next(16);
+                        int y = _rng.Next(16);
+
+                        orders[i] = new BlockOrder(randomPos, x, y, (ushort)tile);
+                    }
+
+                    SendBlockOrder(orders);
                 }
-
-                SendBlockOrder(orders);
             }
         }
 
@@ -104,24 +106,8 @@ namespace WebSocketServer
             {
                 s = new[] { order.Segment.X, order.Segment.Y },
                 p = new[] { order.X, order.Y },
-                tile = order.Tile
+                t = order.Tile
             };
-        }
-
-        struct BlockOrder
-        {
-            public SegmentPosition Segment;
-            public int X;
-            public int Y;
-            public ushort Tile;
-
-            public BlockOrder(SegmentPosition segment, int x, int y, ushort tile)
-            {
-                Segment = segment;
-                X = x;
-                Y = y;
-                Tile = tile;
-            }
         }
 
         protected override void OnOpen()
@@ -129,7 +115,7 @@ namespace WebSocketServer
             _endpoint = Context.UserEndPoint;
             Console.WriteLine("SegmentBehavior connected at " + _endpoint);
 
-            _timer = new Timer(CallBack, null, 1000, 50);
+            _timer = new Timer(TimerCallBack, null, 1000, 100);
         }
 
         protected override void OnClose(CloseEventArgs e)

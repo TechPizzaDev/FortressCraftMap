@@ -49,6 +49,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BlockOrder.cs" />
     <Compile Include="FileHashMap.cs" />
     <Compile Include="FileHash.cs" />
     <Compile Include="MethodInfoExtensions.cs" />

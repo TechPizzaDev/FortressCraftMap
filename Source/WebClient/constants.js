@@ -4,10 +4,10 @@ const segmentSize = 16;
 const resolution = 64;
 
 // TODO: change 'drawDistance' behavior
-const drawDistance = 20;
+const drawDistance = 32;
 
-const loadDelayMs = 3;
+const loadDelayMs = 4;
 
-const minMapZoom = 0.125 / 2;
+const minMapZoom = 0.125 / 4;
 const maxMapZoom = 1;
 const defaultMapZoom = 0.25;
