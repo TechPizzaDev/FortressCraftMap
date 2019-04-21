@@ -23,6 +23,6 @@ Prototype of a web map for FortressCraft
 - [ ] Underground Mapping
 #
 #### Notes
-Scanning Hardened Resin will permanently reveal active Hiveminds.  
+Scanning Hardened Resin will be required to reveal active Hiveminds.  
 One active Threat Scanner will be required to reveal enemies. (Slimes will be visible regardless)  
 Active CCCCC will be required to reveal Cryo. (Cryo spawners will always be visible regardless)  
