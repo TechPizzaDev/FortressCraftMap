@@ -1,11 +1,9 @@
 "use strict";
-importScripts("/Constants.js");
-importScripts("/Helper.js");
-importScripts("/GLHelper.js");
-importScripts("/SegmentShaders.js");
-importScripts("/gl-matrix-min.js");
-importScripts("/VertexDataGen.js");
-importScripts("/SegmentRenderData.js");
+importScripts("/package/MapRendererWorker.jspack");
+
+const segmentChannel = new ChannelSocket("segment");
+segmentChannel.subscribeToEvent("message", handleSegmentChannelMessage);
+segmentChannel.connect();
 
 const mat4 = glMatrix.mat4;
 const vec4 = glMatrix.vec4;
@@ -14,12 +12,11 @@ const vec3 = glMatrix.vec3;
 const viewport = { w: 0, h: 0 }; 
 let canvas = null;
 let GL = null;
-let glFailed = false;
+let GLFailed = false;
 let totalTime = 0;
 
 ///////////////// rendering stuff /////////////////
 let tileTexture = null;
-let tileTextureReady = false;
 let staticSegmentQuads = null;
 const texCoordBuffer = generateTexCoordBuffer(segmentSize);
 const colorBuffer = generateColorBuffer(segmentSize);
@@ -67,7 +64,7 @@ const viewportCenter = vec3.create();
 const viewTranslation = vec3.create();
 const mousePos = vec3.create();
 
-let zoom = defaultMapZoom;
+let zoom = mapZoom.default;
 let isMapTextured = true;
 /////////////////////////////////////////////////
 
@@ -98,7 +95,12 @@ function draw(delta) {
 	const z = 1 / zoom;
 	const w = viewport.w;
 	const h = viewport.h;
-	mat4.ortho(pMatrix, z * -w / 2, z * w / 2, z * h / 2, z * -h / 2, 0.001, 10);
+	mat4.ortho(pMatrix,
+		z * -w / 2,
+		z * w / 2,
+		z * h / 2,
+		z * -h / 2,
+		0.001, 10);
 
 	drawSegments(delta);
 }
@@ -145,36 +147,56 @@ function drawSegments(delta) {
 	mat4.translate(vMatrix, vMatrix, viewTranslation);
 	mat4.multiply(pvMatrix, pMatrix, vMatrix);
 
-	const isTextured = zoom > 1 / 12;
+	let chunkUploadsLeft = currentSegmentUploadsPerFrame;
+	const isTextured = zoom > 1 / 12 && tileTexture.isLoaded;
 	if (isMapTextured !== isTextured) {
 		isMapTextured = isTextured;
-		for (const segment of segmentMap.values())
-			segment.markDirty();
+		forEachSegment((segment) => {
+			if (immediateUploadsOnDetailChange) {
+				if (!segment.isDirty)
+					buildAndUploadSegment(segment, isTextured);
+			}
+			else
+				segment.markDirty(true);
+		});
+
+		// skip building more chunks this frame
+		if (immediateUploadsOnDetailChange)
+			chunkUploadsLeft = 0;
 	}
 
 	const shader = isTextured ? bindTexturedSegmentShader() : bindColoredSegmentShader();
 	const locationName = isTextured ? "texCoord" : "color";
 	GL.enableVertexAttribArray(shader.locations[locationName]);
 
-	let chunkUploadsLeft = immediateUploads ? maxChunkUploadsPerFrame : chunkUploadsPerFrame;
-	for (const segment of getVisibleSegments()) {
+	forEachVisibleSegment((segment) => {
 		if (segment.isDirty && chunkUploadsLeft > 0) {
-			if (isTextured)
-				segment.buildAndUploadTextured(GL, texCoordBuffer);
-			else
-				segment.buildAndUploadColored(GL, colorBuffer);
+			buildAndUploadSegment(segment, isTextured);
 			chunkUploadsLeft--;
 		}
 
 		if (!segment.isDirty) {
-			segment.alpha += delta;
+			segment.alpha += delta / fadeDuration;
 			drawSegment(segment, shader, locationName);
 		}
-	}
+	});
 }
 
-function getVisibleSegments() {
-	return segmentMap.values();
+function buildAndUploadSegment(segment, isTextured) {
+	if (isTextured)
+		segment.buildAndUploadTextured(GL, texCoordBuffer);
+	else
+		segment.buildAndUploadColored(GL, colorBuffer);
+}
+
+function forEachVisibleSegment(callback) {
+	forEachSegment(callback);
+}
+
+function forEachSegment(callback) {
+	segmentMap.forEach((segment) => {
+		callback(segment);
+	});
 }
 
 /**
@@ -187,7 +209,7 @@ function drawSegment(segment, shader, locationName) {
 	mat4.multiply(mvpMatrix, pvMatrix, segment.matrix);
 	GL.uniformMatrix4fv(shader.uniforms.modelViewProjection, false, mvpMatrix);
 
-	const clampedAlpha = Math.clamp(segment.alpha * 5, 0, 1);
+	const clampedAlpha = Math.clamp(segment.alpha, 0, 1);
 	GL.uniform4f(shader.uniforms.tint, 1, 1, 1, clampedAlpha);
 
 	GL.bindBuffer(GL.ARRAY_BUFFER, segment._glDataBuffer);
@@ -200,6 +222,10 @@ self.onmessage = (e) => {
 		case "init":
 			canvas = e.data.canvas;
 			init();
+			break;
+
+		case "draw":
+			draw(e.data.delta);
 			break;
 
 		case "zoom":
@@ -233,6 +259,9 @@ self.onmessage = (e) => {
 		case "texture":
 			const tex = getTexture2D(e.data.id);
 			uploadTextureData(GL, tex, e.data.bitmap);
+			tex.isLoaded = true;
+			if (tex.onLoad)
+				tex.onLoad();
 
 			const bW = e.data.bitmap.width;
 			const bH = e.data.bitmap.height;
@@ -266,55 +295,49 @@ self.onmessage = (e) => {
 			e.data.bitmap.close();
 			break;
 
-		case "draw":
-			draw(e.data.delta);
-			break;
-
-		case "segment": {
-			const x = e.data.position.x;
-			const y = e.data.position.y;
-			const key = coordsToSegmentKey(x, y);
-			let segment = segmentMap.get(key);
-			if (!segment) {
-				segment = new SegmentRenderData(x, y);
-				segmentMap.set(key, segment);
-			}
-
-			const dataTiles = e.data.tiles;
-			for (let i = 0; i < dataTiles.length; i++) {
-				segment.tiles[i] = dataTiles[i];
-			}
-			segment.markDirty();
-			break;
-		}
-
-		case "blockorders": {
-			const dirtySegments = [];
-			for (let i = 0; i < e.data.orders.length; i++) {
-				const order = e.data.orders[i];
-
-				const key = coordsToSegmentKey(order.s[0], order.s[1]);
-				const segment = segmentMap.get(key);
-				if (segment) {
-					const x = order.p[0];
-					const y = order.p[1];
-					const index = y * segmentSize + x;
-					segment.tiles[index] = order.t;
-					dirtySegments.push(segment);
-				}
-			}
-
-			for (const segment of dirtySegments)
-				segment.markDirty();
-			break;
-		}
-
 		default:
 			if (!e.data.type)
 				throw new Error(`Missing property 'type' on event data.`);
 			throw new Error(`Unknown message type '${e.data.type}'.`);
 	}
 };
+
+function handleSegmentChannelMessage(msg) {
+	const response = JSON.parse(msg.data);
+	switch (response.type) {
+		case "segment": {
+			const pos = response.position;
+			const key = coordsToSegmentKey(pos.x, pos.y);
+			let segment = segmentMap.get(key);
+			if (!segment) {
+				segment = new SegmentRenderData(pos.x, pos.y);
+				segmentMap.set(key, segment);
+			}
+			segment.tileBuffer.set(response.tiles);
+			segment.markDirty(true);
+			break;
+		}
+
+		case "blockorders": {
+			const dirtySegments = new Map();
+			for (let i = 0; i < response.orders.length; i++) {
+				const order = response.orders[i];
+				const segmentKey = coordsToSegmentKey(order.s[0], order.s[1]);
+				const segment = segmentMap.get(segmentKey);
+				if (segment) {
+					const tileX = order.p[0];
+					const tileY = order.p[1];
+					const index = tileY * segmentSize + tileX;
+					segment.tileBuffer[index] = order.t;
+					dirtySegments.set(segmentKey, segment);
+				}
+			}
+
+			dirtySegments.forEach((segment) => segment.markDirty(false));
+			break;
+		}
+	}
+}
 
 function requestTexture(id, url) {
 	postMessage({ type: "texture", id, url });
@@ -323,23 +346,30 @@ function requestTexture(id, url) {
 function init() {
 	GL = canvas.getContext("webgl");
 	if (GL) {
-		console.log("Initialized WebGL context in worker");
+		console.log("Initialized WebGL context in worker.");
 	}
 	else {
-		glFailed = true;
-		console.warn("WebGL is not supported");
+		GLFailed = true;
+		console.error("Failed to initialize WebGL context in worker.");
 	}
 
 	GL.enable(GL.BLEND);
 	GL.blendFunc(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA);
 
 	tileTexture = createTexture2D(GL);
+	tileTexture.onLoad = () => {
+		segmentMap.forEach((segment, k) => {
+			segment.markDirty(false);
+			console.log("and u dirty", segment);
+		});
+	};
 	requestTexture(tileTexture.id, "TB_diffuse_64.png"); //"/blocks_64.png");
 
 	prepareSegmentShaders();
 	staticSegmentQuads = prepareSegmentQuads();
 
 	postMessage({ type: "ready" });
+	startRequestingSegments();
 }
 
 function prepareSegmentQuads() {
@@ -358,4 +388,47 @@ function prepareSegmentQuads() {
 		indexBuffer,
 		indexCount: quadData.indices.length
 	};
+}
+
+function startRequestingSegments() {
+	// dirty method for loading from center
+	// this will get removed later
+	const tmpSegmentKeys = new Array(drawDistance * drawDistance);
+	for (let x = 0; x < drawDistance; x++) {
+		for (let y = 0; y < drawDistance; y++) {
+			const xx = x - Math.floor(drawDistance / 2);
+			const yy = y - Math.floor(drawDistance / 2);
+
+			tmpSegmentKeys[x + y * drawDistance] = { x: xx, y: yy };
+		}
+	}
+
+	function enqueueByDistance(origin, keys) {
+		function getSqDist(p1, p2) {
+			return Math.abs((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+		}
+
+		keys.sort(function (a, b) {
+			a.sqDist = getSqDist(origin, a);
+			b.sqDist = getSqDist(origin, b);
+			return a.sqDist - b.sqDist;
+		});
+
+		let time = 0;
+		keys.forEach((item) => {
+			setTimeout(() => {
+				const intervalID = setInterval(() => {
+					if (!segmentChannel.isConnected) {
+						// repeat until we're connected
+						return;
+					}
+					clearInterval(intervalID);
+					segmentChannel.sendMessage("get", { position: { x: item.x, y: item.y } });
+				}, 25 + Math.floor(Math.random() * 25));
+			}, time);
+			time += requestDelayMillis;
+		});
+	}
+
+	enqueueByDistance(createVector2(0, 0), tmpSegmentKeys);
 }

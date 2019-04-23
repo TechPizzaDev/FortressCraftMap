@@ -67,7 +67,7 @@ class ChannelSocket extends EventEmitter {
 
 	/**
 	 * Converts the object to JSON and sends it.
-	 * @param {*} obj The object to turn into JSON.
+	 * @param {*} obj The object to send as JSON.
 	 */
 	sendJson(obj) {
 		const str = JSON.stringify(obj);
@@ -75,12 +75,12 @@ class ChannelSocket extends EventEmitter {
 	}
 
 	/**
-	 * Sends a JSON request object.
-	 * @param {string} code The request code.
-	 * @param {*} data The request data object.
+	 * Sends a JSON message object with a specific code.
+	 * @param {string} code The message code.
+	 * @param {*} data The message data object.
 	 */
-	sendRequest(code, data) {
-		this.sendJson({ code, request: data });
+	sendMessage(code, data) {
+		this.sendJson({ code, message: data });
 	}
 
 	/**

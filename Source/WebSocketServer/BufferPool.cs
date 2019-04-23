@@ -4,20 +4,15 @@ namespace WebSocketServer
 {
     public class BufferPool
     {
-        private static List<byte[]> _pool = new List<byte[]>();
-        public const int DefaultBufferSize = 1024 * 8;
+        private static Stack<byte[]> _pool = new Stack<byte[]>();
+        public const int DefaultBufferSize = 1024 * 16;
         
         public static byte[] Rent()
         {
             lock (_pool)
             {
                 if (_pool.Count > 0)
-                {
-                    int index = _pool.Count - 1;
-                    byte[] buffer = _pool[index];
-                    _pool.RemoveAt(index);
-                    return buffer;
-                }
+                    return _pool.Pop();
                 return new byte[DefaultBufferSize];
             }
         }
@@ -27,7 +22,7 @@ namespace WebSocketServer
             lock (_pool)
             {
                 if(_pool.Count < 16)
-                    _pool.Add(buffer);
+                    _pool.Push(buffer);
             }
         }
     }

@@ -6,10 +6,18 @@ function createTexture2D(gl) {
 	const id = textures.length;
 	const texture = gl.createTexture();
 
-	const texInfo = { id , w: 1, h: 1, texture };
+	const texInfo = {
+		id,
+		width: 1,
+		height: 1,
+		isLoaded: false,
+		texture,
+		onLoad: null
+	};
+
 	textures.push(texInfo);
 
-	const pixel = new Uint8Array([255, 0, 255, 255]);
+	const pixel = new Uint8Array([0, 0, 0, 255]);
 	uploadTextureData(gl, texInfo, pixel);
 
 	return texInfo;
@@ -30,14 +38,14 @@ function uploadTextureData(gl, textureInfo, data) {
 	if (data instanceof Uint8Array) {
 		const border = 0;
 		gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-			textureInfo.w, textureInfo.h, border, format, type, data);
+			textureInfo.width, textureInfo.height, border, format, type, data);
 	} else if (data instanceof ImageBitmap) {
-		textureInfo.w = data.width;
-		textureInfo.h = data.height;
+		textureInfo.width = data.width;
+		textureInfo.height = data.height;
 		gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, format, type, data);
 	}
 
-	if (isPowerOf2(textureInfo.w) && isPowerOf2(textureInfo.h)) {
+	if (isPowerOf2(textureInfo.width) && isPowerOf2(textureInfo.height)) {
 		// it's a power of 2; generate mipmap
 		gl.generateMipmap(gl.TEXTURE_2D);
 	} else {

@@ -32,5 +32,10 @@ namespace WebSocketServer
                 return hash;
             }
         }
+
+        public FileHash GetHash(string path)
+        {
+            return GetHash(new FileInfo(path));
+        }
     }
 }

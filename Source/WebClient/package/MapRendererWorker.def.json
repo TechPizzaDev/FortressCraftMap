@@ -1,0 +1,16 @@
+{
+    "Name": "MapRendererWorker.jspack",
+    "MIME": "application/javascript",
+    "Files": [
+        "Constants.js",
+        "Settings.js",
+        "Helper.js",
+        "GLHelper.js",
+        "gl-matrix-min.js",
+        "SegmentShaders.js",
+        "VertexDataGen.js",
+        "SegmentRenderData.js",
+        "EventEmitter.js",
+        "ChannelSocket.js"
+    ]
+}

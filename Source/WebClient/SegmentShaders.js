@@ -1,4 +1,5 @@
 "use strict";
+
 const texturedSegmentShaderSource = [
 	{
 		type: "VERTEX",

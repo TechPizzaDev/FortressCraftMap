@@ -4,9 +4,9 @@ class SegmentRenderData {
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
-		this.tiles = new Uint16Array(segmentSize * segmentSize);
 		this.isDirty = false;
-		this.alpha = 0;
+		this.alpha = 1;
+		this.tileBuffer = new Uint16Array(segmentSize * segmentSize);
 		this._glDataBuffer = null;
 
 		const translation = vec3.create();
@@ -17,17 +17,19 @@ class SegmentRenderData {
 		mat4.fromTranslation(this.matrix, translation);
 	}
 
-	markDirty() {
+	markDirty(fade) {
+		if(fade === true)  
+			this.alpha = 0;
 		this.isDirty = true;
 	}
 
 	buildAndUploadTextured(gl, buffer) {
-		generateTexCoords(this.tiles, segmentSize, buffer);
+		generateTexCoords(this.tileBuffer, segmentSize, buffer);
 		this.uploadData(gl, buffer);
 	}
 
 	buildAndUploadColored(gl, buffer) {
-		generateColors(this.tiles, segmentSize, buffer);
+		generateColors(this.tileBuffer, segmentSize, buffer);
 		this.uploadData(gl, buffer);
 	}
 

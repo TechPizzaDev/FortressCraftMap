@@ -1,17 +1,19 @@
-﻿"use strict";
+"use strict";
 
-// the only real constants
 const segmentSize = 16;
 const resolution = 64;
 
-// TODO: change 'drawDistance' behavior
-const drawDistance = 24;
-const immediateUploads = true;
-const chunkUploadsPerFrame = 32;
-const minChunkUploadsPerFrame = 8;
-const maxChunkUploadsPerFrame = 512;
-const loadDelayMs = 4;
+// settings constants
+const requestDelayMillis = 2;
 
-const minMapZoom = 0.125 / 4;
-const maxMapZoom = 1;
-const defaultMapZoom = 0.25;
+const chunkUploadsPerFrame = {
+	default: 32,
+	min: 8,
+	max: 512
+};
+
+const mapZoom = {
+	default: 0.25,
+	min: 0.125 / 4,
+	max: 1
+};

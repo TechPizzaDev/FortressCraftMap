@@ -77,20 +77,6 @@ function getTileDescription(tile) {
 	return desc;
 }
 
-//function generateRenderData(tiles, size, texCoordOutput, colorOutput) {
-//	checkTexCoordArray(texCoordOutput);
-//	checkColorArray(colorOutput);
-//
-//	for (let y = 0; y < size; y++) {
-//		for (let x = 0; x < size; x++) {
-//			const i = x + y * size;
-//			const tileDesc = getTileDescription(tiles[i]);
-//			writeCornersToOutput(texCoordOutput, i, tileDesc.corners);
-//			writeColorsToOutput(colorOutput, i, tileDesc.color);
-//		}
-//	}
-//}
-
 function generateTexCoords(tiles, size, output) {
 	checkTexCoordArray(size, output);
 	for (let y = 0; y < size; y++) {

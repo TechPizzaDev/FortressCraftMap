@@ -22,7 +22,7 @@ namespace WebSocketServer
             _loadedSegments = new List<SegmentPosition>();
         }
 
-        public void OnGetRequest(JToken request)
+        public void OnGetMessage(JToken request)
         {
             if (Missing(request, "position", out var position))
                 return;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using WebSocketServer.Packaging;
 using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
@@ -7,11 +8,21 @@ namespace WebSocketServer
 {
     class Program
     {
+        private const string _wwwRoot = "WebClient";
+        private const string _packageDir = "package";
+
         private static FileHashMap _hashMap;
+        private static PackageManager _packageManager;
 
         static void Main(string[] args)
         {
             _hashMap = new FileHashMap();
+
+            var packageDataRoot = GetPathInRoot(string.Empty); // use empty string to get the root dir
+            _packageManager = new PackageManager(packageDataRoot);
+
+            string packageDefDir = GetPathInRoot(_packageDir);
+            _packageManager.AddDefinitions(packageDefDir);
 
             var server = new HttpServer(1337);
             server.OnGet += Server_OnGet;
@@ -30,26 +41,51 @@ namespace WebSocketServer
 
         private static void Server_OnGet(object s, HttpRequestEventArgs e)
         {
-            string path = e.Request.RawUrl;
-            if (path == "/")
-                path = "/index.html";
-            path = "WebClient" + path;
+            string url = e.Request.RawUrl;
+            string packagePath = "/" + _packageDir + "/";
 
-            if (System.Diagnostics.Debugger.IsAttached)
+            if (url.StartsWith(packagePath, StringComparison.Ordinal))
             {
-                // only use this if you start from the project/solution folder
-                path = "../../../" + path;
+                string packageName = url.Remove(0, packagePath.Length);
+                if (_packageManager.TryGetDefinition(packageName, out var definition))
+                    ServePackage(definition, e);
+                else
+                    e.Response.StatusCode = (int)HttpStatusCode.NotFound;
             }
-
-            if (!File.Exists(path))
+            else
             {
-                e.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                if (string.IsNullOrEmpty(url) || url == "/")
+                    url = "/index.html";
+
+                string filePath = GetPathInRoot(url);
+                if (File.Exists(filePath))
+                    ServeFile(filePath, e);
+                else
+                    e.Response.StatusCode = (int)HttpStatusCode.NotFound;
+            }
+        }
+
+        private static void ServePackage(PackageDefinition definition, HttpRequestEventArgs e)
+        {
+            CachedPackage package = _packageManager.GetPackage(definition, _hashMap);
+
+            e.Response.Headers[HttpResponseHeader.ETag] = package.Tag;
+            if (e.Request.Headers["If-None-Match"] == package.Tag)
+            {
+                e.Response.StatusCode = (int)HttpStatusCode.NotModified;
                 return;
             }
 
+            e.Response.ContentType = package.Definition.MIME;
+            e.Response.ContentLength64 = package.Content.Length;
+            e.Response.OutputStream.Write(package.Content);
+        }
+
+        private static void ServeFile(string path, HttpRequestEventArgs e)
+        {
             var file = new FileInfo(path);
             var hash = _hashMap.GetHash(file);
-            
+
             e.Response.Headers[HttpResponseHeader.ETag] = hash.Tag;
             if (e.Request.Headers["If-None-Match"] == hash.Tag)
             {
@@ -65,6 +101,22 @@ namespace WebSocketServer
                 e.Response.ContentLength64 = file.Length;
                 fs.CopyTo(e.Response.OutputStream);
             }
+        }
+
+        private static string GetPathInRoot(string path)
+        {
+            if (!path.StartsWith("/") && !_wwwRoot.EndsWith("/"))
+                path = _wwwRoot + "/" + path;
+            else
+                path = _wwwRoot + path;
+#if DEBUG
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                // only use this if you start from the project/solution folder
+                path = "../../../" + path;
+            }
+#endif
+            return path;
         }
     }
 }

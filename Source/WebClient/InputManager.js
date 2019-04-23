@@ -3,8 +3,32 @@
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
 
-let mapZoom = defaultMapZoom;
-let smoothMapZoom = mapZoom;
+let currentMapZoom = mapZoom.default;
+let smoothMapZoom = currentMapZoom;
+
+function handleKeyDown(e) {
+	// TODO: multiply by delta time (in an update func)
+	// change this from a constant to a setting
+	// implement a "isKeyDown" method instead of events
+	const speed = e.shiftKey ? resolution * currentMapZoom : resolution;
+	switch (e.key) {
+		case "ArrowRight":
+			onMapMove(-speed, 0);
+			break;
+
+		case "ArrowLeft":
+			onMapMove(speed, 0);
+			break;
+
+		case "ArrowUp":
+			onMapMove(0, speed);
+			break;
+
+		case "ArrowDown":
+			onMapMove(0, -speed);
+			break;
+	}
+}
 
 function updateMousePos(e) {
 	currentMousePos.x = e.clientX;
@@ -29,7 +53,7 @@ function handleMouseDown(e) {
 			break;
 
 		case 2:
-			mapZoom = defaultMapZoom;
+			currentMapZoom = mapZoom.default;
 			break;
 	}
 	e.preventDefault();
@@ -41,9 +65,9 @@ function handleMouseEnd(e) {
 }
 
 function handleScrollWheel(e) {
-	const factor = 1 - 1 / (mapZoom + 1);
+	const factor = 1 - 1 / (currentMapZoom + 1);
 	const scroll = e.deltaY / 750 * factor;
-	mapZoom = clampZoom(mapZoom - scroll);
+	currentMapZoom = clampZoom(currentMapZoom - scroll);
 }
 
 updatables.push(delta => {
@@ -51,7 +75,7 @@ updatables.push(delta => {
 	if (lerpValue > 0.5)
 		lerpValue = 0.5;
 
-	const newSmoothMapZoom = clampZoom(Math.lerp(smoothMapZoom, mapZoom, lerpValue));
+	const newSmoothMapZoom = clampZoom(Math.lerp(smoothMapZoom, currentMapZoom, lerpValue));
 	if (newSmoothMapZoom !== smoothMapZoom) {
 		onMapZoomChanged(smoothMapZoom);
 		smoothMapZoom = newSmoothMapZoom;
@@ -59,7 +83,7 @@ updatables.push(delta => {
 });
 
 function clampZoom(zoom) {
-	return Math.clamp(zoom, minMapZoom, maxMapZoom);
+	return Math.clamp(zoom, mapZoom.min, mapZoom.max);
 }
 
 // TODO: add touch events (should be as simple as subscribing to respective touch event)
@@ -69,5 +93,7 @@ mainCanvas.addEventListener("mouseup", handleMouseEnd);
 mainCanvas.addEventListener("mouseout", handleMouseEnd);
 mainCanvas.addEventListener("wheel", handleScrollWheel, { passive: true });
 
+document.addEventListener("keydown", handleKeyDown);
+
 // trigger with default zoom
-onMapZoomChanged(mapZoom);
+onMapZoomChanged(currentMapZoom);

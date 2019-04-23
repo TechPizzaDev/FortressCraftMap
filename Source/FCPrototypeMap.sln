@@ -17,10 +17,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{
 		WebClient\index.html = WebClient\index.html
 		WebClient\InputManager.js = WebClient\InputManager.js
 		WebClient\Main.js = WebClient\Main.js
-		WebClient\SegmentManagerWorker.js = WebClient\SegmentManagerWorker.js
+		WebClient\MapRendererWorker.js = WebClient\MapRendererWorker.js
 		WebClient\SegmentRenderData.js = WebClient\SegmentRenderData.js
-		WebClient\SegmentRendererWorker.js = WebClient\SegmentRendererWorker.js
 		WebClient\SegmentShaders.js = WebClient\SegmentShaders.js
+		WebClient\Settings.js = WebClient\Settings.js
 		WebClient\VertexDataGen.js = WebClient\VertexDataGen.js
 	EndProjectSection
 EndProject
