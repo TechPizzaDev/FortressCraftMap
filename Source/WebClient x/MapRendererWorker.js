@@ -1,7 +1,7 @@
 "use strict";
-importScripts("/package/MapRendererWorker.jspack");
+importScripts("/Packages/MapRendererWorker.jspack");
 
-const segmentChannel = new ChannelSocket("segment");
+const segmentChannel = new ChannelSocket("ws/segment");
 segmentChannel.subscribeToEvent("message", handleSegmentChannelMessage);
 segmentChannel.connect();
 

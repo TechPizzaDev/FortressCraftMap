@@ -81,6 +81,9 @@ bld/
 [Oo]bj/
 [Ll]og/
 
+WebRoot/build.js
+WebRoot/build.js.map
+
 # Visual Studio 2015 cache/options directory
 .vs/
 

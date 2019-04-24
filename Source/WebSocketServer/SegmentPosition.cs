@@ -3,15 +3,22 @@ using Newtonsoft.Json;
 
 namespace WebSocketServer
 {
+    [JsonObject]
     public struct SegmentPosition
     {
-        [JsonProperty("x")] public int X;
-        [JsonProperty("y")] public int Y;
+        [JsonProperty("x")] public long X;
+        [JsonProperty("y")] public long Y;
 
-        public SegmentPosition(int x, int y)
+        [JsonConstructor]
+        public SegmentPosition(long x, long y)
         {
             X = x;
             Y = y;
+        }
+
+        public override string ToString()
+        {
+            return $"X:{X}, Y:{Y}";
         }
     }
 }

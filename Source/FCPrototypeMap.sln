@@ -5,26 +5,16 @@ VisualStudioVersion = 16.0.28705.295
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketServer", "WebSocketServer\WebSocketServer.csproj", "{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{9573C94E-77BF-4709-BB89-753EADCCE279}"
-	ProjectSection(SolutionItems) = preProject
-		WebClient\ChannelSocket.js = WebClient\ChannelSocket.js
-		WebClient\Constants.js = WebClient\Constants.js
-		WebClient\EventEmitter.js = WebClient\EventEmitter.js
-		WebClient\favicon.png = WebClient\favicon.png
-		WebClient\gl-matrix-min.js = WebClient\gl-matrix-min.js
-		WebClient\GLHelper.js = WebClient\GLHelper.js
-		WebClient\Helper.js = WebClient\Helper.js
-		WebClient\index.html = WebClient\index.html
-		WebClient\InputManager.js = WebClient\InputManager.js
-		WebClient\Main.js = WebClient\Main.js
-		WebClient\MapRendererWorker.js = WebClient\MapRendererWorker.js
-		WebClient\SegmentRenderData.js = WebClient\SegmentRenderData.js
-		WebClient\SegmentShaders.js = WebClient\SegmentShaders.js
-		WebClient\Settings.js = WebClient\Settings.js
-		WebClient\VertexDataGen.js = WebClient\VertexDataGen.js
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebMapMod", "WebMapMod\WebMapMod.csproj", "{82D81769-FF87-4727-9570-03C233EA59D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{352E9925-4FF0-45F6-9FFE-84F53A2E2FE7}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\ChannelSocket.ts = WebClient\ChannelSocket.ts
+		WebClient\EventEmitter.ts = WebClient\EventEmitter.ts
+		WebClient\package-lock.json = WebClient\package-lock.json
+		WebClient\package.json = WebClient\package.json
+		WebClient\tsconfig.json = WebClient\tsconfig.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

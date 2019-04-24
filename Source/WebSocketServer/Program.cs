@@ -8,8 +8,8 @@ namespace WebSocketServer
 {
     class Program
     {
-        private const string _wwwRoot = "WebClient";
-        private const string _packageDir = "package";
+        private const string _wwwRoot = "WebRoot";
+        private const string _packageDir = "Packages";
 
         private static FileHashMap _hashMap;
         private static PackageManager _packageManager;
@@ -27,7 +27,7 @@ namespace WebSocketServer
             var server = new HttpServer(1337);
             server.OnGet += Server_OnGet;
             server.OnPost += Server_OnPost;
-            server.AddWebSocketService<SegmentBehavior>("/segment");
+            server.AddWebSocketService<SegmentBehavior>("/ws/segment");
 
             server.Start();
 
@@ -55,7 +55,7 @@ namespace WebSocketServer
             else
             {
                 if (string.IsNullOrEmpty(url) || url == "/")
-                    url = "/index.html";
+                    url = "/Index.html";
 
                 string filePath = GetPathInRoot(url);
                 if (File.Exists(filePath))

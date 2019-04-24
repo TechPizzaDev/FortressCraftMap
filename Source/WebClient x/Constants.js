@@ -8,7 +8,7 @@ const requestDelayMillis = 2;
 
 const chunkUploadsPerFrame = {
 	default: 32,
-	min: 8,
+	min: 4,
 	max: 512
 };
 

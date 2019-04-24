@@ -75,6 +75,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)WebClient" "$(TargetDir)WebClient" /s /i /y</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(SolutionDir)../WebRoot" "$(TargetDir)WebRoot" /s /i /y</PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>
