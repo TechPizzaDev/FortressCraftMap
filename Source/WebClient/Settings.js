@@ -1,5 +1,4 @@
-﻿"use strict";
-
+﻿
 // TODO: change 'drawDistance' behavior
 let currentSegmentUploadsPerFrame = chunkUploadsPerFrame.default;
 let immediateUploadsOnDetailChange = true;

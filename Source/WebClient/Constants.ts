@@ -1,4 +1,3 @@
-"use strict";
 
 const segmentSize = 16;
 const resolution = 64;

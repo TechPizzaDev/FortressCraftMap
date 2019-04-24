@@ -1,4 +1,3 @@
-"use strict";
 
 function generateQuads(size) {
 	const quads = size * size;

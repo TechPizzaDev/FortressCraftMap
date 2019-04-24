@@ -1,4 +1,3 @@
-"use strict";
 importScripts("/Packages/MapRendererWorker.jspack");
 
 const segmentChannel = new ChannelSocket("ws/segment");
@@ -151,14 +150,14 @@ function drawSegments(delta) {
 	const isTextured = zoom > 1 / 12 && tileTexture.isLoaded;
 	if (isMapTextured !== isTextured) {
 		isMapTextured = isTextured;
-		forEachSegment((segment) => {
+		for(const segment of segmentMap.values()) {
 			if (immediateUploadsOnDetailChange) {
 				if (!segment.isDirty)
 					buildAndUploadSegment(segment, isTextured);
 			}
 			else
 				segment.markDirty(true);
-		});
+		}
 
 		// skip building more chunks this frame
 		if (immediateUploadsOnDetailChange)
@@ -169,7 +168,7 @@ function drawSegments(delta) {
 	const locationName = isTextured ? "texCoord" : "color";
 	GL.enableVertexAttribArray(shader.locations[locationName]);
 
-	forEachVisibleSegment((segment) => {
+	for (const segment of visibleSegments()) {
 		if (segment.isDirty && chunkUploadsLeft > 0) {
 			buildAndUploadSegment(segment, isTextured);
 			chunkUploadsLeft--;
@@ -179,7 +178,7 @@ function drawSegments(delta) {
 			segment.alpha += delta / fadeDuration;
 			drawSegment(segment, shader, locationName);
 		}
-	});
+	}
 }
 
 function buildAndUploadSegment(segment, isTextured) {
@@ -189,14 +188,9 @@ function buildAndUploadSegment(segment, isTextured) {
 		segment.buildAndUploadColored(GL, colorBuffer);
 }
 
-function forEachVisibleSegment(callback) {
-	forEachSegment(callback);
-}
-
-function forEachSegment(callback) {
-	segmentMap.forEach((segment) => {
-		callback(segment);
-	});
+function visibleSegments() {
+	//for (const segment of segmentMap.values())
+	return segmentMap.values();
 }
 
 /**
@@ -319,7 +313,7 @@ function handleSegmentChannelMessage(msg) {
 		}
 
 		case "blockorders": {
-			const dirtySegments = new Map();
+			const dirtySegments = new Map<string, SegmentRenderData>();
 			for (let i = 0; i < response.orders.length; i++) {
 				const order = response.orders[i];
 				const segmentKey = coordsToSegmentKey(order.s[0], order.s[1]);
@@ -333,7 +327,8 @@ function handleSegmentChannelMessage(msg) {
 				}
 			}
 
-			dirtySegments.forEach((segment) => segment.markDirty(false));
+			for (const segment of dirtySegments.values())
+				segment.markDirty(false);
 			break;
 		}
 	}
@@ -358,10 +353,8 @@ function init() {
 
 	tileTexture = createTexture2D(GL);
 	tileTexture.onLoad = () => {
-		segmentMap.forEach((segment, k) => {
+		for (const segment of segmentMap.values())
 			segment.markDirty(false);
-			console.log("and u dirty", segment);
-		});
 	};
 	requestTexture(tileTexture.id, "TB_diffuse_64.png"); //"/blocks_64.png");
 

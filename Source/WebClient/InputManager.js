@@ -1,5 +1,4 @@
-﻿"use strict";
-
+﻿
 let isMouseDragging = false;
 let currentMousePos = createVector2(0, 0);
 

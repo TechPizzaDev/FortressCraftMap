@@ -1,68 +1,68 @@
 "use strict";
 
 class ChannelSocket extends EventEmitter {
-	_channel: string;
-	_url: string;
-	_socket: WebSocket;
+	private _channel: string;
+	private _url: string;
+	private _socket: WebSocket;
 
 	constructor(channel: string) {
 		super();
-		this._registerEvent("open");
-		this._registerEvent("close");
-		this._registerEvent("message");
-		this._registerEvent("error");
+		this.registerEvent("open");
+		this.registerEvent("close");
+		this.registerEvent("message");
+		this.registerEvent("error");
 
 		this._channel = channel;
 		this._url = ChannelSocket.getSocketUrl(this._channel);
 		this._socket = null;
 	}
 
-	get isConnected(): boolean {
+	public get isConnected(): boolean {
 		if (!this._socket)
 			return false;
 		return this._socket.readyState === this._socket.OPEN;
 	}
 
-	get channel(): string {
+	public get channel(): string {
 		return this._channel;
 	}
 
-	get url(): string {
+	public get url(): string {
 		return this._url;
 	}
 
-	connect() {
+	public connect() {
 		this._socket = new WebSocket(this.url);
 
 		this._socket.addEventListener("open", (ev: Event) => {
 			console.log(`[Channel '${this._channel}'] Connected`);
-			this._triggerEvent("open", ev);
+			this.triggerEvent("open", ev);
 		});
 
 		this._socket.addEventListener("close", (ev: CloseEvent) => {
 			console.log(`[Channel '${this._channel}'] Disconnected (code ${ev.code})`);
-			this._triggerEvent("close", ev);
+			this.triggerEvent("close", ev);
 		});
 		
 		this._socket.addEventListener("message", (ev: MessageEvent) => {
 			if (this.getEventSubscriberCount("message") <= 0) {
 				console.log(`[Channel '${this._channel}'] Message:`, ev.data);
 			}
-			this._triggerEvent("message", ev);
+			this.triggerEvent("message", ev);
 		});
 
 		this._socket.addEventListener("error", (ev: Event) => {
 			if (this.getEventSubscriberCount("error") <= 0) {
 				console.warn(`[Channel '${this._channel}'] Error:`, ev);
 			}
-			this._triggerEvent("error", ev);
+			this.triggerEvent("error", ev);
 		});
 	}
 
 	/**
 	 * @param data The object to send.
 	 */
-	send(data: string | ArrayBuffer | Blob | ArrayBufferView) {
+	public send(data: string | ArrayBuffer | Blob | ArrayBufferView) {
 		if (!this.isConnected) {
 			throw new Error(`ChannelSocket (for channel '${this.channel}') is disconnected`);
 		}
@@ -73,7 +73,7 @@ class ChannelSocket extends EventEmitter {
 	 * Converts the object to JSON and sends it.
 	 * @param obj The object to send as JSON.
 	 */
-	sendJson(obj: object) {
+	public sendJson(obj: object) {
 		const str = JSON.stringify(obj);
 		this.send(str);
 	}
@@ -83,7 +83,7 @@ class ChannelSocket extends EventEmitter {
 	 * @param code The message code.
 	 * @param data The message data object.
 	 */
-	sendMessage(code: string, data: object) {
+	public sendMessage(code: string, data: object) {
 		this.sendJson({ code, message: data });
 	}
 
@@ -92,7 +92,7 @@ class ChannelSocket extends EventEmitter {
 	 * @param channel The channel name.
 	 * @returns The complete URL.
 	 */
-	static getSocketUrl(channel: string): string {
+	public static getSocketUrl(channel: string): string {
 		return `ws://${self.location.host}/${channel}`;
 	}
 }

@@ -1,34 +1,8 @@
-"use strict";
 
-const textures = [];
 
-function createTexture2D(gl) {
-	const id = textures.length;
-	const texture = gl.createTexture();
+function uploadTextureData(gl: WebGLContext, texture: Texture2D, data: Uint8Array | ImageBitmap) {
 
-	const texInfo = {
-		id,
-		width: 1,
-		height: 1,
-		isLoaded: false,
-		texture,
-		onLoad: null
-	};
-
-	textures.push(texInfo);
-
-	const pixel = new Uint8Array([0, 0, 0, 255]);
-	uploadTextureData(gl, texInfo, pixel);
-
-	return texInfo;
-}
-
-function getTexture2D(id) {
-	return textures[id];
-}
-
-function uploadTextureData(gl, textureInfo, data) {
-	gl.bindTexture(gl.TEXTURE_2D, textureInfo.texture);
+	gl.bindTexture(gl.TEXTURE_2D, texture.texture);
 
 	const level = 0;
 	const internalFormat = gl.RGBA;
@@ -38,14 +12,15 @@ function uploadTextureData(gl, textureInfo, data) {
 	if (data instanceof Uint8Array) {
 		const border = 0;
 		gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-			textureInfo.width, textureInfo.height, border, format, type, data);
+			texture.width, texture.height, border, format, type, data);
 	} else if (data instanceof ImageBitmap) {
-		textureInfo.width = data.width;
-		textureInfo.height = data.height;
+		texture.setData();
+		texture.width = data.width;
+		texture.height = data.height;
 		gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, format, type, data);
 	}
 
-	if (isPowerOf2(textureInfo.width) && isPowerOf2(textureInfo.height)) {
+	if (isPowerOf2(texture.width) && isPowerOf2(texture.height)) {
 		// it's a power of 2; generate mipmap
 		gl.generateMipmap(gl.TEXTURE_2D);
 	} else {
@@ -57,21 +32,16 @@ function uploadTextureData(gl, textureInfo, data) {
 	}
 }
 
-function isPowerOf2(value) {
-	return (value & (value - 1)) === 0;
-}
-
-function getGlType(gl, type) {
-	const glType = gl[`${type}_SHADER`];
+// FIXME: this is so broken
+function getShaderType(gl: WebGLRenderingContext, type: string) {
+	const glType = gl.VERTEX_SHADER; //.y[`${type}_SHADER`];
 	if (glType)
 		return glType;
 	throw new Error(`Unknown shader type '${type}'`);
 }
 
-function compileShader(gl, data, type) {
-	const glType = getGlType(gl, type);
-	const shader = gl.createShader(glType);
-
+function compileShader(gl: WebGLRenderingContext, data: string, type: number) {
+	const shader = gl.createShader(type);
 	gl.shaderSource(shader, data);
 	gl.compileShader(shader);
 
@@ -81,10 +51,11 @@ function compileShader(gl, data, type) {
 	return shader;
 }
 
-function buildShaderProgram(gl, shaderInfo) {
+// TODO: create a shader info object (similar to Texture2D but a shader program)
+function buildShaderProgram(gl: WebGLRenderingContext, shaderInfo) {
 	const program = gl.createProgram();
 
-	shaderInfo.forEach(desc => {
+	shaderInfo.forEach(desc:  => {
 		const shader = compileShader(gl, desc.data, desc.type);
 		if (shader)
 			gl.attachShader(program, shader);

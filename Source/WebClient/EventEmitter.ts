@@ -1,7 +1,6 @@
-"use strict";
 
 class EventEmitter {
-	_events: Map<string, Function[]>;
+	private _events: Map<string, Function[]>;
 
 	constructor() {
 		this._events = new Map<string, Function[]>();
@@ -26,7 +25,7 @@ class EventEmitter {
 	 * @param name The name of the event.
 	 * @returns Returns true if the event is defined.
 	 */
-	isEventDefined(name: string): boolean {
+	public isEventDefined(name: string): boolean {
 		if (this._events.has(name))
 			return true;
 		return false;
@@ -46,7 +45,7 @@ class EventEmitter {
 	 * @param name The name of the event.
 	 * @param data The event data. 
 	 */
-	protected _triggerEvent(name: string, data: object) {
+	protected triggerEvent(name: string, data: object) {
 		this._assertEventIsDefined(name);
 
 		const delegateList = this._events.get(name);
@@ -61,7 +60,7 @@ class EventEmitter {
 	 * Registers an event that can be triggered and subscribed to.
 	 * @param name The name of the event.
 	 */
-	protected _registerEvent(name: string) {
+	protected registerEvent(name: string) {
 		if (!this.isEventDefined(name))
 			this._events.set(name, []);
 	}
@@ -70,7 +69,7 @@ class EventEmitter {
 	 * Removes an event.
 	 * @param name The name of the event.
 	 */
-	protected _removeEvent(name: string) {
+	protected removeEvent(name: string) {
 		if (this.isEventDefined(name))
 			this._events.delete(name);
 	}

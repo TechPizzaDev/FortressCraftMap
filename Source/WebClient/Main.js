@@ -1,5 +1,4 @@
-﻿"use strict";
-
+﻿
 const viewport = { w: 0, h: 0 };
 const updatables = [];
 let animationID;

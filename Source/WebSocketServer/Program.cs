@@ -20,9 +20,9 @@ namespace WebSocketServer
 
             var packageDataRoot = GetPathInRoot(string.Empty); // use empty string to get the root dir
             _packageManager = new PackageManager(packageDataRoot);
-
-            string packageDefDir = GetPathInRoot(_packageDir);
-            _packageManager.AddDefinitions(packageDefDir);
+            
+            //string packageDefDir = GetPathInRoot(_packageDir);
+            //_packageManager.AddDefinitions(packageDefDir);
 
             var server = new HttpServer(1337);
             server.OnGet += Server_OnGet;

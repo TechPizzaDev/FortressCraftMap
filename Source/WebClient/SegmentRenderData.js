@@ -1,4 +1,3 @@
-"use strict";
 
 class SegmentRenderData {
 	constructor(x, y) {
