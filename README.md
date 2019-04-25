@@ -1,5 +1,5 @@
 # FCPrototypeMap
-Prototype of a web map for FortressCraft
+Prototype of a web map mod for FortressCraft
 
 ### Main Roadmap
 - [x] Basic rendering
@@ -21,13 +21,13 @@ Prototype of a web map for FortressCraft
 
 #### Extras
 - [ ] Visualizing Falcor routes
-- [ ] Only Rendering Selected Blocks
+- [ ] Only rendering selected blocks
   - [ ] Select by Regex
     - [ ] Search for item in inventories
     - [ ] Search by block name
-- [ ] Sound Effects
-- [ ] Current Attacks/Wave Info
-- [ ] Location of Enemies
+- [ ] Sound effects
+- [ ] Current attacks/Wave info
+- [ ] Location of enemies
 - [ ] World statistics
 - [ ] Ore visualization
 - [ ] Heightmap shading
