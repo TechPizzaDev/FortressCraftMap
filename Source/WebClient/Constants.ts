@@ -1,3 +1,4 @@
+type GLContext = WebGLRenderingContext;
 
 const segmentSize = 16;
 const resolution = 64;

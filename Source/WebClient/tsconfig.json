@@ -12,9 +12,10 @@
 		"sourceMap": true
 	},
 	"files": [
-		"EventEmitter.ts"
+		"Constants.ts",
+		"Helpers/EventEmitter.ts"
 	],
 	"include": [
-		"*.ts"
+		"**/*.ts"
 	]
 }

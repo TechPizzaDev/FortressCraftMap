@@ -1,4 +1,5 @@
 
+/*
 
 // FIXME: this is so broken
 function getShaderType(gl: WebGLRenderingContext, type: string) {
@@ -38,3 +39,5 @@ function buildShaderProgram(gl: WebGLRenderingContext, shaderInfo) {
 	}
 	return program;
 }
+
+*/

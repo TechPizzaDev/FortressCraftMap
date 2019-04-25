@@ -1,4 +1,3 @@
-type WebGLContext = WebGLRenderingContext;
 
 class Texture2D {
 	private static _textures = new Map<number, Texture2D>();
@@ -8,12 +7,12 @@ class Texture2D {
 
 	private _id: number;
 	private _isLoaded: boolean;
-	private _gl: WebGLContext;
+	private _gl: GLContext;
 	private _texture: WebGLTexture;
 	private _width: number;
 	private _height: number;
 
-	constructor(gl: WebGLContext) {
+	constructor(gl: GLContext) {
 		this._gl = gl;
 		this._texture = this._gl.createTexture();
 		this._width = 0;
@@ -111,7 +110,7 @@ class Texture2D {
 		this._gl = null;
 	}
 
-	public static getActiveTextures(): IterableIterator<Texture2D> {
+	public static getLoadedTextures(): IterableIterator<Texture2D> {
 		return Texture2D._textures.values();
 	}
 
@@ -121,44 +120,38 @@ class Texture2D {
 		return Texture2D._idCounter++;
 	}
 
-	public static getSizeOfFormat(gl: WebGLContext, format: number, type: number): number {
+	public static getSizeOfFormat(gl: GLContext, format: number, type: number): number {
 		switch (format) {
 			case gl.ALPHA:
 			case gl.LUMINANCE:
 				if (type == gl.UNSIGNED_BYTE)
 					return 1;
+				break;
 
 			case gl.LUMINANCE_ALPHA:
 				if (type == gl.UNSIGNED_BYTE)
 					return 2;
+				break;
 
 			case gl.RGB:
 				switch (type) {
-					case gl.UNSIGNED_SHORT_5_6_5:
-						return 2;
-
-					case gl.UNSIGNED_BYTE:
-						return 3;
+					case gl.UNSIGNED_SHORT_5_6_5: return 2;
+					case gl.UNSIGNED_BYTE: return 3;
 				}
+				break;
 
 			case gl.RGBA:
 				switch (type) {
-					case gl.UNSIGNED_SHORT_4_4_4_4:
-						return 2;
-
-					case gl.UNSIGNED_SHORT_5_5_5_1:
-						return 2;
-
-					case gl.UNSIGNED_BYTE:
-						return 4;
+					case gl.UNSIGNED_SHORT_4_4_4_4: return 2;
+					case gl.UNSIGNED_SHORT_5_5_5_1: return 2;
+					case gl.UNSIGNED_BYTE: return 4;
 				}
-
-			default:
-				return -1;
+				break;
 		}
+		return -1;
 	}
 
-	public static isValidTextureFormat(gl: WebGLContext, format: number): boolean {
+	public static isValidTextureFormat(gl: GLContext, format: number): boolean {
 		switch (format) {
 			case gl.ALPHA:
 			case gl.LUMINANCE:
@@ -173,13 +166,14 @@ class Texture2D {
 	}
 }
 
+/** Settings object for Texture2D.setData() */
 class Texture2DFormat {
 	public type: number;
 	public format: number;
 	public filter: number;
 	public generateMipmaps: boolean;
 
-	public static createDefault(gl: WebGLContext): Texture2DFormat {
+	public static createDefault(gl: GLContext): Texture2DFormat {
 		const f = new Texture2DFormat();
 		f.type = gl.UNSIGNED_BYTE;
 		f.format = gl.RGBA;
