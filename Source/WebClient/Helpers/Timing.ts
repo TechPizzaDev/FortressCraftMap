@@ -1,5 +1,10 @@
 
 class Timing {
-    public delta: number;
-    public total: number;
+    public readonly delta: number;
+	public readonly total: number;
+
+	constructor(delta: number, total: number) {
+		this.delta = delta;
+		this.total = total;
+	}
 }

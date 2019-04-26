@@ -25,6 +25,21 @@
 <body>
 	<canvas id="mainCanvas"></canvas>
 	
-	<script src="/Packages/index.jspack"></script>
+	<script src="/build.js"></script>
+	<script>
+		const glCtx = mainCanvas.getContext("webgl");
+		if (glCtx) {
+			console.log("Initialized WebGL1 context.");
+
+			glCtx.enable(glCtx.BLEND);
+			glCtx.blendFunc(glCtx.SRC_ALPHA, glCtx.ONE_MINUS_SRC_ALPHA);
+
+			const frame = new MainFrame(glCtx);
+			frame.run();
+		}
+		else {
+			console.error("Failed to initialize WebGL context.");
+		}
+	</script>
 </body>
 </html>

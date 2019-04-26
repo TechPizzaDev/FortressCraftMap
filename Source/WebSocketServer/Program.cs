@@ -20,7 +20,7 @@ namespace WebSocketServer
 
             var packageDataRoot = GetPathInRoot(string.Empty); // use empty string to get the root dir
             _packageManager = new PackageManager(packageDataRoot);
-            
+
             //string packageDefDir = GetPathInRoot(_packageDir);
             //_packageManager.AddDefinitions(packageDefDir);
 
@@ -105,18 +105,23 @@ namespace WebSocketServer
 
         private static string GetPathInRoot(string path)
         {
+            string rootPath;
             if (!path.StartsWith("/") && !_wwwRoot.EndsWith("/"))
-                path = _wwwRoot + "/" + path;
+                rootPath = _wwwRoot + "/" + path;
             else
-                path = _wwwRoot + path;
+                rootPath = _wwwRoot + path;
+
 #if DEBUG
+            // only use this if you start from the project/solution folder
             if (System.Diagnostics.Debugger.IsAttached)
             {
-                // only use this if you start from the project/solution folder
-                path = "../../../" + path;
+                if (path.StartsWith("/Source/"))
+                    rootPath = "../../../../" + path;
+                else
+                    rootPath = "../../../../" + rootPath;
             }
 #endif
-            return path;
+            return rootPath;
         }
     }
 }
