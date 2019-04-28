@@ -9,15 +9,15 @@ class EventEmitter {
 	/**
 	 * Subscribes a function to a registered event.
 	 * @param name The name of the event.
-	 * @param delegate The function to invoke.
+	 * @param callback The function to invoke.
 	 */
-	public subscribeToEvent(name: string, delegate: Function) {
+	public subscribeToEvent(name: string, callback: Function) {
 		this._assertEventIsDefined(name);
 
-		if (!delegate)
-			throw new Error("The delegate is null.");
+		if (!callback)
+			throw new Error("The callback is null.");
 
-		this._events.get(name).push(delegate);
+		this._events.get(name).push(callback);
 	}
 
 	/**
@@ -32,9 +32,9 @@ class EventEmitter {
 	}
 
 	/**
-	 * Returns the amount of currenty subscribed delegates.
+	 * Returns the amount of currenty subscribed callbacks.
 	 * @param name The name of the event.
-	 * @returns The amount of currenty subscribed delegates.
+	 * @returns The amount of currenty subscribed callbacks.
 	 */
 	public getEventSubscriberCount(name: string): number {
 		return this.isEventDefined(name) ? this._events.get(name).length : -1;
@@ -48,10 +48,10 @@ class EventEmitter {
 	protected triggerEvent(name: string, data: object) {
 		this._assertEventIsDefined(name);
 
-		const delegateList = this._events.get(name);
-		if (delegateList) {
-			for (let i = 0; i < delegateList.length; i++) {
-				delegateList[i](data);
+		const callbackList = this._events.get(name);
+		if (callbackList) {
+			for (let i = 0; i < callbackList.length; i++) {
+				callbackList[i](data);
 			}
 		}
 	}

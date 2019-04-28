@@ -18,6 +18,7 @@ Prototype of a web map mod for FortressCraft
   - [ ] Scanned blocks
   - [ ] RP projects
   - [ ] Lab projects
+- [ ] Add 3D HoloBase view 
 
 #### Extras
 - [ ] Visualizing Falcor routes

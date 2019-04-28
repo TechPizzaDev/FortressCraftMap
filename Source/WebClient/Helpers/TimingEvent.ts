@@ -1,5 +1,5 @@
 
-class Timing {
+class TimingEvent {
     public readonly delta: number;
 	public readonly total: number;
 

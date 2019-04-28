@@ -7,13 +7,14 @@
 		"noImplicitAny": true,
 		"removeComments": true,
 		"preserveConstEnums": true,
-		"downlevelIteration":  true,
+		"downlevelIteration": true,
 		"outFile": "../../WebRoot/build.js",
 		"sourceMap": true
 	},
 	"files": [
 		"Constants.ts",
-		"Helpers/EventEmitter.ts"
+		"Helpers/EventEmitter.ts",
+		"Graphics/RendererBase.ts"
 	],
 	"include": [
 		"**/*.ts"

@@ -7,7 +7,7 @@ using WebSocketSharp;
 
 namespace WebSocketServer
 {
-    public class SegmentBehavior : ReflectiveWebSocketBehavior
+    public class MapSocketBehavior : AttributedWebSocketBehavior
     {
         private static SimplexNoise _noise = new SimplexNoise(42);
         private static Random _rng = new Random();
@@ -16,13 +16,14 @@ namespace WebSocketServer
         private ushort[] _tileArray;
         private List<SegmentPosition> _loadedSegments;
 
-        public SegmentBehavior()
+        public MapSocketBehavior()
         {
             _tileArray = new ushort[16 * 16];
             _loadedSegments = new List<SegmentPosition>();
         }
 
-        public void OnGetMessage(JToken request)
+        [MessageHandler]
+        public void GetSegment(JToken request)
         {
             if (Missing(request, "position", out var position))
                 return;
@@ -60,7 +61,7 @@ namespace WebSocketServer
                     return;
 
                 var orders = new BlockOrder[8];
-                for (int j = 0; j < 2; j++)
+                for (int j = 0; j < 1; j++)
                 {
                     SegmentPosition randomPos = _loadedSegments[_rng.Next(_loadedSegments.Count)];
 
@@ -100,7 +101,7 @@ namespace WebSocketServer
             });
         }
 
-        private object CreateBlockOrderObj(BlockOrder order)
+        private static object CreateBlockOrderObj(BlockOrder order)
         {
             return new
             {
@@ -113,14 +114,14 @@ namespace WebSocketServer
         protected override void OnOpen()
         {
             _endpoint = Context.UserEndPoint;
-            Console.WriteLine("SegmentBehavior connected at " + _endpoint);
+            Console.WriteLine("Map Behavior connected: " + _endpoint);
 
-            _timer = new Timer(TimerCallBack, null, 1000, 100);
+            _timer = new Timer(TimerCallBack, null, 1000, 2500);
         }
 
         protected override void OnClose(CloseEventArgs e)
         {
-            Console.WriteLine($"SegmentBehavior at {_endpoint} disconnected");
+            Console.WriteLine($"Map Behavior disconnected: " + _endpoint);
 
             _timer.Dispose();
         }

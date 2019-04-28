@@ -45,16 +45,14 @@ class ChannelSocket extends EventEmitter {
 		});
 		
 		this._socket.addEventListener("message", (ev: MessageEvent) => {
-			if (this.getEventSubscriberCount("message") <= 0) {
+			if (this.getEventSubscriberCount("message") <= 0)
 				console.log(`[Channel '${this._channel}'] Message:`, ev.data);
-			}
 			this.triggerEvent("message", ev);
 		});
 
 		this._socket.addEventListener("error", (ev: Event) => {
-			if (this.getEventSubscriberCount("error") <= 0) {
+			if (this.getEventSubscriberCount("error") <= 0)
 				console.warn(`[Channel '${this._channel}'] Error:`, ev);
-			}
 			this.triggerEvent("error", ev);
 		});
 	}
@@ -62,7 +60,7 @@ class ChannelSocket extends EventEmitter {
 	/**
 	 * @param data The object to send.
 	 */
-	public send(data: string | ArrayBuffer | Blob | ArrayBufferView) {
+	public send(data: string | ArrayBuffer | ArrayBufferView | Blob) {
 		if (!this.isConnected) {
 			throw new Error(`ChannelSocket (for channel '${this.channel}') is disconnected`);
 		}
@@ -73,7 +71,7 @@ class ChannelSocket extends EventEmitter {
 	 * Converts the object to JSON and sends it.
 	 * @param obj The object to send as JSON.
 	 */
-	public sendJson(obj: object) {
+	public sendJson(obj: any) {
 		const str = JSON.stringify(obj);
 		this.send(str);
 	}
@@ -81,10 +79,10 @@ class ChannelSocket extends EventEmitter {
 	/**
 	 * Sends a JSON message object with a specific code.
 	 * @param code The message code.
-	 * @param data The message data object.
+	 * @param obj The object to send as JSON.
 	 */
-	public sendMessage(code: string, data: object) {
-		this.sendJson({ code, message: data });
+	public sendMessage(code: string, obj: any) {
+		this.sendJson({ code, message: obj });
 	}
 
 	/**

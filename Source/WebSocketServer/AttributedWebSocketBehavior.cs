@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using WebSocketSharp;
@@ -9,62 +9,61 @@ using WebSocketSharp.Server;
 
 namespace WebSocketServer
 {
-    public abstract class ReflectiveWebSocketBehavior : WebSocketBehavior
+    public abstract class AttributedWebSocketBehavior : WebSocketBehavior
     {
-        public delegate void MessageHandlerDelegate(JToken message);
+        public delegate void HandlerDelegate(AttributedWebSocketBehavior behavior, JToken message);
 
-        private static Dictionary<Type, List<CachedHandlerInfo>> _handlerCache;
-        private static Regex _handlerRegex;
+        private static Dictionary<Type, Dictionary<string, HandlerDelegate>> _handlerCache;
 
-        private Dictionary<string, MessageHandlerDelegate> _handlers;
+        private Dictionary<string, HandlerDelegate> _handlers;
 
-        static ReflectiveWebSocketBehavior()
+        static AttributedWebSocketBehavior()
         {
-            _handlerCache = new Dictionary<Type, List<CachedHandlerInfo>>();
-            _handlerRegex = new Regex("(?<=On)(.*)(?=Message)");
+            _handlerCache = new Dictionary<Type, Dictionary<string, HandlerDelegate>>();
         }
 
-        public ReflectiveWebSocketBehavior()
+        public AttributedWebSocketBehavior()
         {
-            List<CachedHandlerInfo> handlerInfos;
             lock (_handlerCache)
             {
                 var type = GetType();
-                if(!_handlerCache.TryGetValue(type, out handlerInfos))
+                if (!_handlerCache.TryGetValue(type, out _handlers))
                 {
-                    handlerInfos = GetMessageHandlers(type);
-                    _handlerCache.Add(type, handlerInfos);
+                    _handlers = CreateMessageHandlers(type);
+                    _handlerCache.Add(type, _handlers);
                 }
-            }
-
-            _handlers = new Dictionary<string, MessageHandlerDelegate>(StringComparer.OrdinalIgnoreCase);
-            foreach (var handlerInfo in handlerInfos)
-            {
-                _handlers.Add(
-                    handlerInfo.Name, 
-                    handlerInfo.Method.CreateDelegate<MessageHandlerDelegate>(this));
             }
         }
 
-        private List<CachedHandlerInfo> GetMessageHandlers(Type type)
+        public static Dictionary<string, HandlerDelegate> CreateMessageHandlers(Type type)
         {
             // TODO: consider finding public properties and returning
-            // a serialized version of the value returned by getter
+            // a serialized version of the value returned by the getter
 
-            var list = new List<CachedHandlerInfo>();
+            var handlers = new Dictionary<string, HandlerDelegate>();
             var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
-            foreach(var method in methods)
+            foreach (var method in methods)
             {
                 if (method.IsSpecialName)
                     continue;
 
-                var match = _handlerRegex.Match(method.Name);
-                if (!match.Success)
+                var attribs = method.GetCustomAttributes(typeof(MessageHandlerAttribute), false);
+                if (attribs.Length != 1)
                     continue;
 
-                list.Add(new CachedHandlerInfo(match.Value, method));
+                var attrib = attribs[0] as MessageHandlerAttribute;
+                string name = attrib.Name ?? method.Name;
+
+                var targetBase = Expression.Parameter(typeof(AttributedWebSocketBehavior), "target");
+                var message = Expression.Parameter(typeof(JToken), "message");
+                var target = Expression.Convert(targetBase, type);
+                var call = Expression.Call(target, method, message);
+
+                // (target, message) => ((type)target).Invoke(message)
+                var handler = Expression.Lambda<HandlerDelegate>(call, targetBase, message).Compile();
+                handlers.Add(name, handler);
             }
-            return list;
+            return handlers;
         }
 
         protected bool Missing(JToken token, string name, out JToken value)
@@ -93,7 +92,7 @@ namespace WebSocketServer
             var codeToken = msg["code"];
             if (codeToken == null)
             {
-                Send("Missing message code.");
+                Send("Message code missing.");
                 return;
             }
 
@@ -106,7 +105,7 @@ namespace WebSocketServer
             string code = codeToken.ToObject<string>();
             if (_handlers.TryGetValue(code, out var handler))
             {
-                handler.Invoke(msg["message"]);
+                handler.Invoke(this, msg["message"]);
             }
             else
             {
@@ -122,18 +121,6 @@ namespace WebSocketServer
 
             string str = JsonConvert.SerializeObject(value, Formatting.None);
             Send(str);
-        }
-
-        private class CachedHandlerInfo
-        {
-            public string Name { get; }
-            public MethodInfo Method { get; }
-
-            public CachedHandlerInfo(string name, MethodInfo method)
-            {
-                Name = name;
-                Method = method;
-            }
         }
     }
 }

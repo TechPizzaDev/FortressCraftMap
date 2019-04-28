@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{
 		WebClient\MainFrame.ts = WebClient\MainFrame.ts
 		WebClient\package-lock.json = WebClient\package-lock.json
 		WebClient\package.json = WebClient\package.json
+		WebClient\Segment.ts = WebClient\Segment.ts
 		WebClient\tsconfig.json = WebClient\tsconfig.json
 		WebClient\VertexDataGen.js = WebClient\VertexDataGen.js
 	EndProjectSection
@@ -23,14 +24,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helpers", "Helpers", "{B58D
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Helpers\ChannelSocket.ts = WebClient\Helpers\ChannelSocket.ts
 		WebClient\Helpers\EventEmitter.ts = WebClient\Helpers\EventEmitter.ts
+		WebClient\Helpers\FrameDispatcher.ts = WebClient\Helpers\FrameDispatcher.ts
 		WebClient\Helpers\Helper.ts = WebClient\Helpers\Helper.ts
 		WebClient\Helpers\HttpHelper.ts = WebClient\Helpers\HttpHelper.ts
 		WebClient\Helpers\Mathx.ts = WebClient\Helpers\Mathx.ts
-		WebClient\Helpers\Timing.ts = WebClient\Helpers\Timing.ts
+		WebClient\Helpers\Size.ts = WebClient\Helpers\Size.ts
+		WebClient\Helpers\TimingEvent.ts = WebClient\Helpers\TimingEvent.ts
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Graphics", "Graphics", "{2BCF2388-BB58-4EA3-BFB3-F182C4902B77}"
 	ProjectSection(SolutionItems) = preProject
+		WebClient\Graphics\RendererBase.ts = WebClient\Graphics\RendererBase.ts
+		WebClient\Graphics\SegmentRenderer.ts = WebClient\Graphics\SegmentRenderer.ts
 		WebClient\Graphics\Shader.ts = WebClient\Graphics\Shader.ts
 		WebClient\Graphics\Texture2D.ts = WebClient\Graphics\Texture2D.ts
 	EndProjectSection

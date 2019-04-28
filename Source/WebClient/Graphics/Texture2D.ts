@@ -90,6 +90,8 @@ class Texture2D {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, format.filter);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, format.filter);
 		}
+
+		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
 
 	private checkImageDimension(source: number, dim?: number): number {
