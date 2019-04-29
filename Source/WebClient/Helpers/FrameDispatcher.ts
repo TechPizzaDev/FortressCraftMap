@@ -1,61 +1,40 @@
-type TimingCallback = (t: TimingEvent) => void;
+import TimingEvent from "./TimingEvent";
 
-class FrameDispatcher {
+export type TimingCallback = (t: TimingEvent) => void;
+
+export class FrameDispatcher {
 	private _update: TimingCallback;
-	private _interval: number;
-	private _intervalID: number;
-	private _lastUpdateTime: number;
-	private _totalUpdateTime: number;
-	private _firstUpdateFired: boolean;
-
 	private _draw: TimingCallback;
 	private _animationID: number;
-	private _lastDrawTime: number;
-	private _totalDrawTime: number;
+	private _lastTime: number;
+	private _totalTime: number;
 
-	constructor(updateRate: number, update: TimingCallback, draw: TimingCallback) {
-		this._interval = Math.round(1.0 / updateRate * 1000);
+	constructor(update: TimingCallback, draw: TimingCallback) {
 		this._update = update;
 		this._draw = draw;
-
-		this._totalUpdateTime = 0;
-		this._totalDrawTime = 0;
+		this._totalTime = 0;
 	}
 
 	public run() {
-		if (this._intervalID)
+		if (this._animationID)
 			throw new Error("Dispatcher is already running.");
-		this._intervalID = setInterval(this.updateFrame, this._interval, this);
+		this.requestFrame();
 	}
 
-	private animate() {
+	private requestFrame() {
 		if (this._animationID != 0)
 			this._animationID = requestAnimationFrame(this.animationFrame);
 	}
 
-	private updateFrame = () => {
-		const totalTime = performance.now();
-		if (this._lastUpdateTime) {
-			const delta = (totalTime - this._lastUpdateTime) / 1000;
-			this._update(new TimingEvent(delta, this._totalUpdateTime));
-			this._totalUpdateTime += delta;
-
-			// we start animating here as we want at least one update() before drawing
-			if (!this._firstUpdateFired) {
-				this.animate();
-				this._firstUpdateFired = true;
-			}
-		}
-		this._lastUpdateTime = totalTime;
-	}
-
 	private animationFrame = (totalTime: number) => {
-		if (this._lastDrawTime) {
-			const delta = (totalTime - this._lastDrawTime) / 1000;
-			this._draw(new TimingEvent(delta, this._totalDrawTime));
-			this._totalDrawTime += delta;
+		if (this._lastTime) {
+			const delta = (totalTime - this._lastTime) / 1000;
+			const te = new TimingEvent(delta, this._totalTime);
+			this._update(te);
+			this._draw(te);
+			this._totalTime += delta;
 		}
-		this._lastDrawTime = totalTime;
-		this.animate();
+		this._lastTime = totalTime;
+		this.requestFrame();
 	}
 }

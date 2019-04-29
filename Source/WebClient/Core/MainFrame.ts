@@ -1,20 +1,27 @@
+import SegmentRenderer from "../Graphics/SegmentRenderer";
+import ChannelSocket from "../Helpers/ChannelSocket";
+import TimingEvent from "../Helpers/TimingEvent";
+import { FrameDispatcher } from "../Helpers/FrameDispatcher";
+import { Size } from "../Helpers/Size";
+import { vec3 } from "gl-matrix";
 
-class MainFrame {
+export default class MainFrame {
 	private _gl: GLContext;
 	private _frameDispatcher: FrameDispatcher;
-	private _mapSocket: ChannelSocket;
-
 	private _segmentRenderer: SegmentRenderer;
+	private _mapSocket: ChannelSocket;
 
 	constructor(gl: GLContext) {
 		if (!gl)
 			throw new TypeError("GL Context is undefined.");
 
+		const vec = vec3.fromValues(3, 2, 1);
+		console.log(vec);
+
 		this._gl = gl;
-		this._frameDispatcher = new FrameDispatcher(20, (t) => this.update(t), (t) => this.draw(t));
-
+		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
 		this._segmentRenderer = new SegmentRenderer(this);
-
+		
 		this._mapSocket = new ChannelSocket("map");
 		this._mapSocket.subscribeToEvent("open", this.onMapSocketOpen);
 		this._mapSocket.subscribeToEvent("message", this.onMapSocketMessage);
@@ -28,11 +35,13 @@ class MainFrame {
 	private onMapSocketOpen = (ev: Event) => {
 		console.log("Map socket open, sending hello");
 		this._mapSocket.sendMessage("hello", "on you u smexy boi");
-		this._mapSocket.sendMessage("GetSegment", { position: { x: 0, y: 2 } });
+		this._mapSocket.sendMessage("GetSegment", { p: [0, 2] });
 	}
 
 	private onMapSocketMessage = (ev: MessageEvent) => {
-		console.log(ev);
+		console.log(ev.data);
+
+
 	}
 
 	public run() {
@@ -42,11 +51,11 @@ class MainFrame {
 		this._frameDispatcher.run();
 	}
 
-	public update(time: TimingEvent) {
+	public update = (time: TimingEvent) => {
 
 	}
 
-	public draw(time: TimingEvent) {
+	public draw = (time: TimingEvent) => {
 		this._segmentRenderer.draw(time);
 	}
 
@@ -60,6 +69,5 @@ class MainFrame {
 }
 
 // this should run in a Worker
-class MeshGenerator {
-
-}
+//class MeshGenerator {
+//}

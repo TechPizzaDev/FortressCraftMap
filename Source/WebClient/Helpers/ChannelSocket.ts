@@ -1,6 +1,6 @@
-"use strict";
+import EventEmitter from "./EventEmitter";
 
-class ChannelSocket extends EventEmitter {
+export default class ChannelSocket extends EventEmitter {
 	private _channel: string;
 	private _url: string;
 	private _socket: WebSocket;
@@ -62,7 +62,7 @@ class ChannelSocket extends EventEmitter {
 	 */
 	public send(data: string | ArrayBuffer | ArrayBufferView | Blob) {
 		if (!this.isConnected) {
-			throw new Error(`ChannelSocket (for channel '${this.channel}') is disconnected`);
+			throw new Error(`Channel '${this.channel}' is disconnected`);
 		}
 		this._socket.send(data);
 	}

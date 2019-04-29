@@ -9,15 +9,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebMapMod", "WebMapMod\WebM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{352E9925-4FF0-45F6-9FFE-84F53A2E2FE7}"
 	ProjectSection(SolutionItems) = preProject
-		WebClient\Constants.ts = WebClient\Constants.ts
-		WebClient\GLHelper.ts = WebClient\GLHelper.ts
 		..\WebRoot\Index.html = ..\WebRoot\Index.html
-		WebClient\MainFrame.ts = WebClient\MainFrame.ts
 		WebClient\package-lock.json = WebClient\package-lock.json
 		WebClient\package.json = WebClient\package.json
-		WebClient\Segment.ts = WebClient\Segment.ts
 		WebClient\tsconfig.json = WebClient\tsconfig.json
-		WebClient\VertexDataGen.js = WebClient\VertexDataGen.js
+		WebClient\webpack.config.js = WebClient\webpack.config.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helpers", "Helpers", "{B58D9765-29D3-4453-A0FC-EC2BD242BAD2}"
@@ -38,6 +34,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Graphics", "Graphics", "{2B
 		WebClient\Graphics\SegmentRenderer.ts = WebClient\Graphics\SegmentRenderer.ts
 		WebClient\Graphics\Shader.ts = WebClient\Graphics\Shader.ts
 		WebClient\Graphics\Texture2D.ts = WebClient\Graphics\Texture2D.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{CC64AAE8-5BC0-4FD7-92C5-DAD2FD3517D0}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Core\Constants.ts = WebClient\Core\Constants.ts
+		WebClient\Core\GLHelper.ts = WebClient\Core\GLHelper.ts
+		WebClient\Core\Index.ts = WebClient\Core\Index.ts
+		WebClient\Core\MainFrame.ts = WebClient\Core\MainFrame.ts
+		WebClient\Core\MessageCode.ts = WebClient\Core\MessageCode.ts
+		WebClient\Core\Segment.ts = WebClient\Core\Segment.ts
 	EndProjectSection
 EndProject
 Global
@@ -61,6 +67,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{B58D9765-29D3-4453-A0FC-EC2BD242BAD2} = {352E9925-4FF0-45F6-9FFE-84F53A2E2FE7}
 		{2BCF2388-BB58-4EA3-BFB3-F182C4902B77} = {352E9925-4FF0-45F6-9FFE-84F53A2E2FE7}
+		{CC64AAE8-5BC0-4FD7-92C5-DAD2FD3517D0} = {352E9925-4FF0-45F6-9FFE-84F53A2E2FE7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CA70DA06-C641-4B7C-A353-F66EA7579F1C}

@@ -1,5 +1,5 @@
 
-class TimingEvent {
+export default class TimingEvent {
     public readonly delta: number;
 	public readonly total: number;
 

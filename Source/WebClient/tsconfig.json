@@ -1,18 +1,18 @@
 {
-	"compileOnSave": true,
 	"compilerOptions": {
-		"lib": [ "es2015", "dom" ],
-		"target": "es5",
-		"module": "System",
+		"lib": [ "es2016", "dom" ],
+		"target": "es6",
+		"module": "es6",
 		"noImplicitAny": true,
+		"noImplicitReturns": true,
 		"removeComments": true,
 		"preserveConstEnums": true,
 		"downlevelIteration": true,
-		"outFile": "../../WebRoot/build.js",
-		"sourceMap": true
+		"sourceMap": true,
+		"outDir": "../../WebRoot/js"
 	},
 	"files": [
-		"Constants.ts",
+		"Core/Constants.ts",
 		"Helpers/EventEmitter.ts",
 		"Graphics/RendererBase.ts"
 	],

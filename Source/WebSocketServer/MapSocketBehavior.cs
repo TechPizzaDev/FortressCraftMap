@@ -25,11 +25,12 @@ namespace WebSocketServer
         [MessageHandler]
         public void GetSegment(JToken request)
         {
-            if (Missing(request, "position", out var position))
+            if (Missing(request, "p", out var position))
                 return;
 
-            int segX = position["x"].ToObject<int>() * 16;
-            int segY = position["y"].ToObject<int>() * 16;
+            var array = position as JArray;
+            int segX = array[0].ToObject<int>() * 16;
+            int segY = array[1].ToObject<int>() * 16;
             for (int y = 0; y < 16; y++)
             {
                 for (int x = 0; x < 16; x++)
@@ -40,15 +41,15 @@ namespace WebSocketServer
                 }
             }
 
-            SendAsJson(new
-            {
-                type = "segment",
-                position,
-                tiles = _tileArray
-            });
-
             lock (_loadedSegments)
                 _loadedSegments.Add(new SegmentPosition(segX / 16, segY / 16));
+
+            SendAsJson(new
+            {
+                code = MessageCode.BlockOrders,
+                pos = new[] { segX, segY },
+                tiles = _tileArray
+            });
         }
 
         private Timer _timer;
@@ -60,7 +61,7 @@ namespace WebSocketServer
                 if (_loadedSegments.Count <= 0)
                     return;
 
-                var orders = new BlockOrder[8];
+                var orders = new BlockOrder[_rng.Next(6, 10)];
                 for (int j = 0; j < 1; j++)
                 {
                     SegmentPosition randomPos = _loadedSegments[_rng.Next(_loadedSegments.Count)];
@@ -74,12 +75,12 @@ namespace WebSocketServer
                         orders[i] = new BlockOrder(randomPos, x, y, (ushort)tile);
                     }
 
-                    SendBlockOrder(orders);
+                    SendBlockOrders(orders);
                 }
             }
         }
 
-        private void SendBlockOrder(BlockOrder[] orders)
+        private void SendBlockOrders(BlockOrder[] orders)
         {
             var items = new object[orders.Length];
             for (int i = 0; i < items.Length; i++)
@@ -87,7 +88,7 @@ namespace WebSocketServer
             
             SendAsJson(new
             {
-                type = "blockorders",
+                code = MessageCode.BlockOrders,
                 orders = items
             });
         }
@@ -96,7 +97,7 @@ namespace WebSocketServer
         {
             SendAsJson(new
             {
-                type = "blockorders",
+                code = MessageCode.BlockOrders,
                 orders = new[] { CreateBlockOrderObj(order) }
             });
         }
@@ -116,7 +117,7 @@ namespace WebSocketServer
             _endpoint = Context.UserEndPoint;
             Console.WriteLine("Map Behavior connected: " + _endpoint);
 
-            _timer = new Timer(TimerCallBack, null, 1000, 2500);
+            _timer = new Timer(TimerCallBack, null, 2000, 4000);
         }
 
         protected override void OnClose(CloseEventArgs e)

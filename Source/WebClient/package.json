@@ -17,7 +17,14 @@
   },
   "homepage": "https://github.com/TechnologicalPizza/FCPrototypeMap#readme",
   "dependencies": {
+    "@types/gl-matrix": "^2.4.5",
+    "big-integer": "^1.6.43",
     "gl-matrix": "^3.0.0",
-    "typescript": "^3.4.5"
+    "ts-loader": "^5.4.4",
+    "typescript": "^3.4.5",
+    "webpack": "^4.30.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.1"
   }
 }

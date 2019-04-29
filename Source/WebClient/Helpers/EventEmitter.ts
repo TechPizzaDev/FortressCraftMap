@@ -76,6 +76,7 @@ class EventEmitter {
 
 	private _assertEventIsDefined(name: string) {
 		if (!this.isEventDefined(name))
-			return new Error(`The event '${name}' is not defined.`);
+			throw new Error(`The event '${name}' is not defined.`);
 	}
 }
+export default EventEmitter;
