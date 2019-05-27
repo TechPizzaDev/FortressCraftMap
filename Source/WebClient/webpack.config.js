@@ -29,8 +29,7 @@ module.exports = {
 	},
 	stats: {
 		errors: true,
-		warnings: true,
-		moduleTrace: true,
-		errorDetails: true
+		errorDetails: true,
+		warnings: true
 	}
 };

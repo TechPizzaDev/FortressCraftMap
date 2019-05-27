@@ -51,10 +51,12 @@
   <ItemGroup>
     <Compile Include="AttributedWebSocketBehavior.cs" />
     <Compile Include="BlockOrder.cs" />
+    <Compile Include="BlockPosition.cs" />
     <Compile Include="Helpers\JsonHelper.cs" />
     <Compile Include="FileHashMap.cs" />
     <Compile Include="FileHash.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
+    <Compile Include="Helpers\StructToArrayConverter.cs" />
     <Compile Include="MessageHandlerAttribute.cs" />
     <Compile Include="MessageCode.cs" />
     <Compile Include="SegmentPosition.cs" />

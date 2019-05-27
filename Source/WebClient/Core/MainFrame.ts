@@ -15,9 +15,6 @@ export default class MainFrame {
 		if (!gl)
 			throw new TypeError("GL Context is undefined.");
 
-		const vec = vec3.fromValues(3, 2, 1);
-		console.log(vec);
-
 		this._gl = gl;
 		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
 		this._segmentRenderer = new SegmentRenderer(this);
@@ -59,7 +56,7 @@ export default class MainFrame {
 		this._segmentRenderer.draw(time);
 	}
 
-	private onResize() {
+	private onResize = () => {
 		const size = new Size(
 			Math.floor(window.innerWidth * window.devicePixelRatio),
 			Math.floor(window.innerHeight * window.devicePixelRatio));

@@ -3,13 +3,13 @@
 namespace WebSocketServer
 {
     [JsonObject]
-    public struct SegmentPosition
+    public struct BlockPosition
     {
         public long X;
         public long Y;
 
         [JsonConstructor]
-        public SegmentPosition(long x, long y)
+        public BlockPosition(long x, long y)
         {
             X = x;
             Y = y;

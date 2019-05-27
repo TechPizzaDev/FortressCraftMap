@@ -5,7 +5,16 @@ namespace WebSocketServer
 {
     public static class JsonHelper
     {
-        public static JsonSerializer Serializer { get; } = new JsonSerializer();
+        public static JsonSerializer Serializer { get; } = GetSerializer();
+
+        private static JsonSerializer GetSerializer()
+        {
+            var s = new JsonSerializer 
+            {
+                Converters = { new  }
+            };
+            return s;
+        }
 
         public static T Deserialize<T>(Stream stream)
         {
