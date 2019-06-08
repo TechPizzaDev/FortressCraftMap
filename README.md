@@ -1,5 +1,6 @@
-# FCPrototypeMap
-Prototype of a web map mod for FortressCraft
+# FortressCraftMap
+Prototype of a web map mod for FortressCraft, written in TypeScript.  
+Using WebGL, HTML5 and WebSocket messaging abstractions for modular client development.  
 
 ### Main Roadmap
 - [x] Basic rendering
