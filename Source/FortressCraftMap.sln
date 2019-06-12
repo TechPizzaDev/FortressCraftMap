@@ -1,0 +1,99 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28705.295
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketServer", "WebSocketServer\WebSocketServer.csproj", "{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebMapMod", "WebMapMod\WebMapMod.csproj", "{82D81769-FF87-4727-9570-03C233EA59D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "WebClient", "WebClient", "{902756D8-7345-4B51-BF9C-E29A2FDE6A14}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\package-lock.json = WebClient\package-lock.json
+		WebClient\package.json = WebClient\package.json
+		WebClient\tsconfig.json = WebClient\tsconfig.json
+		WebClient\webpack.config.js = WebClient\webpack.config.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Public", "Public", "{FA54B345-910C-4CBF-AE63-4A6A503BD00E}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Public\blocks_128.png = WebClient\Public\blocks_128.png
+		WebClient\Public\blocks_64.png = WebClient\Public\blocks_64.png
+		WebClient\Public\favicon.png = WebClient\Public\favicon.png
+		WebClient\Public\Index.html = WebClient\Public\Index.html
+		WebClient\Public\TB_diffuse_64.png = WebClient\Public\TB_diffuse_64.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{DC7BD409-48CE-41C6-AA8A-F76E12564DF4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D96008B1-1CA5-47B9-A354-BA4E127F4583}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Source\Core\ClientMessageCode.ts = WebClient\Source\Core\ClientMessageCode.ts
+		WebClient\Source\Core\Constants.ts = WebClient\Source\Core\Constants.ts
+		WebClient\Source\Core\GLHelper.ts = WebClient\Source\Core\GLHelper.ts
+		WebClient\Source\Core\Index.ts = WebClient\Source\Core\Index.ts
+		WebClient\Source\Core\MainFrame.ts = WebClient\Source\Core\MainFrame.ts
+		WebClient\Source\Core\Segment.ts = WebClient\Source\Core\Segment.ts
+		WebClient\Source\Core\ServerMessageCode.ts = WebClient\Source\Core\ServerMessageCode.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helpers", "Helpers", "{1D3063F4-E788-4911-8E21-C4A6A1821175}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Source\Helpers\ChannelSocket.ts = WebClient\Source\Helpers\ChannelSocket.ts
+		WebClient\Source\Helpers\EventEmitter.ts = WebClient\Source\Helpers\EventEmitter.ts
+		WebClient\Source\Helpers\FrameDispatcher.ts = WebClient\Source\Helpers\FrameDispatcher.ts
+		WebClient\Source\Helpers\Helper.ts = WebClient\Source\Helpers\Helper.ts
+		WebClient\Source\Helpers\HttpHelper.ts = WebClient\Source\Helpers\HttpHelper.ts
+		WebClient\Source\Helpers\Mathx.ts = WebClient\Source\Helpers\Mathx.ts
+		WebClient\Source\Helpers\Size.ts = WebClient\Source\Helpers\Size.ts
+		WebClient\Source\Helpers\TimingEvent.ts = WebClient\Source\Helpers\TimingEvent.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Graphics", "Graphics", "{47F6A3EA-BAA5-4E8F-897A-683E9BF1ED1D}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Source\Graphics\RendererBase.ts = WebClient\Source\Graphics\RendererBase.ts
+		WebClient\Source\Graphics\SegmentRenderer.ts = WebClient\Source\Graphics\SegmentRenderer.ts
+		WebClient\Source\Graphics\Shader.ts = WebClient\Source\Graphics\Shader.ts
+		WebClient\Source\Graphics\Texture2D.ts = WebClient\Source\Graphics\Texture2D.ts
+		WebClient\Source\Graphics\TextureImage2D.ts = WebClient\Source\Graphics\TextureImage2D.ts
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_Ubuntu|Any CPU = Debug_Ubuntu|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release_Ubuntu|Any CPU = Release_Ubuntu|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Debug_Ubuntu|Any CPU.ActiveCfg = Debug|Any CPU
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Debug_Ubuntu|Any CPU.Build.0 = Debug|Any CPU
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Release_Ubuntu|Any CPU.ActiveCfg = Release|Any CPU
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Release_Ubuntu|Any CPU.Build.0 = Release|Any CPU
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Debug_Ubuntu|Any CPU.ActiveCfg = Debug|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Debug_Ubuntu|Any CPU.Build.0 = Debug|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Release_Ubuntu|Any CPU.ActiveCfg = Release|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Release_Ubuntu|Any CPU.Build.0 = Release|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82D81769-FF87-4727-9570-03C233EA59D9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FA54B345-910C-4CBF-AE63-4A6A503BD00E} = {902756D8-7345-4B51-BF9C-E29A2FDE6A14}
+		{DC7BD409-48CE-41C6-AA8A-F76E12564DF4} = {902756D8-7345-4B51-BF9C-E29A2FDE6A14}
+		{D96008B1-1CA5-47B9-A354-BA4E127F4583} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
+		{1D3063F4-E788-4911-8E21-C4A6A1821175} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
+		{47F6A3EA-BAA5-4E8F-897A-683E9BF1ED1D} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CA70DA06-C641-4B7C-A353-F66EA7579F1C}
+	EndGlobalSection
+EndGlobal

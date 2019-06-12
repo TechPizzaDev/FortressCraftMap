@@ -34,12 +34,16 @@
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="GameDevWare.Serialization, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\GameDevWare.Serialization.2.4.2\lib\net35\GameDevWare.Serialization.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.1\lib\net35\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net35\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -49,31 +53,37 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AttributedWebSocketBehavior.cs" />
-    <Compile Include="BlockOrder.cs" />
+    <Compile Include="Helpers\ObjectExtensions.cs" />
+    <Compile Include="Server\BlockOrder.cs" />
+    <Compile Include="Helpers\AttributedWebSocketBehavior\AttributedWebSocketBehavior.cs" />
+    <Compile Include="Helpers\AttributedWebSocketBehavior\CodeCollection.cs" />
+    <Compile Include="Helpers\AttributedWebSocketBehavior\CodeTypeDefinition.cs" />
+    <Compile Include="Helpers\AttributedWebSocketBehavior\HandlerCollection.cs" />
+    <Compile Include="Helpers\AttributedWebSocketBehavior\MessageHandlerAttribute.cs" />
     <Compile Include="Helpers\JsonHelper.cs" />
-    <Compile Include="FileHashMap.cs" />
-    <Compile Include="FileHash.cs" />
+    <Compile Include="Helpers\FileHashMap.cs" />
+    <Compile Include="Helpers\FileHash.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
-    <Compile Include="MessageHandlerAttribute.cs" />
-    <Compile Include="MessageCode.cs" />
+    <Compile Include="Client\ClientMessageCode.cs" />
     <Compile Include="SegmentPosition.cs" />
-    <Compile Include="SimplexNoise.cs" />
-    <Compile Include="BufferPool.cs" />
+    <Compile Include="Helpers\SimplexNoise.cs" />
+    <Compile Include="Helpers\BufferPool.cs" />
     <Compile Include="Helpers\JsonExtensions.cs" />
-    <Compile Include="MimeMap.cs" />
+    <Compile Include="Helpers\MimeMap.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="MapSocketBehavior.cs" />
+    <Compile Include="Server\MapSocketBehavior.cs" />
     <Compile Include="Helpers\StreamExtensions.cs" />
+    <Compile Include="Server\ServerMessageCode.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(SolutionDir)../WebRoot" "$(TargetDir)WebRoot" /s /i /y</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>

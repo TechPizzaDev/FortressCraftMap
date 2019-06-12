@@ -9,14 +9,12 @@
 		"preserveConstEnums": true,
 		"downlevelIteration": true,
 		"sourceMap": true,
-		"outDir": "../../WebRoot/js"
+		"outDir": "Public/"
 	},
-	"files": [
-		"Core/Constants.ts",
-		"Helpers/EventEmitter.ts",
-		"Graphics/RendererBase.ts"
-	],
 	"include": [
-		"**/*.ts"
+		"Source/**/*.ts"
+	],
+	"exclude": [
+		"node_modules"
 	]
 }

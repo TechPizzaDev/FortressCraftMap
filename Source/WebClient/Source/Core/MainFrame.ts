@@ -1,7 +1,7 @@
 import SegmentRenderer from "../Graphics/SegmentRenderer";
-import ChannelSocket from "../Helpers/ChannelSocket";
+import ChannelSocket, { ChannelMessage } from "../Helpers/ChannelSocket";
 import TimingEvent from "../Helpers/TimingEvent";
-import { FrameDispatcher } from "../Helpers/FrameDispatcher";
+import FrameDispatcher from "../Helpers/FrameDispatcher";
 import { Size } from "../Helpers/Size";
 import { vec3 } from "gl-matrix";
 
@@ -9,7 +9,7 @@ export default class MainFrame {
 	private _gl: GLContext;
 	private _frameDispatcher: FrameDispatcher;
 	private _segmentRenderer: SegmentRenderer;
-	private _mapSocket: ChannelSocket;
+	private _mapChannel: ChannelSocket;
 
 	constructor(gl: GLContext) {
 		if (!gl)
@@ -22,26 +22,31 @@ export default class MainFrame {
 		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
 		this._segmentRenderer = new SegmentRenderer(this);
 		
-		this._mapSocket = new ChannelSocket("map");
-		this._mapSocket.subscribeToEvent("open", this.onMapSocketOpen);
-		this._mapSocket.subscribeToEvent("message", this.onMapSocketMessage);
-		this._mapSocket.connect();
+		this._mapChannel = new ChannelSocket("map");
+		this._mapChannel.subscribeToEvent("ready", this.onChannelReady);
+		this._mapChannel.subscribeToEvent("message", this.onChannelMessage);
+		this._mapChannel.connect();
 	}
 
 	public get gl(): GLContext {
 		return this._gl;
 	}
 
-	private onMapSocketOpen = (ev: Event) => {
-		console.log("Map socket open, sending hello");
-		this._mapSocket.sendMessage("hello", "on you u smexy boi");
-		this._mapSocket.sendMessage("GetSegment", { p: [0, 2] });
+	private onChannelReady = (ev: Event) => {
+
+		this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, 2]);
 	}
 
-	private onMapSocketMessage = (ev: MessageEvent) => {
-		console.log(ev.data);
+	private onChannelMessage = (message: ChannelMessage) => {
+		switch (message.code.number) {
+			case ServerMessageCode.BlockOrder:
+			case ServerMessageCode.BlockOrders:
+				break;
 
-
+			default:
+				console.log("%c" + message.code.name, "color: pink", message.body);
+				break;
+		}
 	}
 
 	public run() {

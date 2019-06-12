@@ -2,7 +2,7 @@ import TimingEvent from "./TimingEvent";
 
 export type TimingCallback = (t: TimingEvent) => void;
 
-export class FrameDispatcher {
+export default class FrameDispatcher {
 	private _update: TimingCallback;
 	private _draw: TimingCallback;
 	private _animationID: number;

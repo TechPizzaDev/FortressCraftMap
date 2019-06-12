@@ -1,7 +1,7 @@
 const PATH = require('path');
 
 module.exports = {
-	entry: './Core/Index.ts',
+	entry: './Source/Core/Index.ts',
 	devtool: 'source-map',
 	mode: 'development',
 	watch: true,
@@ -22,15 +22,15 @@ module.exports = {
 	},
 	output: {
 		filename: 'bundle.js',
-		path: PATH.resolve(__dirname, '../../WebRoot')
+		path: PATH.resolve(__dirname, 'Public')
 	},
 	watchOptions: {
 		ignored: [ 'node_modules']
 	},
 	stats: {
-		errors: true,
 		warnings: true,
-		moduleTrace: true,
-		errorDetails: true
+		errors: true,
+		errorDetails: true,
+		moduleTrace: true
 	}
 };

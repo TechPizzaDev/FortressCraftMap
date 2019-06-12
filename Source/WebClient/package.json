@@ -1,25 +1,28 @@
 {
-  "name": "fcprototypemap",
+  "name": "fortresscraftmap",
   "version": "1.0.0",
   "description": "Prototype of a web map for FortressCraft",
   "main": "WebRoot/bundle.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx webpack"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TechnologicalPizza/FCPrototypeMap.git"
+    "url": "git+https://github.com/TechnologicalPizza/FortressCraftMap.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/TechnologicalPizza/FCPrototypeMap/issues"
+    "url": "https://github.com/TechnologicalPizza/FortressCraftMap/issues"
   },
-  "homepage": "https://github.com/TechnologicalPizza/FCPrototypeMap#readme",
+  "homepage": "https://github.com/TechnologicalPizza/FortressCraftMap#readme",
   "dependencies": {
     "@types/gl-matrix": "^2.4.5",
+    "@types/msgpack5": "^3.4.1",
     "big-integer": "^1.6.43",
     "gl-matrix": "^3.0.0",
+    "msgpack5": "^4.2.1",
     "ts-loader": "^5.4.4",
     "typescript": "^3.4.5",
     "webpack": "^4.30.0"

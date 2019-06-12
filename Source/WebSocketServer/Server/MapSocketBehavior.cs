@@ -12,25 +12,33 @@ namespace WebSocketServer
         private static SimplexNoise _noise = new SimplexNoise(42);
         private static Random _rng = new Random();
 
+        private Timer _timer;
         private IPEndPoint _endpoint;
+
         private ushort[] _tileArray;
         private List<SegmentPosition> _loadedSegments;
 
-        public MapSocketBehavior()
+        public MapSocketBehavior() : base(
+            codeTypeDefinition: new CodeEnumDefinition(typeof(ClientMessageCode), typeof(ServerMessageCode)))
         {
+#if DEBUG
+            VerboseDebug = true;
+#else
+            VerboseDebug = false;
+#endif
+
             _tileArray = new ushort[16 * 16];
             _loadedSegments = new List<SegmentPosition>();
         }
 
         [MessageHandler]
-        public void GetSegment(JToken request)
+        public void GetSegment(List<object> pos)
         {
-            if (Missing(request, "p", out var position))
+            if (Missing(pos))
                 return;
 
-            var array = position as JArray;
-            int segX = array[0].ToObject<int>() * 16;
-            int segY = array[1].ToObject<int>() * 16;
+            int segX = pos[0].ToInt32() * 16;
+            int segY = pos[1].ToInt32() * 16;
             for (int y = 0; y < 16; y++)
             {
                 for (int x = 0; x < 16; x++)
@@ -44,15 +52,12 @@ namespace WebSocketServer
             lock (_loadedSegments)
                 _loadedSegments.Add(new SegmentPosition(segX / 16, segY / 16));
 
-            SendAsJson(new
+            SendMessage(ServerMessageCode.Segment, new
             {
-                code = MessageCode.BlockOrders,
                 pos = new[] { segX, segY },
                 tiles = _tileArray
             });
         }
-
-        private Timer _timer;
 
         private void TimerCallBack(object state)
         {
@@ -84,36 +89,35 @@ namespace WebSocketServer
         {
             var items = new object[orders.Length];
             for (int i = 0; i < items.Length; i++)
-                items[i] = CreateBlockOrderObj(orders[i]);
-            
-            SendAsJson(new
-            {
-                code = MessageCode.BlockOrders,
-                orders = items
-            });
+                items[i] = CreateBlockOrderObject(orders[i]);
+
+            SendMessage(ServerMessageCode.BlockOrders, items);
         }
 
         private void SendBlockOrder(BlockOrder order)
         {
-            SendAsJson(new
-            {
-                code = MessageCode.BlockOrders,
-                orders = new[] { CreateBlockOrderObj(order) }
-            });
+            SendMessage(ServerMessageCode.BlockOrder, CreateBlockOrderObject(order));
         }
 
-        private static object CreateBlockOrderObj(BlockOrder order)
+        private static object[] CreateBlockOrderObject(BlockOrder order)
         {
-            return new
+            return new object[]
             {
-                s = new[] { order.Segment.X, order.Segment.Y },
-                p = new[] { order.X, order.Y },
-                t = order.Tile
+                new[] { order.Segment.X, order.Segment.Y },
+                new[] { order.X, order.Y },
+                order.Tile
             };
+        }
+
+        protected void SendMessage<T>(ServerMessageCode code, T body)
+        {
+            SendMessage((int)code, body);
         }
 
         protected override void OnOpen()
         {
+            base.OnOpen();
+
             _endpoint = Context.UserEndPoint;
             Console.WriteLine("Map Behavior connected: " + _endpoint);
 

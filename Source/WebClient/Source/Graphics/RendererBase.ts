@@ -1,7 +1,7 @@
 import TimingEvent from "../Helpers/TimingEvent";
 import { Size } from "../Helpers/Size";
 
-abstract class RendererBase {
+export default abstract class RendererBase {
 	public readonly gl: GLContext;
 
 	constructor(gl: GLContext) {
@@ -15,4 +15,3 @@ abstract class RendererBase {
 
 	public abstract draw(time: TimingEvent): void;
 }
-export default RendererBase;

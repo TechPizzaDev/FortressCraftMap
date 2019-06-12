@@ -7,7 +7,7 @@ namespace WebSocketServer
 {
     class Program
     {
-        private const string _wwwRoot = "WebRoot";
+        private const string _wwwRoot = "Public";
 
         private static FileHashMap _hashMap;
 
@@ -74,16 +74,16 @@ namespace WebSocketServer
             else
                 rootPath = _wwwRoot + path;
 
-#if DEBUG
-            // only use this if you start from the project/solution folder
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
+//#if DEBUG
+//          // only use this if you start from the project/solution folder
+//          if (System.Diagnostics.Debugger.IsAttached)
+//          {
                 if (path.StartsWith("/Source/"))
-                    rootPath = "../../../../" + path;
+                    rootPath = "../../../WebClient/" + path;
                 else
-                    rootPath = "../../../../" + rootPath;
-            }
-#endif
+                    rootPath = "../../../WebClient/" + rootPath;
+//          }
+//#endif
             return rootPath;
         }
     }

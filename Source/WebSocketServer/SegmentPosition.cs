@@ -1,15 +1,13 @@
-﻿
-using Newtonsoft.Json;
+﻿using System.Runtime.Serialization;
 
 namespace WebSocketServer
 {
-    [JsonObject]
+    [DataContract]
     public struct SegmentPosition
     {
-        [JsonProperty("x")] public long X;
-        [JsonProperty("y")] public long Y;
+        [DataMember] public long X;
+        [DataMember] public long Y;
 
-        [JsonConstructor]
         public SegmentPosition(long x, long y)
         {
             X = x;

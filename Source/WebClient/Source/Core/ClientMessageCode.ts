@@ -1,0 +1,4 @@
+
+const enum ClientMessageCode {
+	GetSegment
+}

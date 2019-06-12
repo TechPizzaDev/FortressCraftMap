@@ -1,12 +1,10 @@
 
-class Texture2D {
+export default class Texture2D {
 	private static _textures = new Map<number, Texture2D>();
 	private static _freeIDs = new Array<number>();
 	private static _idCounter = 0;
-	public static readonly BlackPixel = new Uint8Array([0, 0, 0, 255]);
 
 	private _id: number;
-	private _isLoaded: boolean;
 	private _gl: GLContext;
 	private _texture: WebGLTexture;
 	private _width: number;
@@ -15,22 +13,22 @@ class Texture2D {
 	constructor(gl: GLContext) {
 		this._gl = gl;
 		this._texture = this._gl.createTexture();
-		this._width = 0;
-		this._height = 0;
 
-		this._id = Texture2D.getID();
+		this._id = Texture2D.rentID();
 		Texture2D._textures.set(this._id, this);
+
+		this.setData(Texture2D.createOpaquePixel(), Texture2DFormat.createDefault(this._gl), 1, 1);
 	}
 
 	public get isDisposed(): boolean {
 		return this._id == -1;
 	}
 
-	public get isLoaded(): boolean {
-		return this._isLoaded;
+	public get glContext(): GLContext {
+		return this._gl;
 	}
 
-	public get texture(): WebGLTexture {
+	public get glTexture(): WebGLTexture {
 		return this._texture;
 	}
 
@@ -53,11 +51,11 @@ class Texture2D {
 
 		const gl = this._gl;
 		const glFormat = format.format;
-		if (!Texture2D.isValidTextureFormat(gl, glFormat))
+		if (!Texture2D.isValidFormat(gl, glFormat))
 			throw new TypeError(`Invalid texture format (${glFormat}).`);
 
 		const type = format.type;
-		const formatSize = Texture2D.getSizeOfFormat(gl, glFormat, type);
+		const formatSize = Texture2D.getFormatSize(gl, glFormat, type);
 		if (formatSize == -1)
 			throw new TypeError(`Invalid texture format (${glFormat} + ${type})`);
 
@@ -97,32 +95,36 @@ class Texture2D {
 	private checkImageDimension(source: number, dim?: number): number {
 		if (dim) {
 			if (dim > source)
-				throw new RangeError("Given image dimension exceeds source dimension.");
+				throw new RangeError("Image dimension exceeds source dimension.");
 			return dim;
 		}
 		return source;
 	}
 
 	public dispose() {
+		this._gl.deleteTexture(this._texture);
+		this._gl = null;
+
 		Texture2D._textures.delete(this._id);
 		Texture2D._freeIDs.push(this._id);
 		this._id = -1;
-
-		this._gl.deleteTexture(this._texture);
-		this._gl = null;
 	}
 
 	public static getLoadedTextures(): IterableIterator<Texture2D> {
 		return Texture2D._textures.values();
 	}
 
-	private static getID(): number {
+	private static rentID(): number {
 		if (Texture2D._freeIDs.length > 0)
 			return Texture2D._freeIDs.pop();
 		return Texture2D._idCounter++;
 	}
 
-	public static getSizeOfFormat(gl: GLContext, format: number, type: number): number {
+	public static createOpaquePixel(): Uint8Array {
+		return new Uint8Array([0, 0, 0, 255]);
+	}
+
+	public static getFormatSize(gl: GLContext, format: number, type: number): number {
 		switch (format) {
 			case gl.ALPHA:
 			case gl.LUMINANCE:
@@ -153,7 +155,7 @@ class Texture2D {
 		return -1;
 	}
 
-	public static isValidTextureFormat(gl: GLContext, format: number): boolean {
+	public static isValidFormat(gl: GLContext, format: number): boolean {
 		switch (format) {
 			case gl.ALPHA:
 			case gl.LUMINANCE:
