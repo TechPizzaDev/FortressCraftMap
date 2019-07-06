@@ -1,47 +1,60 @@
 # FortressCraftMap
-Prototype of a web map mod for FortressCraft, written in TypeScript.  
-Using WebGL, HTML5 and WebSocket messaging abstractions for modular client development.  
+Simple web map mod for FortressCraft, written in TypeScript.  
+Using WebGL and WebSocket messaging abstractions for modular client development.  
 
 ### Main Roadmap
-- [x] Basic rendering
+- [ ] Basic rendering (coming very soon)
 - [x] Live data/updates
 - [ ] Game integration
+- [ ] Heightmap shading
 - [ ] Inspecting machines
   - [ ] Generic status
   - [ ] Inventory contents
-- [ ] Location of mobs
+- [ ] Location of entities
   - [ ] Location of players
   - [ ] Location of enemies
-- [ ] Following target
+  - [ ] Location of mynocks
+  - [ ] Location of items (see notes)
+- [ ] Following a target
   - [ ] Following player
   - [ ] Following enemy
-  - [ ] Following Falcors
-  - [ ] Following carts
+  - [ ] Following Falcor
+  - [ ] Following minecart
 - [ ] Visualizing cart routes
+- [ ] 3D HoloBase view (mostly identical to in-game)
+- [ ] Toggles for most icons (mobs, players, info popups) 
+- [ ] Settings for icon sizes/visibility
+- [ ] Underground mapping
+
+#### Extras
+- [x] Loading indicator
+- [ ] Simple sound effects
+- [ ] Visualizing info popups (e.g. Ore Extractor missing drill)
+- [ ] Visualizing Falcor routes
+  - [ ] Surface Falcors
+  - [ ] Falcors on any Y level
 - [ ] Chart of current research
   - [ ] Scanned blocks
   - [ ] RP projects
   - [ ] Lab projects
-- [ ] 3D HoloBase view (identical to in-game)
-
-#### Extras
-- [ ] Location of mynocks
-- [ ] Visualizing Falcor routes
 - [ ] Only rendering selected blocks
   - [ ] Select by Regex
     - [ ] Search for item in inventories
     - [ ] Search by block name
 - [ ] Location of research parts/drop pods
-- [ ] Simple sound effects
 - [ ] Current attack and wave info
 - [ ] World statistics (e.g. production)
-- [ ] Ore visualization
-- [ ] Heightmap shading
-- [ ] Underground mapping
+- [ ] Ore scan/visualization
+
+#### Not on Roadmap
+- Special topography rendering based on vertex normals and time of day
+
 #
 #### Notes
-Scanning Hardened Resin will be required to reveal active Hiveminds.  
+Researching Hardened Resin will be required to reveal active Hiveminds.  
 One active Threat Scanner will be required to reveal enemies. (Slimes will be visible regardless)  
-Active CCCCC will be required to reveal Cryo. (Cryo spawners will always be visible regardless)  
-Searching by block name will require that block to be scanned.  
-Showing location of research parts should be gated behind something.
+Active CCCCC will be required to reveal Cryo. (Cryo spawners will be visible regardless)  
+Searching by block name will require that block to be researched.  
+Showing location of research parts should be gated behind something (maybe Basic SpiderBot Defences?).  
+Items should probably not be drawn individually (performance should not be a problem because of instancing)
+because of clarity, it's better to come up with some system where the user can hover over a group of items (and remember a range setting).

@@ -1,4 +1,0 @@
-
-const enum ClientMessageCode {
-	GetSegment
-}

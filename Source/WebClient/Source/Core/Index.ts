@@ -3,15 +3,16 @@ import MainFrame from "./MainFrame";
 const canvas = document.getElementById("mainCanvas");
 
 if (canvas instanceof HTMLCanvasElement) {
-	const glCtx = canvas.getContext("webgl");
-	if (glCtx) {
+	const glContext = canvas.getContext("webgl");
+	if (glContext) {
 		console.log("Initialized WebGL1 context.");
 
-		glCtx.enable(glCtx.BLEND);
-		glCtx.blendFunc(glCtx.SRC_ALPHA, glCtx.ONE_MINUS_SRC_ALPHA);
+		glContext.enable(glContext.BLEND);
+		glContext.blendFunc(glContext.SRC_ALPHA, glContext.ONE_MINUS_SRC_ALPHA);
 
-		const frame = new MainFrame(glCtx);
-		frame.run();
+		const frame = new MainFrame(glContext, () => {
+			frame.run();
+		});
 	}
 	else {
 		console.error("Failed to initialize WebGL context.");

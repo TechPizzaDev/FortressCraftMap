@@ -4,43 +4,36 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{82D81769-FF87-4727-9570-03C233EA59D9}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <ProjectGuid>{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <RootNamespace>TechPizza.WebMapMod</RootNamespace>
-    <AssemblyName>plugin_TechPizza.WebMap</AssemblyName>
+    <AssemblyName>WebSocketServer</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SERVER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>6</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;SERVER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>6</LangVersion>
-    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony, Version=1.2.0.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Lib.Harmony.1.2.0.1\lib\net35\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\FortressCraft\64\FC_64_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="GameDevWare.Serialization, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\GameDevWare.Serialization.2.4.2\lib\net35\GameDevWare.Serialization.dll</HintPath>
     </Reference>
@@ -49,58 +42,54 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="UnityEngine">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\FortressCraft\64\FC_64_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="websocket-sharp, Version=1.0.2.59611, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
       <HintPath>..\packages\WebSocketSharp.1.0.3-rc11\lib\websocket-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\ObjectExtensions.cs" />
+    <Compile Include="HttpHost.cs" />
+    <Compile Include="Map\MapBlockPosition.cs" />
+    <Compile Include="Map\Server\BlockOrder.cs" />
     <Compile Include="Helpers\AttributedWebSocketBehavior\AttributedWebSocketBehavior.cs" />
     <Compile Include="Helpers\AttributedWebSocketBehavior\CodeCollection.cs" />
     <Compile Include="Helpers\AttributedWebSocketBehavior\CodeTypeDefinition.cs" />
     <Compile Include="Helpers\AttributedWebSocketBehavior\HandlerCollection.cs" />
     <Compile Include="Helpers\AttributedWebSocketBehavior\MessageHandlerAttribute.cs" />
-    <Compile Include="Helpers\BufferPool.cs" />
-    <Compile Include="Helpers\FileHash.cs" />
-    <Compile Include="Helpers\FileHashMap.cs" />
-    <Compile Include="Helpers\JsonExtensions.cs" />
     <Compile Include="Helpers\JsonHelper.cs" />
-    <Compile Include="Helpers\MimeMap.cs" />
-    <Compile Include="Helpers\ObjectExtensions.cs" />
+    <Compile Include="Helpers\FileHashMap.cs" />
+    <Compile Include="Helpers\FileHash.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
-    <Compile Include="Helpers\SimplexNoise.cs" />
-    <Compile Include="Helpers\StreamExtensions.cs" />
-    <Compile Include="HttpHost.cs" />
-    <Compile Include="HttpHost.Extra.cs" />
     <Compile Include="Map\Client\ClientMessageCode.cs" />
-    <Compile Include="Map\MapBlockPosition.cs" />
     <Compile Include="Map\MapSegmentPosition.cs" />
+    <Compile Include="Helpers\SimplexNoise.cs" />
+    <Compile Include="Helpers\BufferPool.cs" />
+    <Compile Include="Helpers\JsonExtensions.cs" />
+    <Compile Include="Helpers\MimeMap.cs" />
     <Compile Include="Map\Point.cs" />
-    <Compile Include="Map\Server\BlockOrder.cs" />
-    <Compile Include="Map\Server\MapSocketBehavior.cs" />
     <Compile Include="Map\Server\MapSocketBehavior.Orders.cs" />
-    <Compile Include="Map\Server\ServerMessageCode.cs" />
-    <Compile Include="WebMapMod.Helpers.cs" />
-    <Compile Include="NodeWorkerPatch.cs" />
+    <Compile Include="ServerProgram.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WebMapMod.cs" />
+    <Compile Include="Map\Server\MapSocketBehavior.cs" />
+    <Compile Include="Helpers\StreamExtensions.cs" />
+    <Compile Include="Map\Server\ServerMessageCode.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Mod.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)$(OutDir)." "C:\Users\Michal Piatkowski\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\" /S /Y /EXCLUDE:$(ProjectDir)buildexclusions.txt</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
 </Project>

@@ -1,72 +1,91 @@
-import SegmentRenderer from "../Graphics/SegmentRenderer";
-import ChannelSocket, { ChannelMessage } from "../Helpers/ChannelSocket";
-import TimingEvent from "../Helpers/TimingEvent";
-import FrameDispatcher from "../Helpers/FrameDispatcher";
-import { Size } from "../Helpers/Size";
-import { vec3 } from "gl-matrix";
+import MapSegmentRenderer from "../Graphics/Renderers/MapSegmentRenderer";
+import ChannelSocket, { ChannelMessage } from "../Utility/ChannelSocket";
+import GameContent from "./Content/GameContent";
+import TimedEvent from "../Utility/TimingEvent";
+import FrameDispatcher from "../Utility/FrameDispatcher";
+import { Rectangle } from "../Utility/Shapes";
+import * as Map from "./World/Map";
 
+/**
+ * Loads components and handles document events (input, resizing).
+ * */
 export default class MainFrame {
-	private _gl: GLContext;
+	private _gl: WebGLRenderingContext;
+	private _content: GameContent;
 	private _frameDispatcher: FrameDispatcher;
-	private _segmentRenderer: SegmentRenderer;
+	private _segmentRenderer: MapSegmentRenderer;
+
+	// move networking into a NetworkManager class
 	private _mapChannel: ChannelSocket;
 
-	constructor(gl: GLContext) {
-		if (!gl)
-			throw new TypeError("GL Context is undefined.");
-
+	constructor(gl: WebGLRenderingContext, onLoad?: () => void) {
+		if (gl == null)
+			throw new TypeError("GL context is undefined.");
 		this._gl = gl;
+
+		this._content = new GameContent(gl, onLoad);
 		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
-		this._segmentRenderer = new SegmentRenderer(this);
+		this._segmentRenderer = new MapSegmentRenderer(this);
 		
-		this._mapChannel = new ChannelSocket("map");
-		this._mapChannel.subscribeToEvent("ready", this.onChannelReady);
-		this._mapChannel.subscribeToEvent("message", this.onChannelMessage);
+		this._mapChannel = ChannelSocket.create("map", false);
+		this._mapChannel.subscribeToEvent("ready", this.onMapChannelReady);
+		this._mapChannel.subscribeToEvent("message", this.onMapChannelMessage);
 		this._mapChannel.connect();
 	}
 
-	public get gl(): GLContext {
+	public get glContext(): WebGLRenderingContext {
 		return this._gl;
 	}
 
-	private onChannelReady = (ev: Event) => {
+	private onMapChannelReady = (ev: Event) => {
 
 		this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, 2]);
 	}
 
-	private onChannelMessage = (message: ChannelMessage) => {
+	private onMapChannelMessage = (message: ChannelMessage) => {
 		switch (message.code.number) {
 			case ServerMessageCode.BlockOrder:
 			case ServerMessageCode.BlockOrders:
-				break;
+				return;
 
-			default:
-				console.log("%c" + message.code.name, "color: pink", message.body);
+			case ServerMessageCode.Segment:
+				const pos = new Map.SegmentPosition(message.body.segment);
+				const tiles = new Uint16Array(message.body.tiles);
+				const seg = new Map.Segment(pos, tiles);
+				this._segmentRenderer.segments.set(seg, pos);
 				break;
 		}
+		console.log("%c" + message.code.name, "color: pink", message.body);
 	}
 
+	/**
+	 * Calls onWindowResize() once and starts the frame dispatcher.
+	 * */
 	public run() {
-		this.onResize();
-		window.addEventListener("resize", this.onResize);
+		this.onWindowResize();
+		window.addEventListener("resize", this.onWindowResize);
 
 		this._frameDispatcher.run();
 	}
 
-	public update = (time: TimingEvent) => {
+	public update = (time: TimedEvent) => {
 
 	}
 
-	public draw = (time: TimingEvent) => {
+	public draw = (time: TimedEvent) => {
 		this._segmentRenderer.draw(time);
 	}
 
-	private onResize = () => {
-		const size = new Size(
+	/**
+	 * The event triggered by a window resize. Use this to update viewports.
+	 * */
+	private onWindowResize = () => {
+		const viewport = new Rectangle(
+			0, 0,
 			Math.floor(window.innerWidth * window.devicePixelRatio),
 			Math.floor(window.innerHeight * window.devicePixelRatio));
 
-		this._segmentRenderer.onResize(size);
+		this._segmentRenderer.onViewportChanged(viewport);
 	}
 }
 

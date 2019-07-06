@@ -1,130 +1,212 @@
+import Mathx from "../Utility/Mathx";
+import { Rectangle } from "../Utility/Shapes";
+import GLResource from "./GLResource";
+import GLHelper from "./GLHelper";
 
-export default class Texture2D {
-	private static _textures = new Map<number, Texture2D>();
-	private static _freeIDs = new Array<number>();
-	private static _idCounter = 0;
+/**
+ * Wrapper of WebGLTexture for simpler texture management.
+ * This texture's dimensions can only be set at construction time.
+ * */
+export default class Texture2D extends GLResource {
 
-	private _id: number;
-	private _gl: GLContext;
 	private _texture: WebGLTexture;
-	private _width: number;
-	private _height: number;
+	private _format: TextureFormat;
+	private _dataWidth: number;
+	private _dataHeight: number;
 
-	constructor(gl: GLContext) {
-		this._gl = gl;
-		this._texture = this._gl.createTexture();
+	public readonly width: number;
+	public readonly height: number;
 
-		this._id = Texture2D.rentID();
-		Texture2D._textures.set(this._id, this);
+	/**
+	 * Constructs the texture. Dimensions cannot be changed later.
+	 * @param gl The GL context.
+	 * @param format The format specifying WebGL parameters.
+	 * @param width The width of the texture. Cannot be changed later.
+	 * @param height The height of the texture. Cannot be changed later.
+	 */
+	constructor(
+		gl: WebGLRenderingContext,
+		width: number,
+		height: number,
+		format?: TextureFormat)
+	{
+		if (width <= 0)
+			throw new Error("'width' must be greater than 0.");
+		if (height <= 0)
+			throw new Error("'height' must be greater than 0.");
 
-		this.setData(Texture2D.createOpaquePixel(), Texture2DFormat.createDefault(this._gl), 1, 1);
+		super(gl);
+
+		// We can't cache the format as it needs a GL context.
+		// We could make the format independent of a context
+		// but that would require a lot of enums.
+		if (format == null)
+			format = TextureFormat.createDefault(this.glContext);
+
+		this.width = width;
+		this.height = height;
+		this._format = format;
+
+		// init the texture
+		this._texture = this.glContext.createTexture();
+		GLHelper.zoneTexture2D(this.glContext, this._texture, (gl) => {
+			// init texture memory
+			gl.texImage2D(
+				gl.TEXTURE_2D,
+				0, // level
+				format.dataFormat,
+				this.width,
+				this.height,
+				0, // border
+				format.dataFormat,
+				gl.UNSIGNED_BYTE,
+				null // pixels
+			);
+		});
 	}
 
-	public get isDisposed(): boolean {
-		return this._id == -1;
-	}
-
-	public get glContext(): GLContext {
-		return this._gl;
-	}
-
+	/** Gets the GL texture object. */
 	public get glTexture(): WebGLTexture {
+		this.assertNotDisposed();
 		return this._texture;
 	}
 
-	public get width(): number {
-		return this._width;
+	/** Gets the texture's dimensions as a rectangle. */
+	public get bounds(): Rectangle {
+		return new Rectangle(0, 0, this.width, this.height);
 	}
 
-	public get height(): number {
-		return this._height;
+	/** Gets the width of the currently uploaded texture data. */
+	public get dataWidth(): number {
+		this.assertNotDisposed();
+		return this._dataWidth;
+	}
+	
+	/** Gets the height of the currently uploaded texture data. */
+	public get dataHeight(): number {
+		this.assertNotDisposed();
+		return this._dataHeight;
 	}
 
-	public setData(
-		data: Uint8Array | ImageBitmap,
-		format: Texture2DFormat,
-		width?: number,
-		height?: number) {
+	/**
+	 * Uploads data to the GL texture.
+	 * @param data The texture data.
+	 * @param format The format specifying WebGL parameters. Defaults to the current format.
+	 * @param rect The dimensions of the texture data. Defaults to texture bounds.
+	 * @param rect Ignored if ImageBitmap is passed as data.
+	 */
+	public setData(data: ArrayBufferView | ImageBitmap, format?: TextureFormat, rect?: Rectangle) {
+		this.assertNotDisposed();
 
-		if (data instanceof Uint8Array && (!width || !height))
-			throw new Error("Width and height is required for Uint8Array.");
+		if (rect == null)
+			rect = this.bounds;
 
-		const gl = this._gl;
-		const glFormat = format.format;
-		if (!Texture2D.isValidFormat(gl, glFormat))
+		if (format != null)
+			this._format = format;
+
+		if (data instanceof ImageBitmap)
+			this._format = TextureFormat.createBitmapFormat(
+				this.glContext, this._format.filter, this._format.generateMipmaps);
+
+		const glFormat = this._format.dataFormat;
+		if (!TextureFormat.isValidDataFormat(this.glContext, glFormat))
 			throw new TypeError(`Invalid texture format (${glFormat}).`);
 
-		const type = format.type;
-		const formatSize = Texture2D.getFormatSize(gl, glFormat, type);
+		const type = this._format.dataType;
+		const formatSize = TextureFormat.getFormatSize(this.glContext, glFormat, type);
 		if (formatSize == -1)
 			throw new TypeError(`Invalid texture format (${glFormat} + ${type})`);
 
-		const level = 0;
-		gl.bindTexture(gl.TEXTURE_2D, this._texture);
+		GLHelper.zoneTexture2D(this.glContext, this._texture, (gl) => {
+			const level = 0;
+			if (data instanceof ImageBitmap) {
+				this._dataWidth = Texture2D.checkImageDimension("width", rect.width, data.width);
+				this._dataHeight = Texture2D.checkImageDimension("height", rect.height, data.height);
+				gl.texImage2D(gl.TEXTURE_2D, level, glFormat, glFormat, type, data);
+			}
+			else {
+				if (rect.width * rect.height * formatSize > data.byteLength)
+					throw new RangeError("Not enough bytes for the given format.");
 
-		if (data instanceof Uint8Array) {
-			if (width * height * formatSize > data.length)
-				throw new RangeError("Not enough data for the given format.");
-			this._width = width;
-			this._height = height;
-			gl.texImage2D(gl.TEXTURE_2D, level, glFormat, width, height, 0, glFormat, type, data);
-		}
-		else if (data instanceof ImageBitmap) {
-			this._width = this.checkImageDimension(width, data.width);
-			this._height = this.checkImageDimension(height, data.height);
-			gl.texImage2D(gl.TEXTURE_2D, level, glFormat, glFormat, type, data);
-		}
+				this._dataWidth = rect.width;
+				this._dataHeight = rect.height;
+				gl.texImage2D(gl.TEXTURE_2D, level, glFormat, rect.width, rect.height, 0, glFormat, type, data);
+			}
 
-		if (format.generateMipmaps &&
-			Mathx.isPowerOf2(this._width) &&
-			Mathx.isPowerOf2(this._height)) {
-			gl.generateMipmap(gl.TEXTURE_2D);
-		}
-		else {
-			if (format.generateMipmaps)
-				console.warn("Failed to generate mipmaps as texture is not power of two.");
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, format.filter);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, format.filter);
-		}
-
-		gl.bindTexture(gl.TEXTURE_2D, null);
+			if (this._format.generateMipmaps &&
+				Mathx.isPowerOf2(this.width) &&
+				Mathx.isPowerOf2(this.height)) {
+				gl.generateMipmap(gl.TEXTURE_2D);
+			}
+			else {
+				if (this._format.generateMipmaps)
+					console.warn("Failed to generate mipmaps as texture is not power of two.");
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._format.filter);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._format.filter);
+			}
+		});
 	}
 
-	private checkImageDimension(source: number, dim?: number): number {
+	protected destroy() {
+		this.glContext.deleteTexture(this._texture);
+
+		this._dataWidth = 0;
+		this._dataHeight = 0;
+	}
+
+	private static checkImageDimension(dimName: string, source: number, dim?: number): number {
 		if (dim) {
 			if (dim > source)
-				throw new RangeError("Image dimension exceeds source dimension.");
+				throw new RangeError(`Image ${dimName} exceeds the texture's ${dimName}.`);
 			return dim;
 		}
 		return source;
 	}
+}
 
-	public dispose() {
-		this._gl.deleteTexture(this._texture);
-		this._gl = null;
+/** 
+ *  Settings object containing WebGL parameters for textures.
+ *  */
+class TextureFormat {
 
-		Texture2D._textures.delete(this._id);
-		Texture2D._freeIDs.push(this._id);
-		this._id = -1;
+	public readonly dataType: number;
+	public readonly dataFormat: number;
+	public readonly filter: number;
+	public readonly generateMipmaps: boolean;
+
+	constructor(type: number, format: number, filter: number, mipmaps: boolean) {
+		this.dataType = type;
+		this.dataFormat = format;
+		this.filter = filter;
+		this.generateMipmaps = mipmaps;
 	}
 
-	public static getLoadedTextures(): IterableIterator<Texture2D> {
-		return Texture2D._textures.values();
+	public static createDefault(
+		gl: WebGLRenderingContext,
+		mipmaps: boolean = false
+	): TextureFormat {
+		return new TextureFormat(
+			gl.UNSIGNED_BYTE,
+			gl.RGBA,
+			gl.LINEAR,
+			mipmaps);
 	}
 
-	private static rentID(): number {
-		if (Texture2D._freeIDs.length > 0)
-			return Texture2D._freeIDs.pop();
-		return Texture2D._idCounter++;
+	public static createBitmapFormat(
+		gl: WebGLRenderingContext,
+		filter: number = 0,
+		mipmaps: boolean = false
+	): TextureFormat {
+		return new TextureFormat(
+			gl.UNSIGNED_BYTE,
+			gl.RGBA,
+			filter == 0 ? gl.LINEAR : filter,
+			mipmaps);
 	}
 
-	public static createOpaquePixel(): Uint8Array {
-		return new Uint8Array([0, 0, 0, 255]);
-	}
-
-	public static getFormatSize(gl: GLContext, format: number, type: number): number {
+	public static getFormatSize(gl: WebGLRenderingContext, format: number, type: number): number {
 		switch (format) {
 			case gl.ALPHA:
 			case gl.LUMINANCE:
@@ -155,7 +237,7 @@ export default class Texture2D {
 		return -1;
 	}
 
-	public static isValidFormat(gl: GLContext, format: number): boolean {
+	public static isValidDataFormat(gl: WebGLRenderingContext, format: number): boolean {
 		switch (format) {
 			case gl.ALPHA:
 			case gl.LUMINANCE:
@@ -167,22 +249,5 @@ export default class Texture2D {
 			default:
 				return false;
 		}
-	}
-}
-
-/** Settings object for Texture2D.setData() */
-class Texture2DFormat {
-	public type: number;
-	public format: number;
-	public filter: number;
-	public generateMipmaps: boolean;
-
-	public static createDefault(gl: GLContext): Texture2DFormat {
-		const f = new Texture2DFormat();
-		f.type = gl.UNSIGNED_BYTE;
-		f.format = gl.RGBA;
-		f.filter = gl.LINEAR;
-		f.generateMipmaps = false;
-		return f;
 	}
 }

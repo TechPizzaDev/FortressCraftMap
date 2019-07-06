@@ -1,6 +1,7 @@
 const PATH = require('path');
+//const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 
-module.exports = {
+const webpackConfig = {
 	entry: './Source/Core/Index.ts',
 	devtool: 'source-map',
 	mode: 'development',
@@ -25,7 +26,7 @@ module.exports = {
 		path: PATH.resolve(__dirname, 'Public')
 	},
 	watchOptions: {
-		ignored: [ 'node_modules']
+		ignored: ['node_modules']
 	},
 	stats: {
 		warnings: true,
@@ -34,3 +35,8 @@ module.exports = {
 		moduleTrace: true
 	}
 };
+
+//const smp = new SpeedMeasurePlugin({ outputFormat: "humanVerbose", granularLoaderData: true });
+//module.exports = smp.wrap(webpackConfig);
+
+module.exports = webpackConfig;
