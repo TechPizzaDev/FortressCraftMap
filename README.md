@@ -1,5 +1,5 @@
 # FortressCraftMap
-Simple web map mod for FortressCraft, written in TypeScript.  
+Simple web map mod for FortressCraft. Client written in TypeScript.  
 Using WebGL and WebSocket messaging abstractions for modular client development.  
 
 ### Main Roadmap
