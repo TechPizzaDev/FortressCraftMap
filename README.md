@@ -1,5 +1,5 @@
 # FortressCraftMap
-Simple web map mod for FortressCraft, written in TypeScript.  
+Simple web map mod for FortressCraft. Client written in TypeScript.  
 Using WebGL and WebSocket messaging abstractions for modular client development.  
 
 ### Main Roadmap
@@ -56,5 +56,5 @@ One active Threat Scanner will be required to reveal enemies. (Slimes will be vi
 Active CCCCC will be required to reveal Cryo. (Cryo spawners will be visible regardless)  
 Searching by block name will require that block to be researched.  
 Showing location of research parts should be gated behind something (maybe Basic SpiderBot Defences?).  
-Items should probably not be drawn individually (performance should not be a problem because of instancing)
-because of clarity, it's better to come up with some system where the user can hover over a group of items (and remember a range setting).
+Items should not be drawn individually not because of performance issues (instancing is a thing) but because of clarity,
+a good system where the user can hover over a group of items is preferred (remember a range setting for grouping).
