@@ -1,29 +1,29 @@
-import * as Content from "../Content";
-import { Common } from "../../Utility/Helper";
+import * as Content from "../Namespaces/Content";
+import { Common } from "../Namespaces/Helper";
 import ContentRegistry from "./ContentRegistry";
 
-export default class GameContent {
+export default class AppContent {
 
 	private _manager: Content.Manager;
 	private _list: Content.List;
 
 	/**
-	 * Constructs the game content.
+	 * Constructs the app content.
 	 * @param gl The GL context used for constructing GL resources.
 	 */
 	constructor(gl: WebGLRenderingContext, onLoad?: () => void) {
 		this._manager = new Content.Manager(gl);
 
 		this.initializeContentList();
-		this.downloadContent().then(
-			() => {
-				this._manager.linkShaderPairs();
+		this.downloadContent().then(() => {
 
-				if (onLoad)
-					onLoad();
-			},
-			(reason) => {
-			console.error("Failed to load content:", reason);
+			this._manager.linkShaderPairs();
+
+			if (onLoad)
+				onLoad();
+
+		}).catch((reason) => {
+			console.error("Failed to load content:\n", reason)
 		});
 	}
 
@@ -59,23 +59,23 @@ export default class GameContent {
 		const size = Common.bytesToReadable(status.totalBytesDownloaded);
 		console.log(`Downloaded ${successCount} out of ${status.totalFiles} assets, ${size}`);
 
-		// delay the fade animation slightly
-		window.setTimeout(() => {
-			const loader = document.getElementById("initial-loader");
-			loader.addEventListener("transitionend", () => loader.remove(), false);
-			loader.classList.add("fadeaway");
+		const loader = document.getElementById("initial-loader");
+		loader.addEventListener("transitionend", () => loader.remove(), false);
+		loader.classList.add("fadeaway");
 
-			// for browsers that don't support transitionend
-			window.setTimeout(() => loader.remove(), 1000);
-		}, 50);
+		// for browsers that don't support transitionend
+		window.setTimeout(() => loader.remove(), 1000);
 	}
 
 	private pushShader(name: string) {
-		this._list.push(`${Content.VertexShaderPath}/${name}.glsl`);
-		this._list.push(`${Content.FragmentShaderPath}/${name}.glsl`);
+		const vsDesc = Content.getDescription(Content.Type.VertexShader);
+		const fsDesc = Content.getDescription(Content.Type.FragmentShader);
+		this._list.push(`${vsDesc.path}/${name}${vsDesc.extension}`);
+		this._list.push(`${fsDesc.path}/${name}${fsDesc.extension}`);
 	}
 
 	private pushTexture(name: string) {
-		this._list.push(`${Content.TexturePath}/${name}.png`);
+		const tDesc = Content.getDescription(Content.Type.Texture);
+		this._list.push(`${tDesc.path}/${name}${tDesc.extension}`);
 	}
 }

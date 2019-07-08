@@ -1,8 +1,13 @@
-import GLResource from "../../Graphics/GLResource";
-import * as Content from "../Content";
-import Texture2D from "../../Graphics/Texture2D";
-import Shader from "../../Graphics/Shaders/Shader";
-import { Web, Common } from "../../Utility/Helper";
+import GLResource from "../Graphics/GLResource";
+import * as Content from "../Namespaces/Content";
+import Texture2D from "../Graphics/Texture2D";
+import Shader from "../Graphics/Shaders/Shader";
+import { Web, Common } from "../Namespaces/Helper";
+import ShaderProgram from "../Graphics/Shaders/ShaderProgram";
+import ShaderDescription from "../Graphics/Shaders/ShaderDescription";
+
+type ResourceIterator<T> = IterableIterator<[string, T]>;
+type ResourceMap<T> = Array<[string, T]>;
 
 /** Used for easier management of external content. */
 export class Manager extends GLResource {
@@ -60,34 +65,61 @@ export class Manager extends GLResource {
 
 	/** Links shader pairs of the same name into shader programs. */
 	public linkShaderPairs() {
-		const resourcePairs = this._resources.entries();
-		const vertexShaders = Manager.filterShaders(resourcePairs, ShaderType.Vertex);
-		const fragmentShaders = Manager.filterShaders(resourcePairs, ShaderType.Fragment);
+		const vertexShaders = Manager.filterShaders(this._resources.entries(), ShaderType.Vertex);
+		const fragmentShaders = Manager.filterShaders(this._resources.entries(), ShaderType.Fragment);
 
-		// find the pairs by name and type
+		if (vertexShaders.length != fragmentShaders.length)
+			throw new Error("The amount of vertex and fragment shaders was not equal.");
+
+		// find the shader pairs by vertex shader name
 		for (const [vertexUri, vertexShader] of vertexShaders) {
 			const vertexName = Manager.getShaderName(vertexUri, ShaderType.Vertex);
+			const fragmentShader = Manager.findShader(vertexName, ShaderType.Fragment, fragmentShaders);
 
-			for (const [fragUri, fragShader] of fragmentShaders) {
-				const fragName = Manager.getShaderName(fragUri, ShaderType.Fragment);
-			}
+			const program = new ShaderProgram(this.glContext);
+			program.link(vertexShader, fragmentShader);
 
-			console.log(vertexName);
+			console.log(vertexName, program);
 		}
 	}
 
+	private static findShader(name: string, type: ShaderType, map: ResourceMap<Shader>): Shader {
+		for (const [shaderUri, shader] of map) {
+			if (shader.type == type && Manager.getShaderName(shaderUri, type) == name)
+				return shader;
+		}
+		throw new Error(`Failed to find ${type.toLowerCase()} shader '${name}'.`);
+	}
+
 	public static getShaderName(uri: string, type: ShaderType): string {
-		const root = type == ShaderType.Vertex ? Content.VertexShaderPath : Content.FragmentShaderPath;
+		const root = type == ShaderType.Vertex
+			? Content.getPath(Content.Type.VertexShader)
+			: Content.getPath(Content.Type.FragmentShader);
+		return Manager.getResourceName(uri, root);
+	}
+
+	public static getResourceName(uri: string, root: string) {
 		const nameWithExtension = uri.substring(root.length + 1);
 		return Common.changeExtension(nameWithExtension, null);
 	}
 
+	private static filterShaderDescriptions(
+		map: ResourceIterator<object>
+	): ResourceMap<ShaderDescription> {
+		const descriptions = new Array<[string, ShaderDescription]>();
+		for (const [uri, resource] of map) {
+			if (resource instanceof ShaderDescription)
+				descriptions.push([uri, resource]);
+		}
+		return descriptions;
+	}
+
 	private static filterShaders(
-		pairs: IterableIterator<[string, object]>,
+		map: ResourceIterator<object>,
 		type: ShaderType
-	): Array<[string, Shader]> {
+	): ResourceMap<Shader> {
 		const shaders = new Array<[string, Shader]>();
-		for (const [uri, resource] of pairs) {
+		for (const [uri, resource] of map) {
 			if (resource instanceof Shader && resource.type == type)
 				shaders.push([uri, resource]);
 		}
@@ -95,19 +127,24 @@ export class Manager extends GLResource {
 	}
 
 	private async decodeResource(uri: string, data: any) {
-		let resource: any;
-		if (uri.startsWith(Content.TexturePath)) {
-			resource = await this.decodeTexture(data);
-		}
-		else if (uri.startsWith(Content.VertexShaderPath)) {
-			resource = await this.decodeShader(data, ShaderType.Vertex);
-		}
-		else if (uri.startsWith(Content.FragmentShaderPath)) {
-			resource = await this.decodeShader(data, ShaderType.Fragment);
-		}
-		else
-			throw new Error(`Failed to identify type of '${uri}'.`);
+		const decode = async () => {
+			switch (Content.getType(uri)) {
+				case Content.Type.Texture:
+					return await this.decodeTexture(data);
 
+				case Content.Type.VertexShader:
+					return this.decodeShader(data, ShaderType.Vertex);
+
+				case Content.Type.FragmentShader:
+					return this.decodeShader(data, ShaderType.Fragment);
+
+				default:
+					throw new Error(`Failed to identify resource type from URI '${uri}'.`);
+			}
+		};
+		const resource = await decode();
+
+		// check state as decode may take a while
 		this.assertNotDisposed();
 		this._resources.set(uri, resource);
 	}
@@ -124,7 +161,7 @@ export class Manager extends GLResource {
 		}
 	}
 
-	private async decodeShader(data: string, type: ShaderType) {
+	private decodeShader(data: string, type: ShaderType) {
 		const shader = new Shader(this.glContext, type);
 		shader.compile(data);
 		return shader;

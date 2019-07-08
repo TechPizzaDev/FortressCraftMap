@@ -24,7 +24,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D96008B1-1CA5-47B9-A354-BA4E127F4583}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Core\Constants.ts = WebClient\Source\Core\Constants.ts
-		WebClient\Source\Core\Content.ts = WebClient\Source\Core\Content.ts
 		WebClient\Source\Core\Index.ts = WebClient\Source\Core\Index.ts
 		WebClient\Source\Core\MainFrame.ts = WebClient\Source\Core\MainFrame.ts
 	EndProjectSection
@@ -34,7 +33,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility", "Utility", "{1D30
 		WebClient\Source\Utility\ChannelSocket.ts = WebClient\Source\Utility\ChannelSocket.ts
 		WebClient\Source\Utility\EventEmitter.ts = WebClient\Source\Utility\EventEmitter.ts
 		WebClient\Source\Utility\FrameDispatcher.ts = WebClient\Source\Utility\FrameDispatcher.ts
-		WebClient\Source\Utility\Helper.ts = WebClient\Source\Utility\Helper.ts
 		WebClient\Source\Utility\Mathx.ts = WebClient\Source\Utility\Mathx.ts
 		WebClient\Source\Utility\Shapes.ts = WebClient\Source\Utility\Shapes.ts
 		WebClient\Source\Utility\TimingEvent.ts = WebClient\Source\Utility\TimingEvent.ts
@@ -69,8 +67,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{6955D86F-E34A-40B0-BBFE-7A095D453671}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Graphics\Shaders\Shader.ts = WebClient\Source\Graphics\Shaders\Shader.ts
+		WebClient\Source\Graphics\Shaders\ShaderDescription.ts = WebClient\Source\Graphics\Shaders\ShaderDescription.ts
 		WebClient\Source\Graphics\Shaders\ShaderProgram.ts = WebClient\Source\Graphics\Shaders\ShaderProgram.ts
 		WebClient\Source\Graphics\Shaders\ShaderType.ts = WebClient\Source\Graphics\Shaders\ShaderType.ts
+		WebClient\Source\Graphics\Shaders\VertexShaderDescription.ts = WebClient\Source\Graphics\Shaders\VertexShaderDescription.ts
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketServer", "WebMapMod\WebSocketServer.csproj", "{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}"
@@ -94,23 +94,30 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Fragment", "Fragment", "{4D
 		WebClient\Public\Shaders\Fragment\mapsegment-textured.glsl = WebClient\Public\Shaders\Fragment\mapsegment-textured.glsl
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CSS", "CSS", "{3C28A1E8-3987-473A-8856-89B34970CDC0}"
-	ProjectSection(SolutionItems) = preProject
-		WebClient\Public\CSS\Initial-Loader.css = WebClient\Public\CSS\Initial-Loader.css
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{3075B74A-1164-46C9-840E-794C032C39CA}"
-	ProjectSection(SolutionItems) = preProject
-		WebClient\Source\Core\Content\ContentList.ts = WebClient\Source\Core\Content\ContentList.ts
-		WebClient\Source\Core\Content\ContentManager.ts = WebClient\Source\Core\Content\ContentManager.ts
-		WebClient\Source\Core\Content\ContentRegistry.ts = WebClient\Source\Core\Content\ContentRegistry.ts
-		WebClient\Source\Core\Content\GameContent.ts = WebClient\Source\Core\Content\GameContent.ts
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helper", "Helper", "{8ABD6A22-0950-4D9D-983A-737EFFEB8734}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Utility\Helper\CommonHelper.ts = WebClient\Source\Utility\Helper\CommonHelper.ts
 		WebClient\Source\Utility\Helper\WebHelper.ts = WebClient\Source\Utility\Helper\WebHelper.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Style", "Style", "{4E623EE2-E826-4563-9D2F-F2B7772E4E7B}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Public\Style\Initial-Loader.css = WebClient\Public\Style\Initial-Loader.css
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{DD561571-8B92-4F07-B7FE-08DDE3902A92}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Source\Content\AppContent.ts = WebClient\Source\Content\AppContent.ts
+		WebClient\Source\Content\ContentList.ts = WebClient\Source\Content\ContentList.ts
+		WebClient\Source\Content\ContentManager.ts = WebClient\Source\Content\ContentManager.ts
+		WebClient\Source\Content\ContentRegistry.ts = WebClient\Source\Content\ContentRegistry.ts
+		WebClient\Source\Content\ContentType.ts = WebClient\Source\Content\ContentType.ts
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Namespaces", "Namespaces", "{85AF45C6-27FD-469B-8DC1-00E404148F28}"
+	ProjectSection(SolutionItems) = preProject
+		WebClient\Source\Namespaces\Content.ts = WebClient\Source\Namespaces\Content.ts
+		WebClient\Source\Namespaces\Helper.ts = WebClient\Source\Namespaces\Helper.ts
 	EndProjectSection
 EndProject
 Global
@@ -155,9 +162,10 @@ Global
 		{C4E44E20-E6FF-4F4A-9E1F-0F755ECDC03B} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}
 		{B93A2540-655A-4AF2-8CE0-E43F488CE60B} = {497FF5B9-8132-4F8B-AEE6-8D3DC576465E}
 		{4D43B7F1-1086-4ECB-85DE-878F40BDB04C} = {497FF5B9-8132-4F8B-AEE6-8D3DC576465E}
-		{3C28A1E8-3987-473A-8856-89B34970CDC0} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}
-		{3075B74A-1164-46C9-840E-794C032C39CA} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
 		{8ABD6A22-0950-4D9D-983A-737EFFEB8734} = {1D3063F4-E788-4911-8E21-C4A6A1821175}
+		{4E623EE2-E826-4563-9D2F-F2B7772E4E7B} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}
+		{DD561571-8B92-4F07-B7FE-08DDE3902A92} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
+		{85AF45C6-27FD-469B-8DC1-00E404148F28} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CA70DA06-C641-4B7C-A353-F66EA7579F1C}

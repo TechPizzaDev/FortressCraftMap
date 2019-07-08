@@ -83,8 +83,7 @@ export namespace Web {
 	export class HttpResponse {
 
 		/**
-		 * The response's body.
-		 * Is null for failed requests.
+		 * The response's body. Can be null if response was empty.
 		 */
 		public readonly data: any;
 
@@ -111,18 +110,14 @@ export namespace Web {
 
 		/**
 		 * Constructs the response from an evaluated request.
-		 * @param data Response data or failure reason for the evaluated request. 
-		 * @param data Can be null for failed requests.
+		 * @param data Response data or failure reason for the evaluated request. Can be null.
 		 * @param status Status code for the evaluated request or -1 for failed requests.
 		 */
 		constructor(data: any, status: number) {
 			if (status == -1)
 				this.failure = data || "";
-			else {
-				if (data == null)
-					throw new Error("'data' may not be null if 'status' is not -1.");
+			else
 				this.data = data;
-			}
 			this.status = status;
 		}
 	}

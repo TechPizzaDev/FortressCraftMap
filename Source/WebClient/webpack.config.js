@@ -1,11 +1,9 @@
 const PATH = require('path');
-//const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 
-const webpackConfig = {
+const isProduction = false;
+
+const webpackConfigBase = {
 	entry: './Source/Core/Index.ts',
-	devtool: 'source-map',
-	mode: 'development',
-	watch: true,
 	module: {
 		rules: [
 			{
@@ -17,26 +15,41 @@ const webpackConfig = {
 	},
 	resolve: {
 		extensions: ['.ts', '.js'],
-		modules: [
-			PATH.resolve(__dirname, 'node_modules')
-		]
+			modules: [
+				PATH.resolve(__dirname, 'node_modules')
+			]
 	},
 	output: {
 		filename: 'bundle.js',
 		path: PATH.resolve(__dirname, 'Public')
-	},
-	watchOptions: {
-		ignored: ['node_modules']
 	},
 	stats: {
 		warnings: true,
 		errors: true,
 		errorDetails: true,
 		moduleTrace: true
-	}
+	},
+	watch: true,
+	watchOptions: {
+		ignored: ['node_modules']
+	},
 };
 
-//const smp = new SpeedMeasurePlugin({ outputFormat: "humanVerbose", granularLoaderData: true });
-//module.exports = smp.wrap(webpackConfig);
+function getBaseCopy() {
+	return Object.assign({}, webpackConfigBase);
+}
 
-module.exports = webpackConfig;
+function getConfigExport() {
+	if (isProduction)
+		return Object.assign(getBaseCopy(), {
+			devtool: 'source-map',
+			mode: 'production'
+		});
+	else
+		return Object.assign(getBaseCopy(), {
+			devtool: 'source-map',
+			mode: 'development'
+		});
+}
+
+module.exports = getConfigExport();

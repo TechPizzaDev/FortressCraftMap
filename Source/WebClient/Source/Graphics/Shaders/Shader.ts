@@ -42,6 +42,11 @@ export default class Shader extends GLResource {
 		return this._type;
 	}
 
+	/**
+	 * Compiles the shader from source code.
+	 * The shader can be disposed after being linked to a shader program.
+	 * @param source The shader GLSL source code.
+	 */
 	public compile(source: string) {
 		this.assertNotDisposed();
 

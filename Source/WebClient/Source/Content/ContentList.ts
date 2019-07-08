@@ -1,5 +1,5 @@
-import * as Content from "../Content";
-import { Web, Common } from "../../Utility/Helper";
+import * as Content from "../Namespaces/Content";
+import { Web, Common } from "../Namespaces/Helper";
 
 interface ListObject {
 	readonly uri: string;
@@ -38,8 +38,7 @@ export class List {
 		this.assertNotLocked();
 		List.assertValidUri(uri);
 
-		const extension = Common.getExtension(uri);
-		const type = Content.getXHRType(extension);
+		const type = Content.getXHRType(uri);
 		this._items.push({ uri, type });
 	}
 

@@ -11,7 +11,6 @@ export default class ShaderProgram extends GLResource {
 
 	/**
 	 * Constructs and links the shader program.
-	 * Given shaders can be disposed after construction.
 	 * @param gl The GL context.
 	 * @param vertexShader The vertex shader to link. Can be disposed after construction.
 	 * @param fragmentShader The fragment shader to link. Can be disposed after construction.
@@ -35,6 +34,12 @@ export default class ShaderProgram extends GLResource {
 		return this._isLinked;
 	}
 
+	/**
+	 * Links the shader program with a vertex and fragment shader.
+	 * Given shaders can be disposed after construction.
+	 * @param vertexShader The vertex shader. Can be disposed after construction.
+	 * @param fragmentShader The fragment shader. Can be disposed after construction.
+	 */
 	public link(vertexShader: Shader, fragmentShader: Shader) {
 		this.assertNotDisposed();
 

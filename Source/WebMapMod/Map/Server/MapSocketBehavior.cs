@@ -62,10 +62,10 @@ namespace TechPizza.WebMap
             lock (_loadedSegments)
                 _loadedSegments.Add(segPosition);
 
-            SendMessage(ServerMessageCode.Segment, new
+            SendMessage(ServerMessageCode.Segment, new object[] 
             {
-                segment = new[] { segPosition.X.ToString(), segPosition.Z.ToString() },
-                tiles = _tileArray
+                new[] { segPosition.X.ToString(), segPosition.Z.ToString() },
+                _tileArray
             });
         }
 

@@ -1,17 +1,17 @@
 import MapSegmentRenderer from "../Graphics/Renderers/MapSegmentRenderer";
 import ChannelSocket, { ChannelMessage } from "../Utility/ChannelSocket";
-import GameContent from "./Content/GameContent";
 import TimedEvent from "../Utility/TimingEvent";
 import FrameDispatcher from "../Utility/FrameDispatcher";
 import { Rectangle } from "../Utility/Shapes";
 import * as Map from "./World/Map";
+import AppContent from "../Content/AppContent";
 
 /**
  * Loads components and handles document events (input, resizing).
  * */
 export default class MainFrame {
 	private _gl: WebGLRenderingContext;
-	private _content: GameContent;
+	private _content: AppContent;
 	private _frameDispatcher: FrameDispatcher;
 	private _segmentRenderer: MapSegmentRenderer;
 
@@ -23,7 +23,7 @@ export default class MainFrame {
 			throw new TypeError("GL context is undefined.");
 		this._gl = gl;
 
-		this._content = new GameContent(gl, onLoad);
+		this._content = new AppContent(gl, onLoad);
 		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
 		this._segmentRenderer = new MapSegmentRenderer(this);
 		
@@ -49,10 +49,10 @@ export default class MainFrame {
 				return;
 
 			case ServerMessageCode.Segment:
-				const pos = new Map.SegmentPosition(message.body.segment);
-				const tiles = new Uint16Array(message.body.tiles);
-				const seg = new Map.Segment(pos, tiles);
-				this._segmentRenderer.segments.set(seg, pos);
+				const position = new Map.SegmentPosition(message.body[0]);
+				const tiles = new Uint16Array(message.body[1]);
+				const segment = new Map.Segment(position, tiles);
+				this._segmentRenderer.segments.set(segment, position);
 				break;
 		}
 		console.log("%c" + message.code.name, "color: pink", message.body);

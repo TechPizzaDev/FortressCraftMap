@@ -65,6 +65,10 @@ namespace TechPizza.WebMap
         private void StartHttp()
         {
             _httpHost = new HttpHost("Public", 1338);
+            _httpHost.LogOutput = (data, str) =>
+            {
+                LogWarning(data);
+            };
             _httpHost.Start();
 
             Log("Listening for requests on port " + _httpHost.Port);

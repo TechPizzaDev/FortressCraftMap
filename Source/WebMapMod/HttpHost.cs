@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using WebSocketSharp;
 using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
@@ -11,6 +13,12 @@ namespace TechPizza.WebMap
         private HttpServer _server;
 
         public int Port { get { return _server.Port; } }
+
+        public Action<LogData, string> LogOutput
+        {
+            get { return _server.Log.Output; }
+            set { _server.Log.Output = value; }
+        }
 
         public HttpHost(string wwwRoot, int port)
         {
