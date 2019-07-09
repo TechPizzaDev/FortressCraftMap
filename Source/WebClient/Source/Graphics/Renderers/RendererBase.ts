@@ -1,9 +1,10 @@
 import TimedEvent from "../../Utility/TimingEvent";
 import { Rectangle } from "../../Utility/Shapes";
 import GLResource from "../GLResource";
+import * as Content from "../../Namespaces/Content";
 
 /**
- * The base for various GL renderers.
+ * The base for various renderers.
  * */
 export default abstract class RendererBase extends GLResource {
 
@@ -16,13 +17,19 @@ export default abstract class RendererBase extends GLResource {
 	}
 
 	/**
+	 * Used to prepare data needed for rendering.
+	 * @param content The manager used to get loaded content.
+	 */
+	public abstract prepare(content: Content.Manager): void;
+
+	/**
 	 * Called every time the viewport is changed.
 	 * @param rectangle The new viewport.
 	 */
 	public abstract onViewportChanged(rectangle: Rectangle): void;
 
 	/**
-	 * C
+	 * Called for every frame. Not called if the browser tab is not visible.
 	 * @param time The timing information for the current frame.
 	 */
 	public abstract draw(time: TimedEvent): void;

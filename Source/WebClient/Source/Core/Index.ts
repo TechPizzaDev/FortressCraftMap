@@ -11,6 +11,7 @@ if (canvas instanceof HTMLCanvasElement) {
 		glContext.blendFunc(glContext.SRC_ALPHA, glContext.ONE_MINUS_SRC_ALPHA);
 
 		const frame = new MainFrame(glContext, () => {
+			canvas.classList.add("fadein");
 			frame.run();
 		});
 	}

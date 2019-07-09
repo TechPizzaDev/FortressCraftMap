@@ -7,6 +7,31 @@ export class Common {
 		array.length = 0;
 	}
 
+	public static copyArrayTo(source: any[], destination: any[]) {
+		for (let i = 0; i < source.length; i++)
+			destination.push(source[i]);
+	}
+
+	/**
+	 * Overwrites values in the destination map with values from the source map.
+	 * @param source
+	 * @param destination
+	 */
+	public static copyMapTo<TKey, TValue>(source: Map<TKey, TValue>, destination: Map<TKey, TValue>) {
+		for (const pair of source)
+			destination.set(pair[0], pair[1]);
+	}
+
+	public static makeArrayUnique<T>(array: T[], comparison: (source: T, comparand: T) => boolean) {
+		for (let i = 0; i < array.length; i++) {
+			const sourceValue = array[i];
+			for (let j = i + 1; j < array.length; j++) {
+				if (comparison(sourceValue, array[j]))
+					array.splice(j--, 1);
+			}
+		}
+	}
+
 	public static bytesToReadable(count: number): string {
 		if (Math.abs(count) < 1024)
 			return count + ' B';

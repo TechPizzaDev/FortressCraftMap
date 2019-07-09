@@ -32,6 +32,20 @@ export class Manager extends GLResource {
 		return this._resources.get(name);
 	}
 
+	public getShader(name: string): ShaderProgram {
+		const resource = this.get(`${Content.ShaderPath}/${name}`);
+		if (resource instanceof ShaderProgram)
+			return resource;
+		throw new Error(`Could not find shader program named '${name}'.`);
+	}
+
+	public getTexture2D(name: string): Texture2D {
+		const resource = this.get(`${Content.getRootPath(Content.Type.Texture)}/${name}`);
+		if (resource instanceof Texture2D)
+			return resource;
+		throw new Error(`Could not find texture named '${name}'.`);
+	}
+
 	/**
 	 * Downloads given content list to this manager.
 	 * @param list The list to download.
@@ -74,33 +88,38 @@ export class Manager extends GLResource {
 		// find the shader pairs by vertex shader name
 		for (const [vertexUri, vertexShader] of vertexShaders) {
 			const vertexName = Manager.getShaderName(vertexUri, ShaderType.Vertex);
-			const fragmentShader = Manager.findShader(vertexName, ShaderType.Fragment, fragmentShaders);
+			const fragShaderPair = Manager.findShader(vertexName, ShaderType.Fragment, fragmentShaders);
 
 			const program = new ShaderProgram(this.glContext);
-			program.link(vertexShader, fragmentShader);
-
-			console.log(vertexName, program);
+			program.link(vertexShader, fragShaderPair[1]);
+			
+			this._resources.delete(vertexUri);
+			this._resources.delete(fragShaderPair[0]);
+			this._resources.set(`${Content.ShaderPath}/${vertexName}`, program);
 		}
 	}
 
-	private static findShader(name: string, type: ShaderType, map: ResourceMap<Shader>): Shader {
-		for (const [shaderUri, shader] of map) {
-			if (shader.type == type && Manager.getShaderName(shaderUri, type) == name)
-				return shader;
+	private static findShader(
+		name: string,
+		type: ShaderType,
+		map: ResourceMap<Shader>
+	): [string, Shader] {
+		for (const pair of map) {
+			if (pair[1].type == type && Manager.getShaderName(pair[0], type) == name)
+				return pair;
 		}
 		throw new Error(`Failed to find ${type.toLowerCase()} shader '${name}'.`);
 	}
 
 	public static getShaderName(uri: string, type: ShaderType): string {
 		const root = type == ShaderType.Vertex
-			? Content.getPath(Content.Type.VertexShader)
-			: Content.getPath(Content.Type.FragmentShader);
+			? Content.getRootPath(Content.Type.VertexShader)
+			: Content.getRootPath(Content.Type.FragmentShader);
 		return Manager.getResourceName(uri, root);
 	}
 
 	public static getResourceName(uri: string, root: string) {
-		const nameWithExtension = uri.substring(root.length + 1);
-		return Common.changeExtension(nameWithExtension, null);
+		return uri.substring(root.length + 1);
 	}
 
 	private static filterShaderDescriptions(
@@ -146,7 +165,11 @@ export class Manager extends GLResource {
 
 		// check state as decode may take a while
 		this.assertNotDisposed();
-		this._resources.set(uri, resource);
+
+		 // we don't want extensions to be a part of resource names
+		const resourceUri = Common.changeExtension(uri, null);
+
+		this._resources.set(resourceUri, resource);
 	}
 
 	private async decodeTexture(data: ImageBitmapSource) {

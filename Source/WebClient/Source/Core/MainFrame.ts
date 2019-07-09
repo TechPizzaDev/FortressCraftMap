@@ -3,8 +3,9 @@ import ChannelSocket, { ChannelMessage } from "../Utility/ChannelSocket";
 import TimedEvent from "../Utility/TimingEvent";
 import FrameDispatcher from "../Utility/FrameDispatcher";
 import { Rectangle } from "../Utility/Shapes";
-import * as Map from "./World/Map";
 import AppContent from "../Content/AppContent";
+import * as Map from "./World/Map";
+import * as Content from "../Namespaces/Content";
 
 /**
  * Loads components and handles document events (input, resizing).
@@ -18,12 +19,32 @@ export default class MainFrame {
 	// move networking into a NetworkManager class
 	private _mapChannel: ChannelSocket;
 
-	constructor(gl: WebGLRenderingContext, onLoad?: () => void) {
+	constructor(gl: WebGLRenderingContext, onLoad?: Content.LoadCallback) {
 		if (gl == null)
 			throw new TypeError("GL context is undefined.");
 		this._gl = gl;
 
-		this._content = new AppContent(gl, onLoad);
+		const loadCallback = (manager: Content.Manager) => {
+			let prepareErrored = false;
+			try {
+				this._segmentRenderer.prepare(manager);
+			}
+			catch (e) {
+				prepareErrored = true;
+				console.error("Failed to prepare renderers:\n", e);
+			}
+
+			if (!prepareErrored) {
+				if (onLoad)
+					onLoad(manager);
+			}
+			else {
+				// TODO: add some kind of error message for the user
+				throw new Error("Prepare Errored (TODO: Add an error message box for the user)");
+			}
+		};
+
+		this._content = new AppContent(gl, loadCallback);
 		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
 		this._segmentRenderer = new MapSegmentRenderer(this);
 		
@@ -35,6 +56,10 @@ export default class MainFrame {
 
 	public get glContext(): WebGLRenderingContext {
 		return this._gl;
+	}
+
+	public get content(): AppContent {
+		return this._content;
 	}
 
 	private onMapChannelReady = (ev: Event) => {
@@ -84,6 +109,9 @@ export default class MainFrame {
 			0, 0,
 			Math.floor(window.innerWidth * window.devicePixelRatio),
 			Math.floor(window.innerHeight * window.devicePixelRatio));
+
+		this.glContext.canvas.width = viewport.width;
+		this.glContext.canvas.height = viewport.height;
 
 		this._segmentRenderer.onViewportChanged(viewport);
 	}

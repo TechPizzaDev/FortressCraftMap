@@ -89,12 +89,13 @@ export class List {
 					request.onprogress = (ev: ProgressEvent) => {
 						const loadDiff = ev.loaded - state.lastLoaded;
 						state.lastLoaded = ev.loaded;
+						status.totalBytesDownloaded += loadDiff;
 
 						if (ev.lengthComputable) {
 							state.hasLength = true;
 							status.percentage += loadDiff / ev.total * progressMul;
 						}
-						status.totalBytesDownloaded += loadDiff;
+
 						reportProgress();
 					};
 				};
@@ -103,10 +104,11 @@ export class List {
 				const onFinish = (result: Web.HttpResponse) => {
 					if (!state.hasLength)
 						status.percentage += progressMul;
-					reportProgress();
 
 					if (onDownload)
 						onDownload(state.uri, result);
+
+					reportProgress();
 				};
 
 				const onSuccess = (result: Web.HttpResponse) => {

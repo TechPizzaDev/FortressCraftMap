@@ -11,30 +11,44 @@ export default class AppContent {
 	 * Constructs the app content.
 	 * @param gl The GL context used for constructing GL resources.
 	 */
-	constructor(gl: WebGLRenderingContext, onLoad?: () => void) {
+	constructor(gl: WebGLRenderingContext, onLoad?: Content.LoadCallback) {
 		this._manager = new Content.Manager(gl);
 
 		this.initializeContentList();
 		this.downloadContent().then(() => {
-
 			this._manager.linkShaderPairs();
 
-			if (onLoad)
-				onLoad();
+			try {
+				if (onLoad)
+					onLoad(this._manager);
+			}
+			catch (e) {
+				console.error("'onLoad' callback threw an error:\n", e);
+			}
 
 		}).catch((reason) => {
 			console.error("Failed to load content:\n", reason)
 		});
 	}
 
+	public get manager(): Content.Manager {
+		return this._manager;
+	}
+
 	private initializeContentList() {
 		this._list = new Content.List();
 
-		for(const texture of ContentRegistry.textures)
-			this.pushTexture(texture);
+		for (const texture of ContentRegistry.textures) {
+			const tDesc = Content.getDescription(Content.Type.Texture);
+			this._list.push(`${tDesc.path}/${texture}${tDesc.extension}`);
+		}
 
-		for (const shader of ContentRegistry.shaders)
-			this.pushShader(shader);
+		for (const shader of ContentRegistry.shaders) {
+			const vsDesc = Content.getDescription(Content.Type.VertexShader);
+			const fsDesc = Content.getDescription(Content.Type.FragmentShader);
+			this._list.push(`${vsDesc.path}/${shader}${vsDesc.extension}`);
+			this._list.push(`${fsDesc.path}/${shader}${fsDesc.extension}`);
+		}
 	}
 
 	private async downloadContent(onLoad?: () => void) {
@@ -65,17 +79,5 @@ export default class AppContent {
 
 		// for browsers that don't support transitionend
 		window.setTimeout(() => loader.remove(), 1000);
-	}
-
-	private pushShader(name: string) {
-		const vsDesc = Content.getDescription(Content.Type.VertexShader);
-		const fsDesc = Content.getDescription(Content.Type.FragmentShader);
-		this._list.push(`${vsDesc.path}/${name}${vsDesc.extension}`);
-		this._list.push(`${fsDesc.path}/${name}${fsDesc.extension}`);
-	}
-
-	private pushTexture(name: string) {
-		const tDesc = Content.getDescription(Content.Type.Texture);
-		this._list.push(`${tDesc.path}/${name}${tDesc.extension}`);
 	}
 }

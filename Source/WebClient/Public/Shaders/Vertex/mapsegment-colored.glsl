@@ -1,12 +1,12 @@
 
-attribute vec2 aVertexPosition;
+attribute vec2 aPosition;
 attribute vec3 aColor;
-
-uniform mat4 uModelViewProjection;
 
 varying vec3 vColor;
 
+uniform mat4 uModelViewProjection;
+
 void main() {
-	gl_Position = uModelViewProjection * vec4(aVertexPosition.x, aVertexPosition.y, -1.0, 1.0);
+	gl_Position = uModelViewProjection * vec4(aPosition.x, aPosition.y, -1.0, 1.0);
 	vColor = aColor;
 }

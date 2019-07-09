@@ -31,6 +31,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility", "Utility", "{1D3063F4-E788-4911-8E21-C4A6A1821175}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Utility\ChannelSocket.ts = WebClient\Source\Utility\ChannelSocket.ts
+		WebClient\Source\Utility\Disposable.ts = WebClient\Source\Utility\Disposable.ts
 		WebClient\Source\Utility\EventEmitter.ts = WebClient\Source\Utility\EventEmitter.ts
 		WebClient\Source\Utility\FrameDispatcher.ts = WebClient\Source\Utility\FrameDispatcher.ts
 		WebClient\Source\Utility\Mathx.ts = WebClient\Source\Utility\Mathx.ts
@@ -42,6 +43,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Graphics", "Graphics", "{47
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Graphics\GLHelper.ts = WebClient\Source\Graphics\GLHelper.ts
 		WebClient\Source\Graphics\GLResource.ts = WebClient\Source\Graphics\GLResource.ts
+		WebClient\Source\Graphics\QuadGenerator.ts = WebClient\Source\Graphics\QuadGenerator.ts
 		WebClient\Source\Graphics\Texture2D.ts = WebClient\Source\Graphics\Texture2D.ts
 	EndProjectSection
 EndProject
@@ -70,7 +72,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{6955
 		WebClient\Source\Graphics\Shaders\ShaderDescription.ts = WebClient\Source\Graphics\Shaders\ShaderDescription.ts
 		WebClient\Source\Graphics\Shaders\ShaderProgram.ts = WebClient\Source\Graphics\Shaders\ShaderProgram.ts
 		WebClient\Source\Graphics\Shaders\ShaderType.ts = WebClient\Source\Graphics\Shaders\ShaderType.ts
-		WebClient\Source\Graphics\Shaders\VertexShaderDescription.ts = WebClient\Source\Graphics\Shaders\VertexShaderDescription.ts
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketServer", "WebMapMod\WebSocketServer.csproj", "{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}"
@@ -108,6 +109,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{DD561571-8B92-4F07-B7FE-08DDE3902A92}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Content\AppContent.ts = WebClient\Source\Content\AppContent.ts
+		WebClient\Source\Content\ContentFunctions.ts = WebClient\Source\Content\ContentFunctions.ts
+		WebClient\Source\Content\ContentInterfaces.ts = WebClient\Source\Content\ContentInterfaces.ts
 		WebClient\Source\Content\ContentList.ts = WebClient\Source\Content\ContentList.ts
 		WebClient\Source\Content\ContentManager.ts = WebClient\Source\Content\ContentManager.ts
 		WebClient\Source\Content\ContentRegistry.ts = WebClient\Source\Content\ContentRegistry.ts
