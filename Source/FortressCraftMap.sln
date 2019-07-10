@@ -16,6 +16,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Public", "Public", "{FA54B345-910C-4CBF-AE63-4A6A503BD00E}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Public\favicon.png = WebClient\Public\favicon.png
+		WebClient\Public\fullscreen-icon.png = WebClient\Public\fullscreen-icon.png
 		WebClient\Public\Index.html = WebClient\Public\Index.html
 	EndProjectSection
 EndProject
@@ -103,6 +104,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helper", "Helper", "{8ABD6A
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Style", "Style", "{4E623EE2-E826-4563-9D2F-F2B7772E4E7B}"
 	ProjectSection(SolutionItems) = preProject
+		WebClient\Public\Style\Index.css = WebClient\Public\Style\Index.css
 		WebClient\Public\Style\Initial-Loader.css = WebClient\Public\Style\Initial-Loader.css
 	EndProjectSection
 EndProject

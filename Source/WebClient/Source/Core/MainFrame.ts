@@ -88,7 +88,8 @@ export default class MainFrame {
 	 * */
 	public run() {
 		this.onWindowResize();
-		window.addEventListener("resize", this.onWindowResize);
+		window.addEventListener("resize", this.onWindowResize, false);
+		window.addEventListener("orientationchange", this.onWindowResize, false);
 
 		this._frameDispatcher.run();
 	}
@@ -105,10 +106,12 @@ export default class MainFrame {
 	 * The event triggered by a window resize. Use this to update viewports.
 	 * */
 	private onWindowResize = () => {
+		let dpr = window.devicePixelRatio || 1;
+
 		const viewport = new Rectangle(
 			0, 0,
-			Math.floor(window.innerWidth * window.devicePixelRatio),
-			Math.floor(window.innerHeight * window.devicePixelRatio));
+			Math.floor(window.innerWidth * dpr),
+			Math.floor(window.innerHeight * dpr));
 
 		this.glContext.canvas.width = viewport.width;
 		this.glContext.canvas.height = viewport.height;
@@ -116,7 +119,3 @@ export default class MainFrame {
 		this._segmentRenderer.onViewportChanged(viewport);
 	}
 }
-
-// this should run in a Worker
-//class MeshGenerator {
-//}

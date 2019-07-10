@@ -75,7 +75,7 @@ export default class AppContent {
 
 		const loader = document.getElementById("initial-loader");
 		loader.addEventListener("transitionend", () => loader.remove(), false);
-		loader.classList.add("fadeaway");
+		loader.classList.add("hidden");
 
 		// for browsers that don't support transitionend
 		window.setTimeout(() => loader.remove(), 1000);
