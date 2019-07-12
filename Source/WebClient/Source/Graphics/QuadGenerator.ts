@@ -8,7 +8,7 @@ export interface QuadData {
 
 export default class QuadGenerator {
 
-	public static generatePlane(width: number, height: number, quadSize: number): QuadData {
+	public static generatePlane(width: number, height: number, quadSize: number = 1): QuadData {
 		const quads = width * height;
 		const vertices = new Float32Array(quads * 4 * 2);
 		const indices = new Uint16Array(quads * 6);

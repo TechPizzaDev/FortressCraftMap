@@ -64,23 +64,28 @@ export default class MainFrame {
 
 	private onMapChannelReady = (ev: Event) => {
 
-		this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, 2]);
+		for (let z = 0; z < 40; z++) {
+			for (let x = 0; x < 40; x++) {
+				this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [x - 22, z - 22]);
+			}
+		}
 	}
 
 	private onMapChannelMessage = (message: ChannelMessage) => {
 		switch (message.code.number) {
 			case ServerMessageCode.BlockOrder:
 			case ServerMessageCode.BlockOrders:
-				return;
+				// TODO FIXME
+				break;
 
 			case ServerMessageCode.Segment:
 				const position = new Map.SegmentPosition(message.body[0]);
 				const tiles = new Uint16Array(message.body[1]);
-				const segment = new Map.Segment(position, tiles);
+				const segment = new Map.Segment(this.glContext, position, tiles);
 				this._segmentRenderer.segments.set(segment, position);
 				break;
 		}
-		console.log("%c" + message.code.name, "color: pink", message.body);
+		//console.log("%c" + message.code.name, "color: pink", message.body);
 	}
 
 	/**
@@ -106,8 +111,7 @@ export default class MainFrame {
 	 * The event triggered by a window resize. Use this to update viewports.
 	 * */
 	private onWindowResize = () => {
-		let dpr = window.devicePixelRatio || 1;
-
+		const dpr = window.devicePixelRatio || 1;
 		const viewport = new Rectangle(
 			0, 0,
 			Math.floor(window.innerWidth * dpr),

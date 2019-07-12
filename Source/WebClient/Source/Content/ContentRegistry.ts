@@ -2,12 +2,16 @@
 export default class ContentRegistry {
 
 	public static readonly textures = [
-		"TB_diffuse_64"
+		"TerrainTexture"
 	];
 
 	public static readonly shaders = [
 		"mapsegment-colored",
 		"mapsegment-textured"
+	];
+
+	public static readonly binaryData = [
+		"TerrainData"
 	];
 
 }

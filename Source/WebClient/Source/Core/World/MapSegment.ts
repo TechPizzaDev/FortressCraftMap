@@ -1,22 +1,43 @@
-type BigNumber = number | bigint;
-
-import Mathx from "../../Utility/Mathx";
 import Constants from "../Constants";
+import { mat4, vec3 } from "gl-matrix";
+import GLResource from "../../Graphics/GLResource";
 
 /**
  * Data container for a 2D map segment.
  * */
-export class Segment {
+export class Segment extends GLResource {
 
 	public static readonly size = Constants.segmentSize;
 
-	private _tiles: Uint16Array;
+	private _texCoordBuffer: WebGLBuffer;
 
+	public readonly tiles: Uint16Array;
 	public readonly position: SegmentPosition;
+	public readonly matrix: mat4;
 
-	constructor(position: SegmentPosition, tiles: Uint16Array) {
-		this._tiles = tiles;
+	public hasTexCoords: boolean;
+
+	constructor(gl: WebGLRenderingContext, position: SegmentPosition, tiles: Uint16Array) {
+		super(gl);
+		this._texCoordBuffer = gl.createBuffer();
+
+		this.tiles = tiles;
 		this.position = position;
+		this.matrix = mat4.create();
+
+		mat4.translate(this.matrix, this.matrix, vec3.fromValues(
+			this.position.x * Segment.size, this.position.z * Segment.size, 0));
+
+		this.hasTexCoords = false;
+	}
+
+	public get texCoordBuffer(): WebGLBuffer {
+		this.assertNotDisposed();
+		return this._texCoordBuffer;
+	}
+
+	protected destroy() {
+		this._texCoordBuffer = null;
 	}
 }
 
@@ -25,34 +46,32 @@ export class Segment {
  * */
 export class SegmentPosition {
 
-	public static readonly baseOffset = Constants.segmentBaseOffset;
-
 	/** The x coordinate of the segment (minus default base offset).*/
-	public readonly x: bigint;
+	public readonly x: number;
 
 	/** The y coordinate of the segment (minus default base offset).*/
-	public readonly y: bigint;
+	public readonly y: number;
 
 	/** The z coordinate of the segment (minus default base offset).*/
-	public readonly z: bigint;
+	public readonly z: number;
 
 	/**
 	 * Constructs the position from non-offsetted coordinates.
-	 * @param x Can be a BigNumber or Array. An Array needs to contain at least 3 elements.
-	 * @param y May not be null if x is a BigNumber.
-	 * @param z May not be null if x is a BigNumber.
+	 * @param x Can be a number or Array. An Array needs to contain at least 2 elements.
+	 * @param y May not be null if x is a number.
+	 * @param z May not be null if x is a number.
 	 */
-	constructor(x: BigNumber | BigNumber[], y?: BigNumber, z?: BigNumber) {
+	constructor(x: number | number[], y?: number, z?: number) {
 		if (x instanceof Array) {
 			if (x.length == 3) {
-				this.x = Mathx.toBigInt(x[0]);
-				this.y = Mathx.toBigInt(x[1]);
-				this.z = Mathx.toBigInt(x[2]);
+				this.x = x[0];
+				this.y = x[1];
+				this.z = x[2];
 			}
 			else if (x.length == 2) {
-				this.x = Mathx.toBigInt(x[0]);
-				this.z = Mathx.toBigInt(x[1]);
-				this.y = BigInt(0);
+				this.x = x[0];
+				this.z = x[1];
+				this.y = 0;
 			}
 			else
 				throw new SyntaxError("The 'x' Array may only contain 2 or 3 elements.");
@@ -62,20 +81,10 @@ export class SegmentPosition {
 				throw new SyntaxError("'y' and 'z' may not be null if 'x' is not an Array.");
 			}
 			else {
-				this.x = Mathx.toBigInt(x);
-				this.y = Mathx.toBigInt(y);
-				this.z = Mathx.toBigInt(z);
+				this.x = x;
+				this.y = y;
+				this.z = z;
 			}
 		}
-	}
-
-	/**
-	 * Constructs the position from offsetted coordinates.
-	 */
-	public static fromOffseted(baseX: BigNumber, baseY: BigNumber, baseZ: BigNumber) {
-		baseX = Mathx.toBigInt(baseX) - SegmentPosition.baseOffset;
-		baseY = Mathx.toBigInt(baseY) - SegmentPosition.baseOffset;
-		baseZ = Mathx.toBigInt(baseZ) - SegmentPosition.baseOffset;
-		return new SegmentPosition(baseX, baseY, baseZ);
 	}
 }

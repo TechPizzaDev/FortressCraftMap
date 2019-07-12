@@ -1,17 +1,16 @@
 import Mathx from "../../Utility/Mathx";
 import { Segment, SegmentPosition } from "./Map";
 
-type BigNumber = number | bigint;
-type BigNumberOrPosition = BigNumber | SegmentPosition;
+type NumberOrPosition = number | SegmentPosition;
 
 /** Row containing segments indexed by their X coordinate. */
-type Row = Map<bigint, Segment>;
+type Row = Map<number, Segment>;
 
 /**
  * Collection optimized for storing segments in rows.
  * */
 export class SegmentCollection {
-	private _rows: Map<bigint, Row>;
+	private _rows: Map<number, Row>;
 	private _version: number;
 
 	// iterators can apparently have keys deleted and still continue iterating
@@ -27,13 +26,17 @@ export class SegmentCollection {
 	}
 
 	constructor() {
-		this._rows = new Map<bigint, Row>();
+		this._rows = new Map<number, Row>();
 		this._version = 0;
 	}
 
-	public has(x: BigNumberOrPosition, z: BigNumber): boolean {
-		const callback = (xx: bigint, zz: bigint): boolean => {
-			let row = this.getRowInternal(zz);
+	public rows(): IterableIterator<[number, Row]> {
+		return this._rows.entries();
+	}
+
+	public has(x: NumberOrPosition, z: number): boolean {
+		const callback = (xx: number, zz: number): boolean => {
+			let row = this.getRow(zz);
 			if (!row)
 				return false;
 			return row.has(xx);
@@ -41,9 +44,9 @@ export class SegmentCollection {
 		return SegmentCollection.validateCoords(callback, x, z);
 	}
 
-	public get(x: BigNumberOrPosition, z?: BigNumber): Segment {
-		const callback = (xx: bigint, zz: bigint): Segment => {
-			let row = this.getRowInternal(zz);
+	public get(x: NumberOrPosition, z?: number): Segment {
+		const callback = (xx: number, zz: number): Segment => {
+			let row = this.getRow(zz);
 			if (!row)
 				return null;
 			return row.get(xx);
@@ -51,11 +54,11 @@ export class SegmentCollection {
 		return SegmentCollection.validateCoords(callback, x, z);
 	}
 
-	public set(segment: Segment, x: BigNumberOrPosition, z?: BigNumber) {
-		const callback = (xx: bigint, zz: bigint) => {
-			let row = this.getRowInternal(zz);
+	public set(segment: Segment, x: NumberOrPosition, z?: number) {
+		const callback = (xx: number, zz: number) => {
+			let row = this.getRow(zz);
 			if (!row) {
-				row = new Map<bigint, Segment>();
+				row = new Map<number, Segment>();
 				this._rows.set(zz, row);
 			}
 			row.set(xx, segment);
@@ -64,9 +67,9 @@ export class SegmentCollection {
 		return SegmentCollection.validateCoords(callback, x, z);
 	}
 
-	public delete(x: BigNumberOrPosition, z?: BigNumber): boolean {
-		const callback = (xx: bigint, zz: bigint) => {
-			let row = this.getRowInternal(zz);
+	public delete(x: NumberOrPosition, z?: number): boolean {
+		const callback = (xx: number, zz: number) => {
+			let row = this.getRow(zz);
 			if (row && row.delete(xx)) {
 				this._version++;
 				return true;
@@ -86,28 +89,23 @@ export class SegmentCollection {
 
 	/**
 	 * Helper for type-checking/validating the coordinates.
-	 * @param x The X coordinate or a MapSegmentPosition. 
-	 * @param z The Z coordinate. May not be null if 'x' is not a MapSegmentPosition.
+	 * @param x The X coordinate or a SegmentPosition.
+	 * @param z The Z coordinate. May not be null if 'x' is not a SegmentPosition.
 	 * @param callback The callback to call with the checked coordinates.
 	 */
 	private static validateCoords<TResult>(
-		callback: (x: bigint, z: bigint) => TResult,
-		x: BigNumberOrPosition,
-		z?: BigNumber): TResult {
+		callback: (x: number, z: number) => TResult,
+		x: NumberOrPosition,
+		z?: number): TResult {
 		if (x instanceof SegmentPosition)
 			return callback(x.x, x.z);
 		else if (z != null)
-			return callback(Mathx.toBigInt(x), Mathx.toBigInt(z));
+			return callback(x, z);
 		else
-			throw new SyntaxError("'z' cannot be null if 'x' is not a MapSegmentPosition.");
+			throw new SyntaxError("'z' cannot be null if 'x' is not a SegmentPosition.");
 	}
 
-	private getRowInternal(z: bigint): Row {
+	public getRow(z: number): Row {
 		return this._rows.get(z);
-	}
-
-	public getRow(z: BigNumber): Row {
-		z = Mathx.toBigInt(z);
-		return this.getRowInternal(z);
 	}
 }

@@ -1,5 +1,5 @@
 import Disposable from "../../Utility/Disposable";
-import ShaderProgram from "./ShaderProgram";
+import ShaderProgram, { ShaderAttribPointer } from "./ShaderProgram";
 import { Common } from "../../Namespaces/Helper";
 
 // these types are ordered the way the are so linting hover-over is well sorted
@@ -44,14 +44,30 @@ export default class ShaderDescription extends Disposable {
 		return this._varyings.values();
 	}
 
-	public getUniform(name: string): WebGLUniformLocation {
+	public getUniformField(name: string): ShaderUniform {
 		this.assertNotDisposed();
-		return this._uniforms.get(name).location;
+		return this._uniforms.get(name);
 	}
 
-	public getAttribute(name: string): GLint {
+	/**
+	 * Returns a cached uniform location.
+	 * @param name The name of the uniform.
+	 */
+	public getUniformLocation(name: string): WebGLUniformLocation {
+		return this.getUniformField(name).location;
+	}
+
+	public getAttributeField(name: string): ShaderAttribute {
 		this.assertNotDisposed();
-		return this._attributes.get(name).location;
+		return this._attributes.get(name);
+	}
+
+	/**
+	 * Returns a cached attribute location.
+	 * @param name The name of the attribute.
+	 */
+	public getAttributeLocation(name: string): GLint {
+		return this.getAttributeField(name).location;
 	}
 
 	protected destroy() {

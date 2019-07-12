@@ -1,0 +1,17 @@
+
+.icon-fullscreen,
+.icon-exitfullscreen {
+	background-image: url(../icons.png);
+}
+
+.icon-fullscreen {
+	width: 48px;
+	height: 48px;
+	background-position: 0px 0px;
+}
+
+.icon-exitfullscreen {
+	width: 48px;
+	height: 48px;
+	background-position: 0px 48px;
+}

@@ -4,7 +4,7 @@ import Texture2D from "../Graphics/Texture2D";
 import Shader from "../Graphics/Shaders/Shader";
 import { Web, Common } from "../Namespaces/Helper";
 import ShaderProgram from "../Graphics/Shaders/ShaderProgram";
-import ShaderDescription from "../Graphics/Shaders/ShaderDescription";
+import * as msgpack5 from "msgpack5";
 
 type ResourceIterator<T> = IterableIterator<[string, T]>;
 type ResourceMap<T> = Array<[string, T]>;
@@ -12,7 +12,8 @@ type ResourceMap<T> = Array<[string, T]>;
 /** Used for easier management of external content. */
 export class Manager extends GLResource {
 
-	private _resources = new Map<string, object>();
+	private _resources = new Map<string, any>();
+	private _msgPack: msgpack5.MessagePack;
 
 	/**
 	 * Constructs the manager.
@@ -20,6 +21,7 @@ export class Manager extends GLResource {
 	 */
 	constructor(gl: WebGLRenderingContext) {
 		super(gl);
+		this._msgPack = msgpack5();
 	}
 
 	public has(name: string): boolean {
@@ -27,7 +29,7 @@ export class Manager extends GLResource {
 		return this._resources.has(name);
 	}
 
-	public get(name: string): object {
+	public get(name: string): any {
 		this.assertNotDisposed();
 		return this._resources.get(name);
 	}
@@ -44,6 +46,13 @@ export class Manager extends GLResource {
 		if (resource instanceof Texture2D)
 			return resource;
 		throw new Error(`Could not find texture named '${name}'.`);
+	}
+
+	public getBinaryData(name: string): any {
+		const resource = this.get(`${Content.getRootPath(Content.Type.BinaryData)}/${name}`);
+		if (resource == null)
+			throw new Error(`Could not find binary data named '${name}'.`);
+		return resource;
 	}
 
 	/**
@@ -122,17 +131,6 @@ export class Manager extends GLResource {
 		return uri.substring(root.length + 1);
 	}
 
-	private static filterShaderDescriptions(
-		map: ResourceIterator<object>
-	): ResourceMap<ShaderDescription> {
-		const descriptions = new Array<[string, ShaderDescription]>();
-		for (const [uri, resource] of map) {
-			if (resource instanceof ShaderDescription)
-				descriptions.push([uri, resource]);
-		}
-		return descriptions;
-	}
-
 	private static filterShaders(
 		map: ResourceIterator<object>,
 		type: ShaderType
@@ -156,6 +154,9 @@ export class Manager extends GLResource {
 
 				case Content.Type.FragmentShader:
 					return this.decodeShader(data, ShaderType.Fragment);
+
+				case Content.Type.BinaryData:
+					return this._msgPack.decode(data);
 
 				default:
 					throw new Error(`Failed to identify resource type from URI '${uri}'.`);

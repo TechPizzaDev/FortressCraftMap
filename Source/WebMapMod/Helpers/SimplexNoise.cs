@@ -19,15 +19,11 @@ namespace TechPizza.WebMap
 
         public int Seed
         {
-            get
-            {
-                return _seed;
-            }
+            get { return _seed; }
             set
             {
                 if (_seed == value)
                     return;
-
                 if (value == 0)
                 {
                     PermOriginal.CopyTo(_perm, 0);

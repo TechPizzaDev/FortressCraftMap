@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Security.Cryptography;
+using UnityEngine;
 
 namespace TechPizza.WebMap
 {
@@ -34,22 +36,18 @@ namespace TechPizza.WebMap
             Debug.Log($"[{ModName}] {value}");
         }
 
-        public static TerrainDataEntry GetTerrainEntryForTexture(ushort cubeType)
+        public static TerrainDataEntry GetTerrainEntryForTexture(TerrainDataEntry entry)
         {
-            TerrainDataEntry terrainDataEntry = TerrainData.mEntries[cubeType];
-            if (terrainDataEntry == null)
-                return null;
-
-            if (terrainDataEntry.isMultiBlockMachine && 
-                terrainDataEntry.PickReplacement != null)
+            if (entry.isMultiBlockMachine && 
+                entry.PickReplacement != null)
             {
-                TerrainDataEntry entry;
-                TerrainDataValueEntry valueEntry;
-                TerrainData.GetCubeByKey(terrainDataEntry.PickReplacement, out entry, out valueEntry);
+                TerrainDataEntry pickEntry;
+                TerrainDataValueEntry pickValueEntry;
+                TerrainData.GetCubeByKey(entry.PickReplacement, out pickEntry, out pickValueEntry);
                 if (entry != null)
                     return entry;
             }
-            return terrainDataEntry;
+            return entry;
         }
 
         public static TerrainUVCoord GetTerrainUVInstance()
@@ -59,14 +57,14 @@ namespace TechPizza.WebMap
             return renderer.segmentUVCoord;
         }
 
-        private Texture2D BlitTerrainTexture()
+        private Texture2D BlitTerrainTexture(float scale)
         {
             var creator = SegmentMeshCreator.instance;
             var segmentTexture = creator.segmentMaterial.mainTexture;
 
-            int copyWidth = segmentTexture.width / 2;
-            int copyHeight = segmentTexture.height / 2;
-
+            int copyWidth = (int)Math.Floor(segmentTexture.width * scale);
+            int copyHeight = (int)Math.Floor(segmentTexture.height * scale);
+            
             var target = RenderTexture.GetTemporary(
                 copyWidth,
                 copyHeight,
@@ -93,6 +91,15 @@ namespace TechPizza.WebMap
             finally
             {
                 RenderTexture.ReleaseTemporary(target);
+            }
+        }
+
+        public static string GetDataETag(byte[] data)
+        {
+            using (var md5 = MD5.Create())
+            {
+                md5.TransformFinalBlock(data, 0, data.Length);
+                return Convert.ToBase64String(md5.Hash);
             }
         }
     }

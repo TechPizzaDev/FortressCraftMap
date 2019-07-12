@@ -32,15 +32,15 @@ function setupFullscreen() {
 
 	const fullscreenButton = document.getElementById("fullscreenButton");
 	if (document.fullscreenEnabled) {
-		const fullscreenIcon = fullscreenButton.firstChild as HTMLImageElement;
+		const fullscreenIcon = fullscreenButton.firstChild as HTMLDivElement;
 		fullscreenButton.addEventListener("click", () => {
 			if (document.fullscreenElement) {
 				document.exitFullscreen();
-				fullscreenIcon.src = "./Icons/fullscreen-icon.png";
+				fullscreenIcon.className = "icon-fullscreen";
 			}
 			else {
 				document.documentElement.requestFullscreen({ navigationUI: "hide" });
-				fullscreenIcon.src = "./Icons/exitfullscreen-icon.png";
+				fullscreenIcon.className = "icon-exitfullscreen";
 			}
 		});
 	}

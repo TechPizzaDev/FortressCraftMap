@@ -44,9 +44,6 @@
     <Reference Include="GameDevWare.Serialization, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\GameDevWare.Serialization.2.4.2\lib\net35\GameDevWare.Serialization.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net35\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -71,8 +68,6 @@
     <Compile Include="Helpers\BufferPool.cs" />
     <Compile Include="Helpers\FileHash.cs" />
     <Compile Include="Helpers\FileHashMap.cs" />
-    <Compile Include="Helpers\JsonExtensions.cs" />
-    <Compile Include="Helpers\JsonHelper.cs" />
     <Compile Include="Helpers\MimeMap.cs" />
     <Compile Include="Helpers\ObjectExtensions.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
@@ -101,6 +96,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)$(OutDir)." "C:\Users\Michal Piatkowski\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\" /S /Y /EXCLUDE:$(ProjectDir)buildexclusions.txt</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(ProjectDir)$(OutDir)." "C:\Users\Michal Piatkowski\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\" /S /Y /EXCLUDE:$(ProjectDir)buildExclusions.txt
+xcopy "$(SolutionDir)\WebClient\Public" "C:\Users\Michal Piatkowski\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\wwwroot\" /S /Y /EXCLUDE:$(ProjectDir)wwwrootExclusions.txt</PostBuildEvent>
   </PropertyGroup>
 </Project>

@@ -8,7 +8,7 @@ namespace TechPizza.WebMap
 {
     public partial class MapSocketBehavior : AttributedWebSocketBehavior
     {
-        private static SimplexNoise _noise = new SimplexNoise(42);
+        private static SimplexNoise _noise = new SimplexNoise(250); // 0 for equality between mono and net35
         private static Random _rng = new Random();
 
         private Timer _tmpBlockOrderTimer;
@@ -46,16 +46,16 @@ namespace TechPizza.WebMap
             }
 
             var segPosition = new MapSegmentPosition(segX, segY);
-            int blockX = (int)segPosition.X * 16;
-            int blockZ = (int)segPosition.Z * 16;
+            int blockX = (int)(segPosition.X + 100) * 16;
+            int blockZ = (int)(segPosition.Z + 100) * 16;
 
             for (int z = 0; z < 16; z++)
             {
                 for (int x = 0; x < 16; x++)
                 {
-                    int index = z * 16 + x;
-                    float noise = _noise.CalcPixel2D(blockX + x, blockZ + z, 0.0075f) / 256f;
-                    _tileArray[index] = (ushort)(noise * 11 + 210);
+                    int index = x + z * 16;
+                    float noise = _noise.CalcPixel2D(blockX + x, blockZ + z, 0.05f) / 256f;
+                    _tileArray[index] = (ushort)(noise > 0.33f ? 680 : 568); // eCubeTypes.AblatedResin : eCubeTypes.HardenedResin;
                 }
             }
 
@@ -64,7 +64,7 @@ namespace TechPizza.WebMap
 
             SendMessage(ServerMessageCode.Segment, new object[] 
             {
-                new[] { segPosition.X.ToString(), segPosition.Z.ToString() },
+                new[] { segPosition.X, segPosition.Z },
                 _tileArray
             });
         }

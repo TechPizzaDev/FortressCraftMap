@@ -21,17 +21,10 @@ body {
 	float: right;
 }
 
-#fullscreenButton img {
-	width: 48px;
-	height: 48px;
+#fullscreenButton div {
 	background-color: rgba(255, 255, 255, 0.6);
 }
 
 .hidden {
 	opacity: 0;
-}
-
-#testt {
-	color: snow;
-	font-size: 80px;
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using Harmony;
 
@@ -15,7 +16,10 @@ namespace TechPizza.WebMap
         private HttpHost _httpHost;
 
         public TerrainUVCoord TerrainUV { get; private set; }
-        public byte[] TerrainPNG { get; private set; }
+        public byte[] TerrainPng { get; private set; }
+        public string TerrainPngETag { get; private set; }
+
+        public const float TerrainTextureScale = 0.5f;
         
         // this is not really needed for the map... yet
         //private void Update()
@@ -51,7 +55,8 @@ namespace TechPizza.WebMap
 
             Log("Preparing data...");
             TerrainUV = GetTerrainUVInstance();
-            TerrainPNG = BlitTerrainTexture().EncodeToPNG();
+            TerrainPng = BlitTerrainTexture(scale: TerrainTextureScale).EncodeToPNG();
+            TerrainPngETag = GetDataETag(TerrainPng);
 
             StartHttp();
 
@@ -64,7 +69,8 @@ namespace TechPizza.WebMap
 
         private void StartHttp()
         {
-            _httpHost = new HttpHost("Public", 1338);
+            string assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            _httpHost = new HttpHost(assemblyDir + "/wwwroot", 1338);
             _httpHost.LogOutput = (data, str) =>
             {
                 LogWarning(data);

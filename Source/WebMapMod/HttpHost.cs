@@ -42,12 +42,12 @@ namespace TechPizza.WebMap
                 url = "/Index.html";
 
 #if !SERVER
-            if (url == "/TerrainData.msgpack")
+            if (url == "/Data/TerrainData.bin")
             {
                 ServeTerrainData(e);
                 return;
             }
-            else if(url == "/TerrainTexture.png")
+            else if(url == "/Textures/TerrainTexture.png")
             {
                 ServeTerrainTexture(e);
                 return;
@@ -65,13 +65,8 @@ namespace TechPizza.WebMap
         {
             var file = new FileInfo(path);
             var hash = _hashMap.GetHash(file);
-
-            e.Response.Headers[HttpResponseHeader.ETag] = hash.Tag;
-            if (e.Request.Headers["If-None-Match"] == hash.Tag)
-            {
-                e.Response.StatusCode = (int)HttpStatusCode.NotModified;
+            if (ValidateETag(e, hash.Tag))
                 return;
-            }
 
             var extension = Path.GetExtension(path);
             e.Response.ContentType = MimeMap.GetMime(extension);
@@ -81,6 +76,17 @@ namespace TechPizza.WebMap
                 e.Response.ContentLength64 = file.Length;
                 fs.CopyTo(e.Response.OutputStream);
             }
+        }
+
+        private bool ValidateETag(HttpRequestEventArgs e, string tag)
+        {
+            e.Response.Headers[HttpResponseHeader.ETag] = tag;
+            if (e.Request.Headers["If-None-Match"] == tag)
+            {
+                e.Response.StatusCode = (int)HttpStatusCode.NotModified;
+                return true;
+            }
+            return false;
         }
 
         private string GetPathInRoot(string path)

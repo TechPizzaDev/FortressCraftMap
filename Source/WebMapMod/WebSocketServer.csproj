@@ -37,9 +37,6 @@
     <Reference Include="GameDevWare.Serialization, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\GameDevWare.Serialization.2.4.2\lib\net35\GameDevWare.Serialization.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net35\Newtonsoft.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -62,7 +59,6 @@
     <Compile Include="Helpers\AttributedWebSocketBehavior\CodeTypeDefinition.cs" />
     <Compile Include="Helpers\AttributedWebSocketBehavior\HandlerCollection.cs" />
     <Compile Include="Helpers\AttributedWebSocketBehavior\MessageHandlerAttribute.cs" />
-    <Compile Include="Helpers\JsonHelper.cs" />
     <Compile Include="Helpers\FileHashMap.cs" />
     <Compile Include="Helpers\FileHash.cs" />
     <Compile Include="Helpers\PathHelper.cs" />
@@ -70,7 +66,6 @@
     <Compile Include="Map\MapSegmentPosition.cs" />
     <Compile Include="Helpers\SimplexNoise.cs" />
     <Compile Include="Helpers\BufferPool.cs" />
-    <Compile Include="Helpers\JsonExtensions.cs" />
     <Compile Include="Helpers\MimeMap.cs" />
     <Compile Include="Map\Point.cs" />
     <Compile Include="Map\Server\MapSocketBehavior.Orders.cs" />

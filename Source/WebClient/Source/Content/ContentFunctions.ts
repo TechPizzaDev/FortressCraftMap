@@ -6,7 +6,8 @@ export const ShaderPath = "/Shaders";
 const Descriptions = new Map<Type, TypeDescription>([
 	[Type.Texture, { path: "/Textures", extension: ".png" }],
 	[Type.VertexShader, { path: `${ShaderPath}/Vertex`, extension: ".glsl" }],
-	[Type.FragmentShader, { path: `${ShaderPath}/Fragment`, extension: ".glsl" }]
+	[Type.FragmentShader, { path: `${ShaderPath}/Fragment`, extension: ".glsl" }],
+	[Type.BinaryData, { path: "/Data", extension: ".bin" }]
 ]);
 
 export function getDescription(type: Type): TypeDescription {
@@ -42,6 +43,9 @@ export function getXHRType(source: Type | string): XMLHttpRequestResponseType {
 	switch (source) {
 		case Type.Texture:
 			return "blob";
+
+		case Type.BinaryData:
+			return "arraybuffer";
 
 		case Type.VertexShader:
 		case Type.FragmentShader:

@@ -49,6 +49,11 @@ export default class AppContent {
 			this._list.push(`${vsDesc.path}/${shader}${vsDesc.extension}`);
 			this._list.push(`${fsDesc.path}/${shader}${fsDesc.extension}`);
 		}
+
+		for (const binData of ContentRegistry.binaryData) {
+			const bdDesc = Content.getDescription(Content.Type.BinaryData);
+			this._list.push(`${bdDesc.path}/${binData}${bdDesc.extension}`);
+		}
 	}
 
 	private async downloadContent(onLoad?: () => void) {
