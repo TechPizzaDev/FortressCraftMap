@@ -1,6 +1,6 @@
-import TimedEvent from "./TimingEvent";
+import TimeEvent from "./TimeEvent";
 
-export type TimedCallback = (time: TimedEvent) => void;
+export type TimedCallback = (time: TimeEvent) => void;
 
 export default class FrameDispatcher {
 	private _update: TimedCallback;
@@ -34,7 +34,7 @@ export default class FrameDispatcher {
 	private animationCallback = (totalTime: number) => {
 		if (this._lastTime) {
 			const delta = (totalTime - this._lastTime) / 1000;
-			const te = new TimedEvent(delta, this._totalTime);
+			const te = new TimeEvent(delta, this._totalTime);
 			this._update(te);
 			this._draw(te);
 			this._totalTime += delta;

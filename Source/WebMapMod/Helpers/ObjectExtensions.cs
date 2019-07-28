@@ -4,7 +4,7 @@ namespace TechPizza.WebMap.Extensions
 {
     public static class ObjectExtensions
     {
-        public static int ToInt32(this object obj)
+        public static int CastToInt32(this object obj)
         {
             if (obj == null)
                 throw new ArgumentNullException(nameof(obj));

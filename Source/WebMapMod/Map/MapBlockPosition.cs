@@ -14,9 +14,14 @@ namespace TechPizza.WebMap
             Z = y;
         }
 
-        public object[] ToObjects()
+        public long[] ToArray()
         {
-            return new object[] { X.ToString(), Z.ToString() };
+            return new long[] { X, Z };
+        }
+
+        public byte[] ToBaseArray()
+        {
+            return new byte[] { (byte)(X % 16), (byte)(Z % 16) };
         }
 
         public override string ToString()

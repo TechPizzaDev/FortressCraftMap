@@ -56,13 +56,4 @@ export class Common {
 
 		throw "not done";
 	}
-
-	public static coordsToSegmentKey(x: number, y: number): string {
-		return x + "," + y;
-	}
-
-	public static segmentKeyToCoords(key: string): number[] {
-		const split = key.split(",");
-		return [parseInt(split[0]), parseInt(split[1])];
-	}
 }

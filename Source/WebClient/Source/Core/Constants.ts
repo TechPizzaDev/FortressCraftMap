@@ -14,7 +14,7 @@ export default class Constants {
 	public static readonly chunkUploadsPerFrame = {
 		default: 32,
 		min: 4,
-		max: 512
+		max: 128
 	};
 
 	public static readonly mapZoom = {

@@ -3,8 +3,11 @@ Simple web map mod for FortressCraft. Client written in TypeScript.
 Using WebGL and WebSocket messaging abstractions for modular client development.  
 
 ### Main Roadmap
-- [ ] Basic rendering (coming very soon)
-- [x] Live data/updates
+- [x] Rendering
+  - [ ] Mesh batching
+  - [ ] Rotatable quads
+  - [ ] Clean multiblocks
+- [ ] Live data/updates (only needs translation from JS to TS)
 - [ ] Game integration
 - [ ] Heightmap shading
 - [ ] Inspecting machines

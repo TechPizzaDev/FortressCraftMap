@@ -1,4 +1,4 @@
-import TimedEvent from "../../Utility/TimingEvent";
+import TimeEvent from "../../Utility/TimeEvent";
 import { Rectangle } from "../../Utility/Shapes";
 import GLResource from "../GLResource";
 import * as Content from "../../Namespaces/Content";
@@ -30,7 +30,7 @@ export default abstract class RendererBase extends GLResource {
 
 	/**
 	 * Called for every frame. Not called if the browser tab is not visible.
-	 * @param time The timing information for the current frame.
+	 * @param time The time information for the current frame.
 	 */
-	public abstract draw(time: TimedEvent): void;
+	public abstract draw(time: TimeEvent): void;
 }

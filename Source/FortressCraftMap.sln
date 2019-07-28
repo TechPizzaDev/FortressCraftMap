@@ -37,14 +37,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility", "Utility", "{1D30
 		WebClient\Source\Utility\FrameDispatcher.ts = WebClient\Source\Utility\FrameDispatcher.ts
 		WebClient\Source\Utility\Mathx.ts = WebClient\Source\Utility\Mathx.ts
 		WebClient\Source\Utility\Shapes.ts = WebClient\Source\Utility\Shapes.ts
-		WebClient\Source\Utility\TimingEvent.ts = WebClient\Source\Utility\TimingEvent.ts
+		WebClient\Source\Utility\TimeEvent.ts = WebClient\Source\Utility\TimeEvent.ts
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Graphics", "Graphics", "{47F6A3EA-BAA5-4E8F-897A-683E9BF1ED1D}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Graphics\GLHelper.ts = WebClient\Source\Graphics\GLHelper.ts
 		WebClient\Source\Graphics\GLResource.ts = WebClient\Source\Graphics\GLResource.ts
-		WebClient\Source\Graphics\QuadGenerator.ts = WebClient\Source\Graphics\QuadGenerator.ts
+		WebClient\Source\Graphics\RenderSegment.ts = WebClient\Source\Graphics\RenderSegment.ts
+		WebClient\Source\Graphics\RenderSegmentCollection.ts = WebClient\Source\Graphics\RenderSegmentCollection.ts
+		WebClient\Source\Graphics\ShapeGenerator.ts = WebClient\Source\Graphics\ShapeGenerator.ts
 		WebClient\Source\Graphics\Texture2D.ts = WebClient\Source\Graphics\Texture2D.ts
 	EndProjectSection
 EndProject
@@ -56,9 +58,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Enums", "Enums", "{1BE9AFC1
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "World", "World", "{A51252D8-3F12-4489-B854-62611DD933AD}"
 	ProjectSection(SolutionItems) = preProject
-		WebClient\Source\Core\World\Map.ts = WebClient\Source\Core\World\Map.ts
 		WebClient\Source\Core\World\MapSegment.ts = WebClient\Source\Core\World\MapSegment.ts
-		WebClient\Source\Core\World\MapSegmentCollection.ts = WebClient\Source\Core\World\MapSegmentCollection.ts
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Renderers", "Renderers", "{9DC8B626-FA2A-4CB6-BE48-AA5EE4536471}"

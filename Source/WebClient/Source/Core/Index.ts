@@ -1,16 +1,29 @@
 import MainFrame from "./MainFrame";
 
-const canvas = document.getElementById("mainCanvas");
+function setup() {
+	const canvasLayer0 = document.getElementById("canvasLayer0");
+	const canvasLayer1 = document.getElementById("canvasLayer1");
 
-if (canvas instanceof HTMLCanvasElement) {
-	const glContext = canvas.getContext("webgl");
-	if (glContext) {
-		console.log("Initialized WebGL1 context.");
+	if (canvasLayer0 instanceof HTMLCanvasElement && canvasLayer1 instanceof HTMLCanvasElement) {
+		const glContext = canvasLayer0.getContext("webgl");
+		if (!glContext) {
+			console.error("Failed to initialize WebGL context.");
+			return;
+		}
 
+		const drawingContext = canvasLayer1.getContext("2d");
+		if (!drawingContext) {
+			console.error("Failed to initialize 2D context.");
+			return;
+		}
+
+		// setup gl context
 		glContext.enable(glContext.BLEND);
 		glContext.blendFunc(glContext.SRC_ALPHA, glContext.ONE_MINUS_SRC_ALPHA);
 
-		const frame = new MainFrame(glContext, () => {
+		console.log("Initialized canvas contexts.");
+
+		const frame = new MainFrame(glContext, drawingContext, () => {
 			setupFullscreen();
 
 			document.getElementById("mainContainer").classList.remove("hidden");
@@ -18,33 +31,39 @@ if (canvas instanceof HTMLCanvasElement) {
 		});
 	}
 	else {
-		console.error("Failed to initialize WebGL context.");
+		console.error("Could not find required canvas layers.");
 	}
-}
-else {
-	console.error("Could not find main canvas element.");
 }
 
 function setupFullscreen() {
+	const fullscreenButton = document.getElementById("fullscreenButton");
+	const fullscreenIcon = fullscreenButton.firstElementChild;
+
+	if (!document.fullscreenEnabled) {
+		fullscreenButton.classList.add("hidden");
+		return;
+	}
+
 	document.addEventListener("fullscreenerror", (ev) => {
 		console.warn("Failed to enter fullscreen:\n", ev);
 	});
 
-	const fullscreenButton = document.getElementById("fullscreenButton");
+	document.addEventListener("fullscreenchange", () => {
+		fullscreenIcon.className = document.fullscreenElement
+			? "icon-exitfullscreen" : "icon-fullscreen";
+	});
+
 	if (document.fullscreenEnabled) {
-		const fullscreenIcon = fullscreenButton.firstChild as HTMLDivElement;
 		fullscreenButton.addEventListener("click", () => {
-			if (document.fullscreenElement) {
+			if (document.fullscreenElement)
 				document.exitFullscreen();
-				fullscreenIcon.className = "icon-fullscreen";
-			}
-			else {
+			else
 				document.documentElement.requestFullscreen({ navigationUI: "hide" });
-				fullscreenIcon.className = "icon-exitfullscreen";
-			}
 		});
 	}
 	else {
 		fullscreenButton.classList.add("hidden");
 	}
 }
+
+setup();

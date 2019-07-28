@@ -1,50 +1,32 @@
 import Constants from "../Constants";
-import { mat4, vec3 } from "gl-matrix";
-import GLResource from "../../Graphics/GLResource";
+import RenderSegment from "../../Graphics/RenderSegment";
+
+export type NumberOrPos = number | MapSegmentPos;
 
 /**
  * Data container for a 2D map segment.
  * */
-export class Segment extends GLResource {
+export default class MapSegment {
 
+	/** The dimensions of a MapSegment. */
 	public static readonly size = Constants.segmentSize;
 
-	private _texCoordBuffer: WebGLBuffer;
+	/** The amount of blocks in a MapSegment. */
+	public static readonly blocks = MapSegment.size * MapSegment.size;
 
+	public readonly position: MapSegmentPos;
 	public readonly tiles: Uint16Array;
-	public readonly position: SegmentPosition;
-	public readonly matrix: mat4;
 
-	public hasTexCoords: boolean;
-
-	constructor(gl: WebGLRenderingContext, position: SegmentPosition, tiles: Uint16Array) {
-		super(gl);
-		this._texCoordBuffer = gl.createBuffer();
-
-		this.tiles = tiles;
+	constructor(position: MapSegmentPos, tiles: Uint16Array) {
 		this.position = position;
-		this.matrix = mat4.create();
-
-		mat4.translate(this.matrix, this.matrix, vec3.fromValues(
-			this.position.x * Segment.size, this.position.z * Segment.size, 0));
-
-		this.hasTexCoords = false;
-	}
-
-	public get texCoordBuffer(): WebGLBuffer {
-		this.assertNotDisposed();
-		return this._texCoordBuffer;
-	}
-
-	protected destroy() {
-		this._texCoordBuffer = null;
+		this.tiles = tiles;
 	}
 }
 
 /**
  * Segment position without the default base offset.
  * */
-export class SegmentPosition {
+export class MapSegmentPos {
 
 	/** The x coordinate of the segment (minus default base offset).*/
 	public readonly x: number;
@@ -54,6 +36,16 @@ export class SegmentPosition {
 
 	/** The z coordinate of the segment (minus default base offset).*/
 	public readonly z: number;
+
+	/** Gets the x coordinate for the corresponding RenderSegment. */
+	public get renderX(): number {
+		return Math.floor(this.x / RenderSegment.size);
+	}
+
+	/** Gets the z coordinate for the corresponding RenderSegment. */
+	public get renderZ(): number {
+		return Math.floor(this.z / RenderSegment.size);
+	}
 
 	/**
 	 * Constructs the position from non-offsetted coordinates.
@@ -86,5 +78,23 @@ export class SegmentPosition {
 				this.z = z;
 			}
 		}
+	}
+
+	/**
+	 * Helper for type-checking coordinates.
+	 * @param x The x coordinate or a MapSegmentPos.
+	 * @param z The z coordinate if 'x' is not a MapSegmentPos.
+	 * @param callback The callback to call with the checked coordinates.
+	 */
+	public static getCoords<TResult>(
+		callback: (x: number, z: number) => TResult,
+		x: NumberOrPos,
+		z?: number): TResult {
+		if (x instanceof MapSegmentPos)
+			return callback(x.x, x.z);
+		else if (z != null)
+			return callback(x, z);
+		else
+			throw new SyntaxError("'z' cannot be null if 'x' is not a SegmentPosition.");
 	}
 }

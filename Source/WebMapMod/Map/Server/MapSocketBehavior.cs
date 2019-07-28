@@ -64,7 +64,7 @@ namespace TechPizza.WebMap
 
             SendMessage(ServerMessageCode.Segment, new object[] 
             {
-                new[] { segPosition.X, segPosition.Z },
+                segPosition.ToArray(),
                 _tileArray
             });
         }

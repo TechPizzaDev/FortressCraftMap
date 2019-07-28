@@ -45,8 +45,8 @@ namespace TechPizza.WebMap
         {
             return new object[]
             {
-                order.Segment.ToObjects(),
-                order.Block.ToObjects(),
+                order.Segment.ToArray(),
+                order.Block.ToArray(),
                 order.Type
             };
         }

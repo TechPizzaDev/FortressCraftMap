@@ -1,15 +1,13 @@
-import Mathx from "../../Utility/Mathx";
-import { Segment, SegmentPosition } from "./Map";
-
-type NumberOrPosition = number | SegmentPosition;
+import RenderSegment from "./RenderSegment";
+import { MapSegmentPos, NumberOrPos } from "../Core/World/MapSegment";
 
 /** Row containing segments indexed by their X coordinate. */
-type Row = Map<number, Segment>;
+type Row = Map<number, RenderSegment>;
 
 /**
- * Collection optimized for storing segments in rows.
+ * Collection used for storing render segments in rows.
  * */
-export class SegmentCollection {
+export default class RenderSegmentCollection {
 	private _rows: Map<number, Row>;
 	private _version: number;
 
@@ -34,40 +32,40 @@ export class SegmentCollection {
 		return this._rows.entries();
 	}
 
-	public has(x: NumberOrPosition, z: number): boolean {
+	public has(x: NumberOrPos, z: number): boolean {
 		const callback = (xx: number, zz: number): boolean => {
 			let row = this.getRow(zz);
 			if (!row)
 				return false;
 			return row.has(xx);
 		}
-		return SegmentCollection.validateCoords(callback, x, z);
+		return RenderSegmentCollection.getInnerCoords(callback, x, z);
 	}
 
-	public get(x: NumberOrPosition, z?: number): Segment {
-		const callback = (xx: number, zz: number): Segment => {
+	public get(x: NumberOrPos, z?: number): RenderSegment {
+		const callback = (xx: number, zz: number): RenderSegment  => {
 			let row = this.getRow(zz);
 			if (!row)
 				return null;
 			return row.get(xx);
 		}
-		return SegmentCollection.validateCoords(callback, x, z);
+		return RenderSegmentCollection.getInnerCoords(callback, x, z);
 	}
 
-	public set(segment: Segment, x: NumberOrPosition, z?: number) {
+	public set(segment: RenderSegment, x: NumberOrPos, z?: number) {
 		const callback = (xx: number, zz: number) => {
 			let row = this.getRow(zz);
 			if (!row) {
-				row = new Map<number, Segment>();
+				row = new Map<number, RenderSegment>();
 				this._rows.set(zz, row);
 			}
 			row.set(xx, segment);
 			this._version++;
 		}
-		return SegmentCollection.validateCoords(callback, x, z);
+		return RenderSegmentCollection.getInnerCoords(callback, x, z);
 	}
 
-	public delete(x: NumberOrPosition, z?: number): boolean {
+	public delete(x: NumberOrPos, z?: number): boolean {
 		const callback = (xx: number, zz: number) => {
 			let row = this.getRow(zz);
 			if (row && row.delete(xx)) {
@@ -76,7 +74,7 @@ export class SegmentCollection {
 			}
 			return false;
 		}
-		return SegmentCollection.validateCoords(callback, x, z);
+		return RenderSegmentCollection.getInnerCoords(callback, x, z);
 	}
 
 	/** Removes empty rows from the collection. */
@@ -87,25 +85,28 @@ export class SegmentCollection {
 		}
 	}
 
-	/**
-	 * Helper for type-checking/validating the coordinates.
-	 * @param x The X coordinate or a SegmentPosition.
-	 * @param z The Z coordinate. May not be null if 'x' is not a SegmentPosition.
-	 * @param callback The callback to call with the checked coordinates.
-	 */
-	private static validateCoords<TResult>(
-		callback: (x: number, z: number) => TResult,
-		x: NumberOrPosition,
-		z?: number): TResult {
-		if (x instanceof SegmentPosition)
-			return callback(x.x, x.z);
-		else if (z != null)
-			return callback(x, z);
-		else
-			throw new SyntaxError("'z' cannot be null if 'x' is not a SegmentPosition.");
-	}
-
 	public getRow(z: number): Row {
 		return this._rows.get(z);
+	}
+
+	/**
+	 * MapSegmentPos' are used as "MapSegment coordinates", use this to narrow down a RenderSegment that contains the wanted MapSegment.
+	 * Numbers are used as "RenderSegment coordinates", use this to get RenderSegments.
+	 * @param callback
+	 * @param x
+	 * @param z
+	 */
+	public static getInnerCoords<TResult>(
+		callback: (x: number, z: number) => TResult,
+		x: NumberOrPos,
+		z?: number): TResult {
+		return MapSegmentPos.getCoords((xx, zz) => {
+			if (x instanceof MapSegmentPos) {
+				return callback(x.renderX, x.renderZ);
+			}
+			else {
+				return callback(xx, zz);
+			}
+		}, x, z);
 	}
 }

@@ -10,9 +10,17 @@
 </head>
 <body>
 	<div id="mainContainer" class="hidden">
-		<canvas id="mainCanvas"></canvas>
+		<div>
+			<canvas id="canvasLayer0" class="renderCanvas"></canvas>
+			<canvas id="canvasLayer1" class="renderCanvas"></canvas>
+		</div>
 
-		<div id="fullscreenButton"><div class="icon-fullscreen"></div></div>
+		<div id="fpsCounter" title="Frames per second">
+			<span></span>
+		</div>
+		<div id="fullscreenButton" title="Fullscreen toggle">
+			<div class="icon-fullscreen"></div>
+		</div>
 	</div>
 
 	<div id="initial-loader">

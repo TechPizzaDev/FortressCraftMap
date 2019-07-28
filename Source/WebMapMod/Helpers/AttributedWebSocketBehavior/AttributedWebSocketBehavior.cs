@@ -292,7 +292,7 @@ namespace TechPizza.WebMap
                 case TypeCode.UInt16:
                 case TypeCode.Int32:
                 {
-                    int code = codeToken.ToInt32();
+                    int code = codeToken.CastToInt32();
                     if (code == -1)
                     {
                         SendError(list, $"Message code '{codeToken}' is reserved.");

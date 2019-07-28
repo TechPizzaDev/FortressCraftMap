@@ -1,8 +1,8 @@
 
 /**
- * Timing information used by frame dispatchers and renderers.
+ * Time information used by frame dispatchers and renderers.
  * */
-export default class TimedEvent {
+export default class TimeEvent {
 
 	/** The amount of seconds elapsed since the last frame. */
 	public delta: number;

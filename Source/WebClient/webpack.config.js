@@ -47,7 +47,7 @@ function getConfigExport() {
 		});
 	else
 		return Object.assign(getBaseCopy(), {
-			devtool: 'source-map',
+			devtool: 'cheap-module-eval-source-map',
 			mode: 'development'
 		});
 }

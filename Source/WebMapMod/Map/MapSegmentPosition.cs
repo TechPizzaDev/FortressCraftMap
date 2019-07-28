@@ -4,10 +4,10 @@ namespace TechPizza.WebMap
     public struct MapSegmentPosition
     {
         public long X;
-        public long? Y;
+        public long Y;
         public long Z;
 
-        public MapSegmentPosition(long x, long? y, long z)
+        public MapSegmentPosition(long x, long y, long z)
         {
             X = x;
             Y = y;
@@ -18,11 +18,9 @@ namespace TechPizza.WebMap
         {
         }
 
-        public object[] ToObjects()
+        public long[] ToArray()
         {
-            if(!Y.HasValue)
-                return new object[] { X.ToString(), Z.ToString() };
-            return new object[] { X.ToString(), Y.Value.ToString(), Z.ToString() };
+            return new long[] { X, Y, Z };
         }
 
         public override string ToString()
