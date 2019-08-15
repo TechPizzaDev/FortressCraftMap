@@ -226,8 +226,8 @@ export default class MapSegmentRenderer extends RendererBase {
 			this._viewport.x, this._viewport.y, this._viewport.width, this._viewport.height);
 
 		this._frame.drawCtx.translate(
-			Math.round(this._viewport.width / 2) + 0.5,
-			Math.round(this._viewport.height / 2) + 0.5);
+			Math.round(this._viewport.width / 2) + 0.5 + this._mapTranslation[0] / this._zoom,
+			Math.round(this._viewport.height / 2) + 0.5 + this._mapTranslation[2] / this._zoom);
 
 		// TODO: currently draws every render segment
 		for (const [, rowMap] of this._renderSegments.rows()) {
@@ -268,7 +268,7 @@ export default class MapSegmentRenderer extends RendererBase {
 
 		const drawing = this._frame.drawCtx;
 		drawing.lineWidth = 1;
-		//
+		
 		//drawing.beginPath();
 		//drawing.strokeStyle = "rgba(0, 255, 0, 1)";
 		//for (let z = 0; z < RenderSegment.size; z++) {
@@ -341,11 +341,11 @@ export default class MapSegmentRenderer extends RendererBase {
 			gl.drawElements(gl.TRIANGLES, renderSegment.genCount * indicesPerSegment, gl.UNSIGNED_SHORT, 0);
 		}
 
-		//drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
-		//drawing.strokeRect(
-		//	renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
-		//	renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
-		//	16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
+		drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
+		drawing.strokeRect(
+			renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
+			renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
+			16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
 	}
 
 	/** Prepares the needed texture and binds the shader program for textured segments. */

@@ -38,13 +38,13 @@ export class MapSegmentPos {
 	public readonly z: number;
 
 	/** Gets the x coordinate for the corresponding RenderSegment. */
-	public get renderX(): number {
-		return Math.floor(this.x / RenderSegment.size);
+	public get rX(): number {
+		return MapSegmentPos.toRenderCoord(this.x);
 	}
 
 	/** Gets the z coordinate for the corresponding RenderSegment. */
-	public get renderZ(): number {
-		return Math.floor(this.z / RenderSegment.size);
+	public get rZ(): number {
+		return MapSegmentPos.toRenderCoord(this.z);
 	}
 
 	/**
@@ -78,6 +78,10 @@ export class MapSegmentPos {
 				this.z = z;
 			}
 		}
+	}
+
+	public static toRenderCoord(coord: number): number {
+		return Math.floor(coord / RenderSegment.size);
 	}
 
 	/**

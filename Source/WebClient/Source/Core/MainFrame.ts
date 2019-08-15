@@ -31,8 +31,8 @@ export default class MainFrame {
 	private _fpsCounter: HTMLDivElement;
 	private _fpsCounterSpan: HTMLSpanElement;
 
-	private static readonly RequestInterval = 1 / 60;
-	private _requestTick = MainFrame.RequestInterval;
+	private static readonly SegmentViewInterval = 1 / 60;
+	private _segmentViewTick = MainFrame.SegmentViewInterval;
 
 	constructor(glCtx: WebGLRenderingContext, drawCtx: CanvasRenderingContext2D, onLoad?: Content.LoadCallback) {
 		if (glCtx == null) throw new TypeError("GL context is undefined.");
@@ -88,7 +88,8 @@ export default class MainFrame {
 
 	private loadCenter = [0, 0];
 	private requestList: number[][] = [];
-	private _segmentMap = new Map<number, Set<number>>(); 
+	private _segmentRequestedMap = new Map<number, Set<number>>();
+	private _segmentLoadedMap = new Map<number, Set<number>>(); 
 
 	private onMapChannelReady = (ev: Event) => {
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -2]);
@@ -109,17 +110,18 @@ export default class MainFrame {
 				const tiles = new Uint16Array(message.body[1] as ArrayLike<number>);
 				const segment = new MapSegment(pos, tiles);
 
-				let renderSegment = this._segmentRenderer.renderSegments.get(pos);
+				let renderSegment = this._segmentRenderer.renderSegments.get(pos.rX, pos.rZ);
 				if (renderSegment == null) {
 					renderSegment = new RenderSegment(this.glCtx, pos);
-					this._segmentRenderer.renderSegments.set(renderSegment, pos);
+					this._segmentRenderer.renderSegments.set(pos.rX, pos.rZ, renderSegment);
 				}
 
 				//console.log(
 				//	"got mesh [" + RenderSegment.createCoordKey(renderSegment.x, renderSegment.z) +
 				//	"] for segment [" + RenderSegment.createCoordKey(pos.x, pos.z) + "]");
 
-				renderSegment.setSegment(segment, pos);
+				renderSegment.setSegment(pos.x, pos.z, segment);
+				this.getCoordMapRow(this._segmentLoadedMap, pos.x, pos.z).add(pos.x);
 				break;
 		}
 		//console.log("%c" + message.code.name, "color: pink", message.body);
@@ -137,39 +139,33 @@ export default class MainFrame {
 	}
 
 	private requestSegmentsInView(time: TimeEvent) {
-		const w = 30; //48;
-		const h = 30; //24;
+		const w = 24; //48;
+		const h = 24; //24;
 		const hw = Math.round(w / 2);
 		const hh = Math.round(h / 2);
 		//const timeout = 2;
 
-		const speedX = 32;
+		const speedX = 40;
 		const speedY = 1;
-		const sizeY = 18;
+		const sizeY = 38;
 
-		const segX = time.total * speedX;
+		const segX = Math.round(time.total * speedX + 0.5) - hw;
+		const segY = Math.round(Math.sin(time.total * speedY) * sizeY + 0.5) - hh;
 
 		this._segmentRenderer._mapTranslation[0] = segX * -16;
-		this.loadCenter[0] = segX;
+		this.loadCenter[0] = segX + hw;
+		this.loadCenter[1] = segY + hh;
 
 		for (let z = 0; z < h; z++) {
 			for (let x = 0; x < w; x++) {
-				const xx = x + Math.round(segX + 0.5);
-				const zz = z + Math.round(Math.sin(time.total * speedY) * sizeY + 0.5);
+				const xx = x + segX;
+				const zz = z + segY;
 
-				let set: Set<number>;
-				if (!this._segmentMap.has(xx)) {
-					set = new Set();
-					this._segmentMap.set(xx, set);
+				const row = this.getCoordMapRow(this._segmentRequestedMap, xx, zz);
+				if (!row.has(xx)) {
+					this.requestList.push([xx, zz]);
+					row.add(xx);
 				}
-				else {
-					set = this._segmentMap.get(xx);
-					if (set.has(zz))
-						continue;
-				}
-
-				this.requestList.push([xx - hw, zz - hh]);
-				set.add(zz);
 
 				//window.setTimeout(() => {
 				//}, (1 + x + z * h) * timeout);
@@ -177,8 +173,45 @@ export default class MainFrame {
 		}
 	}
 
+	private getCoordMapRow(coordMap: Map<number, Set<number>>, x: number, z: number): Set<number> {
+		let row: Set<number>;
+		if (!coordMap.has(z)) {
+			row = new Set();
+			coordMap.set(z, row);
+		}
+		else {
+			row = coordMap.get(z);
+		}
+		return row;
+	}
+
+	private cullSegmentsInView() {
+		const tmpPos = vec2.create();
+		for (const [z, row] of this._segmentLoadedMap) {
+			for (const x of row) {
+				tmpPos[0] = x;
+				tmpPos[1] = z;
+
+				const maxDist = 128;
+				const dist = vec2.sqrDist(tmpPos, this.loadCenter);
+				if (dist > maxDist * maxDist) {
+					const rX = MapSegmentPos.toRenderCoord(x);
+					const rZ = MapSegmentPos.toRenderCoord(z);
+					const renderSeg = this._segmentRenderer.renderSegments.get(rX, rZ);
+					if (renderSeg != null) {
+						renderSeg.setSegment(x, z, null);
+						row.delete(x);
+
+						if (renderSeg.segmentCount == 0)
+							this._segmentRenderer.renderSegments.delete(rX, rZ);
+					}
+				}
+			}
+		}
+	}
+
 	private processSegmentRequestQueue() {
-		let limit = 800;
+		let limit = 64;
 		while (this.requestList.length > 0 && limit > 0) {
 			let index = 0;
 			let lastDist = Number.MAX_VALUE;
@@ -188,7 +221,7 @@ export default class MainFrame {
 				offsetedPos[0] += 0.5;
 				offsetedPos[1] += 0.5;
 
-				const currentDist = vec2.sqrDist(this.loadCenter, offsetedPos);
+				const currentDist = vec2.sqrDist(offsetedPos, this.loadCenter);
 				if (currentDist < lastDist) {
 					lastDist = currentDist;
 					index = i;
@@ -202,10 +235,12 @@ export default class MainFrame {
 	}
 
 	public update = (time: TimeEvent) => {
-		if (this._mapChannel.isConnected) {
-			this._requestTick += time.delta;
-			if (this._requestTick > MainFrame.RequestInterval) {
-				this._requestTick = 0;
+		if (this._mapChannel.isReady) {
+			this._segmentViewTick += time.delta;
+			if (this._segmentViewTick > MainFrame.SegmentViewInterval) {
+				this._segmentViewTick = 0;
+
+				this.cullSegmentsInView();
 				this.requestSegmentsInView(time);
 			}
 

@@ -12,6 +12,7 @@ export default class ChannelSocket extends EventEmitter {
 	private _url: string;
 	private _msgPack: msgpack5.MessagePack;
 	private _socket: WebSocket;
+	private _isReady: boolean;
 
 	private _useNumericCodes: boolean;
 	private _clientCodeMap: MessageCodeMap;
@@ -38,6 +39,10 @@ export default class ChannelSocket extends EventEmitter {
 		if (!this._socket)
 			return false;
 		return this._socket.readyState === this._socket.OPEN;
+	}
+
+	public get isReady(): boolean {
+		return this._isReady;
 	}
 
 	public get channel(): string {
@@ -84,6 +89,8 @@ export default class ChannelSocket extends EventEmitter {
 		// re-register the "message" event to the new handler
 		this._socket.removeEventListener("message", this.onInitMessage);
 		this._socket.addEventListener("message", this.onMessage);
+
+		this._isReady = true;
 		this.triggerEvent("ready", null);
 	};
 

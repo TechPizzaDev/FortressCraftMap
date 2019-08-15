@@ -32,49 +32,37 @@ export default class RenderSegmentCollection {
 		return this._rows.entries();
 	}
 
-	public has(x: NumberOrPos, z: number): boolean {
-		const callback = (xx: number, zz: number): boolean => {
-			let row = this.getRow(zz);
-			if (!row)
-				return false;
-			return row.has(xx);
-		}
-		return RenderSegmentCollection.getInnerCoords(callback, x, z);
-	}
-
-	public get(x: NumberOrPos, z?: number): RenderSegment {
-		const callback = (xx: number, zz: number): RenderSegment  => {
-			let row = this.getRow(zz);
-			if (!row)
-				return null;
-			return row.get(xx);
-		}
-		return RenderSegmentCollection.getInnerCoords(callback, x, z);
-	}
-
-	public set(segment: RenderSegment, x: NumberOrPos, z?: number) {
-		const callback = (xx: number, zz: number) => {
-			let row = this.getRow(zz);
-			if (!row) {
-				row = new Map<number, RenderSegment>();
-				this._rows.set(zz, row);
-			}
-			row.set(xx, segment);
-			this._version++;
-		}
-		return RenderSegmentCollection.getInnerCoords(callback, x, z);
-	}
-
-	public delete(x: NumberOrPos, z?: number): boolean {
-		const callback = (xx: number, zz: number) => {
-			let row = this.getRow(zz);
-			if (row && row.delete(xx)) {
-				this._version++;
-				return true;
-			}
+	public has(x: number, z: number): boolean {
+		let row = this.getRow(z);
+		if (!row)
 			return false;
+		return row.has(x);
+	}
+
+	public get(x: number, z: number): RenderSegment {
+		let row = this.getRow(z);
+		if (!row)
+			return null;
+		return row.get(x);
+	}
+
+	public set(x: number, z: number, segment: RenderSegment) {
+		let row = this.getRow(z);
+		if (!row) {
+			row = new Map<number, RenderSegment>();
+			this._rows.set(z, row);
 		}
-		return RenderSegmentCollection.getInnerCoords(callback, x, z);
+		row.set(x, segment);
+		this._version++;
+	}
+
+	public delete(x: number, z: number): boolean {
+		let row = this.getRow(z);
+		if (row && row.delete(x)) {
+			this._version++;
+			return true;
+		}
+		return false;
 	}
 
 	/** Removes empty rows from the collection. */
@@ -89,24 +77,24 @@ export default class RenderSegmentCollection {
 		return this._rows.get(z);
 	}
 
-	/**
-	 * MapSegmentPos' are used as "MapSegment coordinates", use this to narrow down a RenderSegment that contains the wanted MapSegment.
-	 * Numbers are used as "RenderSegment coordinates", use this to get RenderSegments.
-	 * @param callback
-	 * @param x
-	 * @param z
-	 */
-	public static getInnerCoords<TResult>(
-		callback: (x: number, z: number) => TResult,
-		x: NumberOrPos,
-		z?: number): TResult {
-		return MapSegmentPos.getCoords((xx, zz) => {
-			if (x instanceof MapSegmentPos) {
-				return callback(x.renderX, x.renderZ);
-			}
-			else {
-				return callback(xx, zz);
-			}
-		}, x, z);
-	}
+	///**
+	// * MapSegmentPos' are used as "MapSegment coordinates", use this to narrow down a RenderSegment that contains the wanted MapSegment.
+	// * Numbers are used as "RenderSegment coordinates", use this to get RenderSegments.
+	// * @param callback
+	// * @param x
+	// * @param z
+	// */
+	//public static getInnerCoords<TResult>(
+	//	callback: (x: number, z: number) => TResult,
+	//	x: NumberOrPos,
+	//	z?: number): TResult {
+	//	return MapSegmentPos.getCoords((xx, zz) => {
+	//		if (x instanceof MapSegmentPos) {
+	//			return callback(x.renderX, x.renderZ);
+	//		}
+	//		else {
+	//			return callback(xx, zz);
+	//		}
+	//	}, x, z);
+	//}
 }

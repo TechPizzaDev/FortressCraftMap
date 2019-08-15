@@ -28,8 +28,8 @@ export default class RenderSegment extends GLResource {
 
 		super(gl);
 		if (x instanceof MapSegmentPos) {
-			this.x = x.renderX;
-			this.z = x.renderZ;
+			this.x = x.rX;
+			this.z = x.rZ;
 		}
 		else {
 			this.x = x;
@@ -49,48 +49,64 @@ export default class RenderSegment extends GLResource {
 		this.isUpToDate = true;
 	}
 
-	public setSegment(segment: MapSegment, x: NumberOrPos, z?: number) {
-		const i = RenderSegment.getIndex(x, z);
-		if (this._segments[i])
-			throw new Error(`Segments can only be assigned to a slot once.`);
-		this._segments[i] = segment;
+	public get segmentCount(): number {
+		let sum = 0;
+		for (let i = 0; i < this._segments.length; i++) {
+			if (this._segments[i] != null)
+				sum++;
+		}
+		return sum;
+	}
 
+	public setSegmentAt(index: number, segment: MapSegment) {
+		this._segments[index] = segment;
 		this.isUpToDate = false;
+	}
+
+	public setSegment(x: number, z: number, segment: MapSegment) {
+		const i = RenderSegment.getIndex(x, z);
+		this.setSegmentAt(i, segment);
 	}
 
 	/**
 	 * Gets a MapSegment by coordinates or an index.
-	 * @param x The x coordinate or an array index.
-	 * @param z The z coordinate if 'x' is not an array index.
+	 * @param x The x coordinate.
+	 * @param z The z coordinate.
 	 */
-	public getSegment(x: NumberOrPos, z?: number): MapSegment {
+	public getSegment(x: number, z: number): MapSegment {
 		const i = RenderSegment.getIndex(x, z);
 		return this._segments[i];
 	}
 
-	private static getIndex(x: NumberOrPos, z?: number): number {
-		return MapSegmentPos.getCoords((xx, zz) => {
-			if (x instanceof MapSegmentPos) {
-				const rMinOne = RenderSegment.size - 1;
-				if (xx < 0)
-					xx = rMinOne - Math.abs(xx - rMinOne) % RenderSegment.size;
-				else
-					xx = Math.abs(xx) % RenderSegment.size;
+	private static getIndex(x: number, z: number): number {
+		const rMinOne = RenderSegment.size - 1;
+		if (x < 0)
+			x = rMinOne - Math.abs(x - rMinOne) % RenderSegment.size;
+		else
+			x = Math.abs(x) % RenderSegment.size;
 
-				if (zz < 0)
-					zz = rMinOne - Math.abs(zz - rMinOne) % RenderSegment.size;
-				else
-					zz = Math.abs(zz) % RenderSegment.size;
-			}
-			else {
-				if (xx < 0 || xx > RenderSegment.size)
-					throw new RangeError("'x' is either zero or above the allowed size.");
-				if (zz < 0 || zz > RenderSegment.size)
-					throw new RangeError("'z' is either zero or above the allowed size.");
-			}
-			return xx + zz * RenderSegment.size;
-		}, x, z);
+		if (z < 0)
+			z = rMinOne - Math.abs(z - rMinOne) % RenderSegment.size;
+		else
+			z = Math.abs(z) % RenderSegment.size;
+
+		return x + z * RenderSegment.size;
 	}
+
+	//private static getIndex(x: NumberOrPos, z?: number): number {
+	//	return MapSegmentPos.getCoords((xx, zz) => {
+	//		if (x instanceof MapSegmentPos) {
+	//			return this.getIndexOf(xx, zz);
+	//		}
+	//		else {
+	//			if (xx < 0 || xx > RenderSegment.size)
+	//				throw new RangeError("'x' is either zero or above the allowed size.");
+	//			if (zz < 0 || zz > RenderSegment.size)
+	//				throw new RangeError("'z' is either zero or above the allowed size.");
+	//			return xx + zz * RenderSegment.size;
+	//		}
+	//	}, x, z);
+	//}
 
 	public get texCoordBuffer(): WebGLBuffer {
 		this.assertNotDisposed();
