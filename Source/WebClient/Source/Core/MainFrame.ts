@@ -211,9 +211,9 @@ export default class MainFrame {
 	}
 
 	private processSegmentRequestQueue() {
-		let limit = 64;
+		let limit = 8;
 		while (this.requestList.length > 0 && limit > 0) {
-			let index = 0;
+			let index = -1;
 			let lastDist = Number.MAX_VALUE;
 			for (let i = 0; i < this.requestList.length; i++) {
 				const currentPos = this.requestList[i];
@@ -222,15 +222,24 @@ export default class MainFrame {
 				offsetedPos[1] += 0.5;
 
 				const currentDist = vec2.sqrDist(offsetedPos, this.loadCenter);
+
+				const maxDiscardDist = 256;
+				if (currentDist > maxDiscardDist) {
+					this.requestList.splice(i, 1);
+					continue;
+				}
+
 				if (currentDist < lastDist) {
 					lastDist = currentDist;
 					index = i;
 				}
 			}
 
-			const requestPos = this.requestList.splice(index, 1)[0];
-			this._mapChannel.sendMessage(ClientMessageCode.GetSegment, requestPos);
-			limit--;
+			if (index != -1) {
+				const requestPos = this.requestList.splice(index, 1)[0];
+				this._mapChannel.sendMessage(ClientMessageCode.GetSegment, requestPos);
+				limit--;
+			}
 		}
 	}
 
