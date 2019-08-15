@@ -212,20 +212,21 @@ export default class MainFrame {
 
 	private processSegmentRequestQueue() {
 		let limit = 8;
+		const tmpPos = vec2.create();
 		while (this.requestList.length > 0 && limit > 0) {
 			let index = -1;
 			let lastDist = Number.MAX_VALUE;
 			for (let i = 0; i < this.requestList.length; i++) {
 				const currentPos = this.requestList[i];
-				const offsetedPos = [...currentPos];
-				offsetedPos[0] += 0.5;
-				offsetedPos[1] += 0.5;
+				tmpPos[0] = currentPos[0] + 0.5;
+				tmpPos[1] = currentPos[1] + 0.5;
 
-				const currentDist = vec2.sqrDist(offsetedPos, this.loadCenter);
+				const currentDist = vec2.sqrDist(tmpPos, this.loadCenter);
 
-				const maxDiscardDist = 256;
-				if (currentDist > maxDiscardDist) {
+				const discardDist = 256;
+				if (currentDist > discardDist * discardDist) {
 					this.requestList.splice(i, 1);
+					i--;
 					continue;
 				}
 
