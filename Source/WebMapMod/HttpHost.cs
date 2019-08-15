@@ -41,17 +41,17 @@ namespace TechPizza.WebMap
             if (string.IsNullOrEmpty(url) || url == "/")
                 url = "/Index.html";
 
-#if !SERVER
-            if (url == "/Data/TerrainData.bin")
+#if DEBUG && !SERVER
+            if (url == "/Data/TerrainUV.msgpack")
             {
-                ServeTerrainData(e);
+                ServeTerrainUV(e);
                 return;
             }
-            else if(url == "/Textures/TerrainTexture.png")
-            {
-                ServeTerrainTexture(e);
-                return;
-            }
+            //else if(url == "/Data/TerrainTexture.png")
+            //{
+            //    ServeTerrainTexture(e);
+            //    return;
+            //}
 #endif
 
             string filePath = GetPathInRoot(url);

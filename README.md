@@ -4,10 +4,11 @@ Using WebGL and WebSocket messaging abstractions for modular client development.
 
 ### Main Roadmap
 - [x] Rendering
-  - [ ] Mesh batching
+  - [x] Segment mesh batching
   - [ ] Rotatable quads
   - [ ] Clean multiblocks
-- [ ] Live data/updates (only needs translation from JS to TS)
+  - [x] Different texture qualities
+- [x] Live data/updates
 - [ ] Game integration
 - [ ] Heightmap shading
 - [ ] Inspecting machines
@@ -50,7 +51,7 @@ Using WebGL and WebSocket messaging abstractions for modular client development.
 - [ ] Ore scan/visualization
 
 #### Not on Roadmap
-- Special topography rendering based on vertex normals and time of day
+- Special topography rendering/lighting based on vertex normals and time of day
 
 #
 #### Notes

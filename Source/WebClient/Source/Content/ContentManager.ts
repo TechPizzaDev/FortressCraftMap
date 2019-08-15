@@ -48,10 +48,10 @@ export class Manager extends GLResource {
 		throw new Error(`Could not find texture named '${name}'.`);
 	}
 
-	public getBinaryData(name: string): any {
-		const resource = this.get(`${Content.getRootPath(Content.Type.BinaryData)}/${name}`);
+	public getMessagePack(name: string): any {
+		const resource = this.get(`${Content.getRootPath(Content.Type.MessagePack)}/${name}`);
 		if (resource == null)
-			throw new Error(`Could not find binary data named '${name}'.`);
+			throw new Error(`Could not find message pack named '${name}'.`);
 		return resource;
 	}
 
@@ -155,7 +155,7 @@ export class Manager extends GLResource {
 				case Content.Type.FragmentShader:
 					return this.decodeShader(data, ShaderType.Fragment);
 
-				case Content.Type.BinaryData:
+				case Content.Type.MessagePack:
 					return this._msgPack.decode(data);
 
 				default:

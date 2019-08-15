@@ -10,6 +10,7 @@ import Texture2D from "../Texture2D";
 import RenderSegmentCollection from "../RenderSegmentCollection";
 import MapSegment from "../../Core/World/MapSegment";
 import RenderSegment from "../RenderSegment";
+import ContentRegistry from "../../Content/ContentRegistry";
 
 /**
  * Renders map segments that are currently visible through the viewport.
@@ -26,27 +27,27 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _texturedPosAttribPtr: ShaderAttribPointer;
 	private _texturedDataAttribPtr: ShaderAttribPointer;
 
-	private _terrainTexture: Texture2D;
+	private _tbDiffuseTexture: Texture2D;
 
 	private _bakedSegmentQuads: BakedRenderSegmentQuads;
 	private _texCoordDataBuffer: Float32Array;
 	private _indexDataBuffer: Uint16Array;
+	private _colorBuffer: WebGLBuffer;
 
-	private _terrainDataMap: Map<number, TileDescription>;
+	private _terrainUVMap: Map<number, TileDescription>;
 	private _defaultTileDescription: TileDescription;
-	private _terrainTextureScale: number;
 
 	private _renderSegments: RenderSegmentCollection;
 	private _viewport: Rectangle;
 
-	private readonly _zoom = 0.75;
+	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
+	public readonly _zoom = 1 / 0.5;
+	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();
 	private _projMatrix = mat4.create();
 	private _projViewMatrix = mat4.create();
 	private _mvpMatrix = mat4.create();
-
-	private _colorBuffer: WebGLBuffer;
 
 	constructor(frame: MainFrame) {
 		super(frame.glCtx);
@@ -64,12 +65,12 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	public prepare(content: Content.Manager) {
 		this.prepareShaders(content);
-		this._terrainTexture = content.getTexture2D("TerrainTexture");
+		this._tbDiffuseTexture = content.getTexture2D(ContentRegistry.TerrainTexture);
 
 		this._bakedSegmentQuads = this.bakeSegmentQuads();
 		this._texCoordDataBuffer = new Float32Array(this._bakedSegmentQuads.metricsPerSegment.vertexCount * 2 * RenderSegment.blockSize);
 		this._indexDataBuffer = new Uint16Array(this._bakedSegmentQuads.metricsPerSegment.indexCount * RenderSegment.blockSize);
-		this.loadTerrainData(content);
+		this.loadTerrainUV(content);
 
 		//// this 'colorData' array is just for testing
 		//const colorData = new Float32Array(16 * 16 * 3 * 4);
@@ -100,34 +101,31 @@ export default class MapSegmentRenderer extends RendererBase {
 		this._texturedDataAttribPtr = ShaderAttribPointer.createFrom(gl, texturedDesc.getAttributeField("aTexCoord"), 2);
 	}
 
-	private loadTerrainData(content: Content.Manager) {
+	private loadTerrainUV(content: Content.Manager) {
 		this._defaultTileDescription = {
 			color: vec3.fromValues(0, 0, 0),
-			corners: this.createCornersFromRect(0, 0, 0, 0)
+			corners: this.createCorners(0, 0, 0, 0)
 		};;
 
-		const terrainData = content.getBinaryData("TerrainData");
-		const info = terrainData[0];
-		this._terrainTextureScale = info.terrainTextureScale;
-
-		const indices = terrainData[1] as ArrayLike<number>;
-		const rects = terrainData[2] as ArrayLike<number>;
-		this._terrainDataMap = new global.Map<number, TileDescription>();
+		const terrainUV = content.getMessagePack("TerrainUV");
+		const indices = terrainUV[0] as ArrayLike<number>;
+		const rects = terrainUV[1] as ArrayLike<number>;
+		this._terrainUVMap = new Map<number, TileDescription>();
 
 		const entryCount = indices.length;
 		for (let i = 0; i < entryCount; i++) {
 			const x = rects[i];
 			const y = rects[i + entryCount];
-			const w = rects[i + entryCount * 2];
-			const h = rects[i + entryCount * 3];
+			const z = rects[i + entryCount * 2];
+			const w = rects[i + entryCount * 3];
 
 			const desc: TileDescription = {
 				color: vec3.fromValues(1, 1, 1),
-				corners: this.createCornersFromRect(x, y, w, h)
+				corners: this.createCorners(x, y, z, w)
 			};
-			this._terrainDataMap.set(indices[i], desc);
+			this._terrainUVMap.set(indices[i], desc);
 		}
-		console.log("Parsed UV:", this._terrainDataMap);
+		console.log("Parsed UV:", this._terrainUVMap);
 	}
 
 	public onViewportChanged(viewport: Rectangle) {
@@ -165,8 +163,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		const scale = vec3.fromValues(1, 1, 1);
 		mat4.scale(this._viewMatrix, this._viewMatrix, scale);
 
-		const translation = vec3.fromValues(0, 0, 0);
-		mat4.translate(this._viewMatrix, this._viewMatrix, translation);
+		mat4.translate(this._viewMatrix, this._viewMatrix, this._mapTranslation);
 
 		// _projViewMatrix = _projMatrix * _viewMatrix
 		mat4.multiply(this._projViewMatrix, this._projMatrix, this._viewMatrix);
@@ -262,6 +259,8 @@ export default class MapSegmentRenderer extends RendererBase {
 		}
 	}
 
+	private x = 0;
+
 	private drawRenderSegment(renderSegment: RenderSegment, shader: ShaderProgram, dataPointer: ShaderAttribPointer) {
 		const gl = this.glContext;
 		const metricsPS = this._bakedSegmentQuads.metricsPerSegment;
@@ -342,18 +341,18 @@ export default class MapSegmentRenderer extends RendererBase {
 			gl.drawElements(gl.TRIANGLES, renderSegment.genCount * indicesPerSegment, gl.UNSIGNED_SHORT, 0);
 		}
 
-		drawing.strokeStyle = "rgba(255, 0, 0, 1)";
-		drawing.strokeRect(
-			renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
-			renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
-			16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
+		//drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
+		//drawing.strokeRect(
+		//	renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
+		//	renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
+		//	16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
 	}
 
 	/** Prepares the needed texture and binds the shader program for textured segments. */
 	private bindTexturedShader(): ShaderProgram {
 		const gl = this.glContext;
 		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, this._terrainTexture.glTexture);
+		gl.bindTexture(gl.TEXTURE_2D, this._tbDiffuseTexture.glTexture);
 
 		const shader = this._texturedShader;
 		shader.useProgram();
@@ -401,17 +400,17 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	}
 
-	private _tileDescGetFailures = new global.Map<number, void>();
+	private _tileDescGetFailures = new Map<number, void>();
 
 	private getTileDescription(tile: number): TileDescription {
-		if (!this._terrainDataMap.has(tile)) {
+		if (!this._terrainUVMap.has(tile)) {
 			if (!this._tileDescGetFailures.has(tile)) {
 				console.warn(`Failed to get description for tile '${tile}'.`);
 				this._tileDescGetFailures.set(tile, null);
 			}
 			return this._defaultTileDescription;
 		}
-		return this._terrainDataMap.get(tile);
+		return this._terrainUVMap.get(tile);
 	}
 
 	/**
@@ -449,22 +448,23 @@ export default class MapSegmentRenderer extends RendererBase {
 		output[offset + 7] = corners.BR[1];
 	}
 
+	private createCorners(x: number, y: number, z: number, w: number): UVCorners {
+		return {
+			TL: vec2.fromValues(x, y),
+			BR: vec2.fromValues(z, w)
+		};
+	}
+
 	private createCornersFromRect(x: number, y: number, w: number, h: number): UVCorners {
-		// remember to scale down coordinates as they are
-		// for the full-res terrain texture but the server
-		// may serve us a different size
-		const texelW = 1.0 / this._terrainTexture.width * this._terrainTextureScale;
-		const texelH = 1.0 / this._terrainTexture.height * this._terrainTextureScale;
+		const texelW = 1.0 / this._tbDiffuseTexture.width;
+		const texelH = 1.0 / this._tbDiffuseTexture.height;
 
 		x *= texelW;
 		y *= texelH;
 		w *= texelW;
 		h *= texelH;
 
-		return {
-			TL: vec2.fromValues(x, y),
-			BR: vec2.fromValues(x + w, y + h)
-		};
+		return this.createCorners(x, y, x + w, y + h);
 	}
 }
 

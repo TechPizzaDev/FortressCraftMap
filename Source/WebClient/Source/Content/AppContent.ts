@@ -50,8 +50,8 @@ export default class AppContent {
 			this._list.push(`${fsDesc.path}/${shader}${fsDesc.extension}`);
 		}
 
-		for (const binData of ContentRegistry.binaryData) {
-			const bdDesc = Content.getDescription(Content.Type.BinaryData);
+		for (const binData of ContentRegistry.messagePacks) {
+			const bdDesc = Content.getDescription(Content.Type.MessagePack);
 			this._list.push(`${bdDesc.path}/${binData}${bdDesc.extension}`);
 		}
 	}

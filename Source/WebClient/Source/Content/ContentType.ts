@@ -6,5 +6,5 @@ export enum Type {
 	VertexShader = "vertexshader",
 	FragmentShader = "fragmentshader",
 	Texture = "texture",
-	BinaryData = "binarydata"
+	MessagePack = "messagepack"
 }

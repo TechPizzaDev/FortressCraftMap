@@ -69,7 +69,7 @@ export namespace Web {
 		 * Constructs the request options.
 		 * @param method The HTTP method used by the request. Defaults to GET. 
 		 */
-		constructor(method?: string, type?: XMLHttpRequestResponseType, timeout: number = 30000) {
+		constructor(method?: string, type?: XMLHttpRequestResponseType, timeout: number = 180000) {
 			this.method = method || "GET";
 			this.type = type || "";
 			this.timeout = timeout;

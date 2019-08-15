@@ -7,7 +7,7 @@
     <ProjectGuid>{82D81769-FF87-4727-9570-03C233EA59D9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TechPizza.WebMapMod</RootNamespace>
+    <RootNamespace>TechPizza.WebMap</RootNamespace>
     <AssemblyName>plugin_TechPizza.WebMap</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -44,6 +44,15 @@
     <Reference Include="GameDevWare.Serialization, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\GameDevWare.Serialization.2.4.2\lib\net35\GameDevWare.Serialization.dll</HintPath>
     </Reference>
+    <Reference Include="ManagedSquish, Version=2.0.0.0, Culture=neutral, PublicKeyToken=fac8b2bfeda84eab, processorArchitecture=MSIL">
+      <HintPath>..\packages\ManagedSquish.2.0.0.0\lib\net35\ManagedSquish.dll</HintPath>
+    </Reference>
+    <Reference Include="NativeSquish_x64, Version=2.0.0.0, Culture=neutral, PublicKeyToken=fac8b2bfeda84eab, processorArchitecture=AMD64">
+      <HintPath>..\packages\ManagedSquish.2.0.0.0\lib\net35\NativeSquish_x64.dll</HintPath>
+    </Reference>
+    <Reference Include="NativeSquish_x86, Version=2.0.0.0, Culture=neutral, PublicKeyToken=fac8b2bfeda84eab, processorArchitecture=x86">
+      <HintPath>..\packages\ManagedSquish.2.0.0.0\lib\net35\NativeSquish_x86.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Runtime.Serialization" />
@@ -75,14 +84,15 @@
     <Compile Include="Helpers\StreamExtensions.cs" />
     <Compile Include="HttpHost.cs" />
     <Compile Include="HttpHost.Extra.cs" />
-    <Compile Include="Map\Client\ClientMessageCode.cs" />
+    <Compile Include="Map\BlockOrder.cs" />
+    <Compile Include="Map\Net\ClientMessageCode.cs" />
     <Compile Include="Map\MapBlockPosition.cs" />
     <Compile Include="Map\MapSegmentPosition.cs" />
     <Compile Include="Map\Point.cs" />
-    <Compile Include="Map\Server\BlockOrder.cs" />
-    <Compile Include="Map\Server\MapSocketBehavior.cs" />
-    <Compile Include="Map\Server\MapSocketBehavior.Orders.cs" />
-    <Compile Include="Map\Server\ServerMessageCode.cs" />
+    <Compile Include="Map\Net\MapSocketBehavior.cs" />
+    <Compile Include="Map\Net\MapSocketBehavior.Orders.cs" />
+    <Compile Include="Map\Net\ServerMessageCode.cs" />
+    <Compile Include="Map\SegmentMeshLayer.cs" />
     <Compile Include="WebMapMod.Helpers.cs" />
     <Compile Include="NodeWorkerPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

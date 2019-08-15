@@ -35,19 +35,19 @@ const webpackConfigBase = {
 	},
 };
 
-function getBaseCopy() {
+function getConfigBaseCopy() {
 	return Object.assign({}, webpackConfigBase);
 }
 
 function getConfigExport() {
 	if (isProduction)
-		return Object.assign(getBaseCopy(), {
+		return Object.assign(getConfigBaseCopy(), {
 			devtool: 'source-map',
 			mode: 'production'
 		});
 	else
-		return Object.assign(getBaseCopy(), {
-			devtool: 'cheap-module-eval-source-map',
+		return Object.assign(getConfigBaseCopy(), {
+			devtool: 'source-map',
 			mode: 'development'
 		});
 }

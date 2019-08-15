@@ -15,12 +15,6 @@ namespace TechPizza.WebMap
         private HarmonyInstance _harmonyInstance;
         private HttpHost _httpHost;
 
-        public TerrainUVCoord TerrainUV { get; private set; }
-        public byte[] TerrainPng { get; private set; }
-        public string TerrainPngETag { get; private set; }
-
-        public const float TerrainTextureScale = 0.5f;
-        
         // this is not really needed for the map... yet
         //private void Update()
         //{   
@@ -53,11 +47,6 @@ namespace TechPizza.WebMap
             Instance = this;
             PatchHarmony();
 
-            Log("Preparing data...");
-            TerrainUV = GetTerrainUVInstance();
-            TerrainPng = BlitTerrainTexture(scale: TerrainTextureScale).EncodeToPNG();
-            TerrainPngETag = GetDataETag(TerrainPng);
-
             StartHttp();
 
             // setup registration data
@@ -69,8 +58,13 @@ namespace TechPizza.WebMap
 
         private void StartHttp()
         {
+            Log("Starting HTTP server...");
+
             string assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            _httpHost = new HttpHost(assemblyDir + "/wwwroot", 1338);
+            string wwwRoot = assemblyDir + "/wwwroot";
+            Log("Serving assets from " + wwwRoot);
+
+            _httpHost = new HttpHost(wwwRoot, 1338);
             _httpHost.LogOutput = (data, str) =>
             {
                 LogWarning(data);
@@ -84,6 +78,8 @@ namespace TechPizza.WebMap
         {
             try
             {
+                Log("Applying Harmony patches");
+
                 _harmonyInstance = HarmonyInstance.Create(ModName);
                 _harmonyInstance.PatchAll(Assembly.GetExecutingAssembly());
             }

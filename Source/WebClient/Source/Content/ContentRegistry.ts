@@ -1,8 +1,11 @@
+import { TextureQuality } from "./TextureQuality";
 
 export default class ContentRegistry {
 
+	public static readonly TerrainTexture = TextureQuality.Low + "/TB_diffuse";
+
 	public static readonly textures = [
-		"TerrainTexture"
+		ContentRegistry.TerrainTexture
 	];
 
 	public static readonly shaders = [
@@ -10,8 +13,8 @@ export default class ContentRegistry {
 		"mapsegment-textured"
 	];
 
-	public static readonly binaryData = [
-		"TerrainData"
+	public static readonly messagePacks = [
+		"TerrainUV"
 	];
 
 }

@@ -9,12 +9,12 @@ export default class FrameDispatcher {
 	private _cachedAnimationCallback: (totalTime: number) => void;
 	private _animationID: number;
 	private _lastTime: number;
-	private _totalTime: number;
+	private _totalTime = 0;
+	private _trueTotalTime = 0;
 
 	constructor(update: TimedCallback, draw: TimedCallback) {
 		this._update = update;
 		this._draw = draw;
-		this._totalTime = 0;
 
 		this._cachedAnimationCallback = this.animationCallback;
 	}
@@ -33,11 +33,15 @@ export default class FrameDispatcher {
 
 	private animationCallback = (totalTime: number) => {
 		if (this._lastTime) {
-			const delta = (totalTime - this._lastTime) / 1000;
-			const te = new TimeEvent(delta, this._totalTime);
-			this._update(te);
-			this._draw(te);
-			this._totalTime += delta;
+			const ev = new TimeEvent(
+				(totalTime - this._lastTime) / 1000,
+				this._trueTotalTime,
+				this._totalTime);
+
+			this._update(ev);
+			this._draw(ev);
+			this._totalTime += ev.delta;
+			this._trueTotalTime += ev.animationDelta;
 		}
 		this._lastTime = totalTime;
 		this.requestFrame();

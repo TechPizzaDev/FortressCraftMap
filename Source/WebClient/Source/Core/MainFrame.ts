@@ -8,6 +8,7 @@ import MapSegment, { MapSegmentPos } from "./World/MapSegment";
 import * as Content from "../Namespaces/Content";
 import RenderSegment from "../Graphics/RenderSegment";
 import RenderSegmentCollection from "../Graphics/RenderSegmentCollection";
+import { vec2 } from "gl-matrix";
 
 /**
  * Loads components and handles document events (input, resizing).
@@ -30,11 +31,12 @@ export default class MainFrame {
 	private _fpsCounter: HTMLDivElement;
 	private _fpsCounterSpan: HTMLSpanElement;
 
+	private static readonly RequestInterval = 1 / 60;
+	private _requestTick = MainFrame.RequestInterval;
+
 	constructor(glCtx: WebGLRenderingContext, drawCtx: CanvasRenderingContext2D, onLoad?: Content.LoadCallback) {
-		if (glCtx == null)
-			throw new TypeError("GL context is undefined.");
-		if (drawCtx == null)
-			throw new TypeError("GL context is undefined.");
+		if (glCtx == null) throw new TypeError("GL context is undefined.");
+		if (drawCtx == null) throw new TypeError("Canvas rendering context is undefined.");
 
 		this._glCtx = glCtx;
 		this._drawCtx = drawCtx;
@@ -62,14 +64,14 @@ export default class MainFrame {
 		this._content = new AppContent(this._glCtx, loadCallback);
 		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
 		this._segmentRenderer = new MapSegmentRenderer(this);
-		
+
 		this._mapChannel = ChannelSocket.create("map", false);
 		this._mapChannel.subscribeToEvent("ready", this.onMapChannelReady);
 		this._mapChannel.subscribeToEvent("message", this.onMapChannelMessage);
 		this._mapChannel.connect();
 
 		this._fpsCounter = document.getElementById("fpsCounter") as HTMLDivElement;
-		this._fpsCounterSpan = this._fpsCounter.firstChild as HTMLSpanElement;
+		this._fpsCounterSpan = this._fpsCounter.firstElementChild as HTMLSpanElement;
 	}
 
 	public get glCtx(): WebGLRenderingContext {
@@ -84,24 +86,22 @@ export default class MainFrame {
 		return this._content;
 	}
 
+	private loadCenter = [0, 0];
+	private requestList: number[][] = [];
+	private _segmentMap = new Map<number, Set<number>>(); 
+
 	private onMapChannelReady = (ev: Event) => {
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -2]);
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -1]);
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, 0]);
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, 1]);
-
-		for (let z = 0; z < 40; z++) {
-			for (let x = 0; x < 80; x++) {
-				this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [x - 40, z - 20]); //[x - 21, z - 21]);
-			}
-		}
 	}
 
 	private onMapChannelMessage = (message: ChannelMessage) => {
 		switch (message.code.number) {
 			case ServerMessageCode.BlockOrder:
 			case ServerMessageCode.BlockOrders:
-				// TODO FIXME
+				// TODO implement this
 				break;
 
 			case ServerMessageCode.Segment:
@@ -136,8 +136,81 @@ export default class MainFrame {
 		this._frameDispatcher.run();
 	}
 
-	public update = (time: TimeEvent) => {
+	private requestSegmentsInView(time: TimeEvent) {
+		const w = 30; //48;
+		const h = 30; //24;
+		const hw = Math.round(w / 2);
+		const hh = Math.round(h / 2);
+		//const timeout = 2;
 
+		const speedX = 32;
+		const speedY = 1;
+		const sizeY = 18;
+
+		const segX = time.total * speedX;
+
+		this._segmentRenderer._mapTranslation[0] = segX * -16;
+		this.loadCenter[0] = segX;
+
+		for (let z = 0; z < h; z++) {
+			for (let x = 0; x < w; x++) {
+				const xx = x + Math.round(segX + 0.5);
+				const zz = z + Math.round(Math.sin(time.total * speedY) * sizeY + 0.5);
+
+				let set: Set<number>;
+				if (!this._segmentMap.has(xx)) {
+					set = new Set();
+					this._segmentMap.set(xx, set);
+				}
+				else {
+					set = this._segmentMap.get(xx);
+					if (set.has(zz))
+						continue;
+				}
+
+				this.requestList.push([xx - hw, zz - hh]);
+				set.add(zz);
+
+				//window.setTimeout(() => {
+				//}, (1 + x + z * h) * timeout);
+			}
+		}
+	}
+
+	private processSegmentRequestQueue() {
+		let limit = 800;
+		while (this.requestList.length > 0 && limit > 0) {
+			let index = 0;
+			let lastDist = Number.MAX_VALUE;
+			for (let i = 0; i < this.requestList.length; i++) {
+				const currentPos = this.requestList[i];
+				const offsetedPos = [...currentPos];
+				offsetedPos[0] += 0.5;
+				offsetedPos[1] += 0.5;
+
+				const currentDist = vec2.sqrDist(this.loadCenter, offsetedPos);
+				if (currentDist < lastDist) {
+					lastDist = currentDist;
+					index = i;
+				}
+			}
+
+			const requestPos = this.requestList.splice(index, 1)[0];
+			this._mapChannel.sendMessage(ClientMessageCode.GetSegment, requestPos);
+			limit--;
+		}
+	}
+
+	public update = (time: TimeEvent) => {
+		if (this._mapChannel.isConnected) {
+			this._requestTick += time.delta;
+			if (this._requestTick > MainFrame.RequestInterval) {
+				this._requestTick = 0;
+				this.requestSegmentsInView(time);
+			}
+
+			this.processSegmentRequestQueue();
+		}
 	}
 
 	public draw = (time: TimeEvent) => {
