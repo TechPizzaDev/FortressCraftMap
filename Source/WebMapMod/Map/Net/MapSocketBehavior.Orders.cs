@@ -22,26 +22,26 @@ namespace TechPizza.WebMap
                         orders[i] = new BlockOrder(randomSeg, randomBlock, type);
                     }
 
-                    SendBlockOrders(orders);
+                    SendBlockOrderBatch(orders);
                 }
             }
         }
 
-        private void SendBlockOrders(BlockOrder[] orders)
+        private void SendBlockOrderBatch(BlockOrder[] orders)
         {
             var items = new object[orders.Length];
             for (int i = 0; i < items.Length; i++)
-                items[i] = CreateOrderObjects(orders[i]);
+                items[i] = CreateOrderObject(orders[i]);
 
-            SendMessage(ServerMessageCode.BlockOrders, items);
+            SendMessage(ServerMessageCode.BlockOrderBatch, items);
         }
 
-        private void SendBlockOrders(BlockOrder order)
+        private void SendBlockOrder(BlockOrder order)
         {
-            SendMessage(ServerMessageCode.BlockOrder, CreateOrderObjects(order));
+            SendMessage(ServerMessageCode.BlockOrder, CreateOrderObject(order));
         }
 
-        private static object[] CreateOrderObjects(BlockOrder order)
+        private static object[] CreateOrderObject(BlockOrder order)
         {
             return new object[]
             {

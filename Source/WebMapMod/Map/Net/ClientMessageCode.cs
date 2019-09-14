@@ -3,6 +3,7 @@ namespace TechPizza.WebMap
 {
     public enum ClientMessageCode
     {
-        GetSegment
+        GetSegment,
+        GetSegmentBatch
     }
 }

@@ -16,7 +16,8 @@ namespace TechPizza.WebMap
 	            { ".js", "application/javascript" },
 	            { ".png", "image/png" },
                 { ".glsl", "text/plain" },
-                { ".css", "text/css" }
+                { ".css", "text/css" },
+                { ".wasm", "application/wasm" }
             };
         }
 

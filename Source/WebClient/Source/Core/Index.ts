@@ -1,5 +1,7 @@
 import MainFrame from "./MainFrame";
 
+var mainFrame: MainFrame;
+
 function setup() {
 	const canvasLayer0 = document.getElementById("canvasLayer0");
 	const canvasLayer1 = document.getElementById("canvasLayer1");
@@ -23,11 +25,12 @@ function setup() {
 
 		console.log("Initialized canvas contexts.");
 
-		const frame = new MainFrame(glContext, drawingContext, () => {
-			setupFullscreen();
+		mainFrame = new MainFrame(glContext, drawingContext, () => {
+			setupFullscreenElements();
+			setupDebugInfoElements();
 
-			document.getElementById("mainContainer").classList.remove("hidden");
-			frame.run();
+			setVisibility(document.getElementById("mainContainer"), true);
+			mainFrame.run();
 		});
 	}
 	else {
@@ -35,12 +38,12 @@ function setup() {
 	}
 }
 
-function setupFullscreen() {
+function setupFullscreenElements() {
 	const fullscreenButton = document.getElementById("fullscreenButton");
 	const fullscreenIcon = fullscreenButton.firstElementChild;
 
 	if (!document.fullscreenEnabled) {
-		fullscreenButton.classList.add("hidden");
+		setVisibility(fullscreenButton, false);
 		return;
 	}
 
@@ -62,7 +65,42 @@ function setupFullscreen() {
 		});
 	}
 	else {
-		fullscreenButton.classList.add("hidden");
+		setVisibility(fullscreenButton, false);
+	}
+}
+
+function setupDebugInfoElements() {
+	const fpsCounterDiv = document.getElementById("fpsCounter");
+	const debugInfoDiv = document.getElementById("debugInfo");
+
+	fpsCounterDiv.onclick = (ev) => {
+		const wasVisible = isVisible(debugInfoDiv);
+		setVisibility(debugInfoDiv, !wasVisible, true);
+
+		if (mainFrame != null) {
+			if (!wasVisible) // use to prevent stacked values
+				mainFrame.clearDebugInfo();
+			mainFrame.updateDebugInfo(null, true);
+		}
+	};
+}
+
+function isVisible(element: HTMLElement) {
+	if (element.classList.contains("hidden"))
+		return false;
+	return true;
+}
+
+function setVisibility(element: HTMLElement, visible: boolean, updateVisibleClass: boolean = false) {
+	if (visible) {
+		element.classList.remove("hidden");
+		if (updateVisibleClass)
+			element.classList.add("visible");
+	}
+	else {
+		element.classList.add("hidden");
+		if (updateVisibleClass)
+			element.classList.remove("visible");
 	}
 }
 

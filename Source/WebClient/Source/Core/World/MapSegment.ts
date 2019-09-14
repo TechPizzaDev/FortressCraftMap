@@ -4,7 +4,7 @@ import RenderSegment from "../../Graphics/RenderSegment";
 export type NumberOrPos = number | MapSegmentPos;
 
 /**
- * Data container for a 2D map segment.
+ * Data container for a 2D map segment layer.
  * */
 export default class MapSegment {
 

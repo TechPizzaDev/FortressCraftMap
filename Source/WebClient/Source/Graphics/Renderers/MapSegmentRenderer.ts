@@ -40,8 +40,11 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _renderSegments: RenderSegmentCollection;
 	private _viewport: Rectangle;
 
+	private _segmentsDrawn: number;
+	private _renderSegmentsDrawn: number;
+
 	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
-	public readonly _zoom = 1 / 0.5;
+	public readonly _zoom = 1 / 1;
 	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();
@@ -56,12 +59,15 @@ export default class MapSegmentRenderer extends RendererBase {
 		this._renderSegments = new RenderSegmentCollection();
 	}
 
-	public get renderSegments(): RenderSegmentCollection { return this._renderSegments; }
+	public get segments(): RenderSegmentCollection { return this._renderSegments; }
 	public get viewport(): Rectangle { return this._viewport; }
 
 	public get viewMatrix(): mat4 { return this._viewMatrix; }
 	public get projMatrix(): mat4 { return this._projMatrix; }
 	public get projViewMatrix(): mat4 { return this._projViewMatrix; }
+
+	public get segmentsDrawnLastFrame(): number { return this._segmentsDrawn; }
+	public get renderSegmentsDrawnLastFrame(): number { return this._renderSegmentsDrawn; }
 
 	public prepare(content: Content.Manager) {
 		this.prepareShaders(content);
@@ -187,6 +193,9 @@ export default class MapSegmentRenderer extends RendererBase {
 		//	if (immediateUploadsOnDetailChange)
 		//		chunkUploadsLeft = 0;
 		//}
+
+		this._segmentsDrawn = 0;
+		this._renderSegmentsDrawn = 0;
 		
 		const isTextured = true;
 
@@ -227,7 +236,7 @@ export default class MapSegmentRenderer extends RendererBase {
 
 		this._frame.drawCtx.translate(
 			Math.round(this._viewport.width / 2) + 0.5 + this._mapTranslation[0] / this._zoom,
-			Math.round(this._viewport.height / 2) + 0.5 + this._mapTranslation[2] / this._zoom);
+			Math.round(this._viewport.height / 2) + 0.5 + this._mapTranslation[1] / this._zoom);
 
 		// TODO: currently draws every render segment
 		for (const [, rowMap] of this._renderSegments.rows()) {
@@ -296,7 +305,7 @@ export default class MapSegmentRenderer extends RendererBase {
 					if (segment == null)
 						continue;
 
-					const bakedSegmentIndex = (x + z * RenderSegment.size);
+					const bakedSegmentIndex = x + z * RenderSegment.size;
 
 					// generate tex coords for this segment
 					const texCoordOffset = bakedSegmentIndex * MapSegment.blocks;
@@ -316,9 +325,11 @@ export default class MapSegmentRenderer extends RendererBase {
 					renderSegment.genCount++;
 				}
 			}
+			this._frame._fastPendingDebugInfo.segmentsBuilt += renderSegment.genCount;
+			this._frame._fastPendingDebugInfo.segmentBatchesBuilt++;
 
+			// only update buffers when there is segment data
 			if (renderSegment.genCount > 0) {
-				//const texCoordSlice = this._texCoordDataBuffer.subarray(0, renderSegment.genCount * metricsPS.vertexCount * 2);
 				gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.texCoordBuffer);
 				gl.bufferData(gl.ARRAY_BUFFER, this._texCoordDataBuffer, gl.DYNAMIC_DRAW);
 
@@ -329,6 +340,7 @@ export default class MapSegmentRenderer extends RendererBase {
 			renderSegment.isUpToDate = true;
 		}
 
+		// only draw if there are segments in the batch
 		if (renderSegment.genCount > 0) {
 			mat4.multiply(this._mvpMatrix, this._projViewMatrix, renderSegment.matrix);
 			shader.uniformMatrix4fv("uModelViewProjection", this._mvpMatrix);
@@ -339,13 +351,16 @@ export default class MapSegmentRenderer extends RendererBase {
 
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderSegment.indexBuffer);
 			gl.drawElements(gl.TRIANGLES, renderSegment.genCount * indicesPerSegment, gl.UNSIGNED_SHORT, 0);
+
+			this._segmentsDrawn += renderSegment.genCount;
+			this._renderSegmentsDrawn++;
 		}
 
-		drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
-		drawing.strokeRect(
-			renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
-			renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
-			16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
+		//drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
+		//drawing.strokeRect(
+		//	renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
+		//	renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
+		//	16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
 	}
 
 	/** Prepares the needed texture and binds the shader program for textured segments. */

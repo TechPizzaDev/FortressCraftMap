@@ -25,6 +25,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D96008B1-1CA5-47B9-A354-BA4E127F4583}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Core\Constants.ts = WebClient\Source\Core\Constants.ts
+		WebClient\Source\Core\DebugInformation.ts = WebClient\Source\Core\DebugInformation.ts
 		WebClient\Source\Core\Index.ts = WebClient\Source\Core\Index.ts
 		WebClient\Source\Core\MainFrame.ts = WebClient\Source\Core\MainFrame.ts
 	EndProjectSection

@@ -1,5 +1,4 @@
 import RenderSegment from "./RenderSegment";
-import { MapSegmentPos, NumberOrPos } from "../Core/World/MapSegment";
 
 /** Row containing segments indexed by their X coordinate. */
 type Row = Map<number, RenderSegment>;
@@ -16,10 +15,19 @@ export default class RenderSegmentCollection {
 	public get version(): number { return this._version; }
 
 	public get rowCount(): number { return this._rows.size; }
+
 	public get count(): number {
 		let c = 0;
 		for (let row of this._rows.values())
 			c += row.size;
+		return c;
+	}
+
+	public get segmentCount(): number {
+		let c = 0;
+		for (let row of this._rows.values())
+			for (let [i, rs] of row)
+				c += rs.segmentCount;
 		return c;
 	}
 

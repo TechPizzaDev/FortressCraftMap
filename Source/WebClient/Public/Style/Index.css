@@ -16,17 +16,51 @@ body {
 	height: 100%;
 }
 
-#fpsCounter {
-	position: absolute;
+#debugInfoContainer {
 	user-select: none;
-	color: rgba(182, 255, 0, 0.75);
+	position: absolute;
+}
+
+#debugInfoContainer span {
+	display: block;
+}
+
+#fpsCounter {
+	float: left;
+	padding: 3px;
 	margin: 2px;
+	color: rgba(182, 255, 0, 0.75);
 	background-color: rgba(10, 30, 0, 0.5);
 }
 
-#fpsCounter span {
-	padding: 3px;
+#debugInfo {
+	display: inline-block;
+	padding: 5px;
+	margin: 2px;
+	color: rgba(255, 255, 255, 0.75);
+	background-color: rgba(10, 30, 0, 0.5);
 }
+
+#debugInfo .visible {
+	user-select: text;
+}
+
+#debugInfo > table {
+	text-align: right;
+}
+
+/* may be useful for debug information that isn't a table
+#debugInfo > div > span {
+	margin-left: 5px;
+}
+#debugInfo > div > .header {
+	margin-left: 0px;
+	font-weight: bold;
+}
+#debugInfo > div > .smallLineBreak {
+	margin-top: 5px;
+}
+*/
 
 #fullscreenButton {
 	position: relative;

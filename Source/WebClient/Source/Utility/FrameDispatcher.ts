@@ -24,11 +24,7 @@ export default class FrameDispatcher {
 			throw new Error("The dispatcher is already running.");
 
 		if (!this._animationID)
-			this.requestFrame();
-	}
-
-	private requestFrame() {
-		this._animationID = requestAnimationFrame(this._cachedAnimationCallback);
+			this._animationID = requestAnimationFrame(this._cachedAnimationCallback);
 	}
 
 	private animationCallback = (totalTime: number) => {
@@ -44,6 +40,6 @@ export default class FrameDispatcher {
 			this._trueTotalTime += ev.animationDelta;
 		}
 		this._lastTime = totalTime;
-		this.requestFrame();
+		this._animationID = requestAnimationFrame(this._cachedAnimationCallback);
 	}
 }

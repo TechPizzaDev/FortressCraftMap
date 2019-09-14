@@ -4,12 +4,15 @@
  * */
 const enum ServerMessageCode {
 
-	/** Large message containing full segment data. */
+	/** Large message containing segment data. */
 	Segment,
+
+	/** Message containing data of multiple segments. */
+	SegmentBatch,
 
 	/** Small message containing one block update. */
 	BlockOrder,
 
 	/** Message containing multiple block updates. */
-	BlockOrders
+	BlockOrderBatch
 }
