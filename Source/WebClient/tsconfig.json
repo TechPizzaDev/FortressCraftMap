@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"lib": [ "es2016", "dom" ],
 		"target": "es6",
-		"module": "es6",
+		"module": "esNext",
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
 		"removeComments": true,

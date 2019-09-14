@@ -1,8 +1,10 @@
 import MainFrame from "./MainFrame";
 
-var mainFrame: MainFrame;
+let mainFrame: MainFrame;
 
-function setup() {
+export type SpeedyModule = typeof import('../../../fortresscraftmap-speedy/pkg/fortresscraftmap_speedy');
+
+async function setup() {
 	const canvasLayer0 = document.getElementById("canvasLayer0");
 	const canvasLayer1 = document.getElementById("canvasLayer1");
 
@@ -24,6 +26,9 @@ function setup() {
 		glContext.blendFunc(glContext.SRC_ALPHA, glContext.ONE_MINUS_SRC_ALPHA);
 
 		console.log("Initialized canvas contexts.");
+
+		const wasmModule = await import('../../../fortresscraftmap-speedy/pkg/fortresscraftmap_speedy');
+		wasmModule.greet();
 
 		mainFrame = new MainFrame(glContext, drawingContext, () => {
 			setupFullscreenElements();
@@ -78,7 +83,7 @@ function setupDebugInfoElements() {
 		setVisibility(debugInfoDiv, !wasVisible, true);
 
 		if (mainFrame != null) {
-			if (!wasVisible) // use to prevent stacked values
+			if (!wasVisible) // clear to prevent stacked values
 				mainFrame.clearDebugInfo();
 			mainFrame.updateDebugInfo(null, true);
 		}

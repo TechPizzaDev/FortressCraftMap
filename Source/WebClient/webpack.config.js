@@ -15,13 +15,16 @@ const webpackConfigBase = {
 	},
 	resolve: {
 		extensions: ['.ts', '.js'],
-			modules: [
-				PATH.resolve(__dirname, 'node_modules')
-			]
+		modules: [
+			PATH.resolve(__dirname, 'node_modules'),
+			PATH.resolve(__dirname, "..", "fortresscraftmap-speedy")
+		]
 	},
 	output: {
-		filename: 'bundle.js',
-		path: PATH.resolve(__dirname, 'Public')
+		filename: 'runtime.js',
+		chunkFilename: '[name].js',
+		publicPath: "/Script/",
+		path: PATH.resolve(__dirname, 'Public/Script')
 	},
 	stats: {
 		warnings: true,
@@ -33,6 +36,24 @@ const webpackConfigBase = {
 	watchOptions: {
 		ignored: ['node_modules']
 	},
+	optimization: {
+		splitChunks: {
+			cacheGroups: {
+				vendors: {
+					test: /[\\/]node_modules[\\/]/i,
+					chunks: "all"
+				},
+				commons: {
+					name: "commons",
+					chunks: "initial",
+					minChunks: 2
+				}
+			}
+		},
+		runtimeChunk: {
+			name: "runtime"
+		}
+	}
 };
 
 function getConfigBaseCopy() {

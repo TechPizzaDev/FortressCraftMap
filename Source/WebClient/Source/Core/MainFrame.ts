@@ -7,7 +7,6 @@ import AppContent from "../Content/AppContent";
 import MapSegment, { MapSegmentPos } from "./World/MapSegment";
 import * as Content from "../Namespaces/Content";
 import RenderSegment from "../Graphics/RenderSegment";
-import RenderSegmentCollection from "../Graphics/RenderSegmentCollection";
 import { vec2 } from "gl-matrix";
 import * as Debug from "./DebugInformation";
 
