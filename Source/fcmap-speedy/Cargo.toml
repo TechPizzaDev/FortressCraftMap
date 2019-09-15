@@ -1,8 +1,11 @@
 [package]
-name = "fortresscraftmap-speedy"
+name = "fcmap-speedy"
 version = "0.1.0"
 authors = ["TechnologicalPizza <piatkowski2002@gmail.com>"]
 edition = "2018"
+description = "Crate used to accelerate the FortressCraftMap web client through WebAssembly."
+license = "MIT"
+repository = "https://github.com/TechnologicalPizza/FortressCraftMap"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

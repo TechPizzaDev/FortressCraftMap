@@ -131,6 +131,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{7C122634-F
 		WebClient\Public\Data\TerrainData.msgpack = WebClient\Public\Data\TerrainData.msgpack
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fcmap-speedy", "fcmap-speedy", "{F8638657-3B07-4D92-B587-E4EDE4625C98}"
+	ProjectSection(SolutionItems) = preProject
+		fcmap-speedy\Cargo.toml = fcmap-speedy\Cargo.toml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B8568977-C322-424E-A9A8-48078255DE3F}"
+	ProjectSection(SolutionItems) = preProject
+		fcmap-speedy\src\lib.rs = fcmap-speedy\src\lib.rs
+		fcmap-speedy\src\utils.rs = fcmap-speedy\src\utils.rs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A62B65A3-854E-46A8-9EE6-4C39E5C9489A}"
+	ProjectSection(SolutionItems) = preProject
+		fcmap-speedy\tests\web.rs = fcmap-speedy\tests\web.rs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug_Ubuntu|Any CPU = Debug_Ubuntu|Any CPU
@@ -218,6 +234,8 @@ Global
 		{DD561571-8B92-4F07-B7FE-08DDE3902A92} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
 		{85AF45C6-27FD-469B-8DC1-00E404148F28} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
 		{7C122634-F527-4DCA-801B-6668F6B126C9} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}
+		{B8568977-C322-424E-A9A8-48078255DE3F} = {F8638657-3B07-4D92-B587-E4EDE4625C98}
+		{A62B65A3-854E-46A8-9EE6-4C39E5C9489A} = {F8638657-3B07-4D92-B587-E4EDE4625C98}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CA70DA06-C641-4B7C-A353-F66EA7579F1C}

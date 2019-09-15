@@ -14,5 +14,5 @@ extern {
 
 #[wasm_bindgen]
 pub fn greet() {
-    alert("Hello from fortresscraftmap-speedy!");
+    alert("Hello from fcmap-speedy but wait really now owo :D?!");
 }

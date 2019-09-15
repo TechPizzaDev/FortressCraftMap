@@ -2,7 +2,7 @@ import MainFrame from "./MainFrame";
 
 let mainFrame: MainFrame;
 
-export type SpeedyModule = typeof import('../../../fortresscraftmap-speedy/pkg/fortresscraftmap_speedy');
+export type SpeedyModule = typeof import('../../../fcmap-speedy/pkg/fcmap_speedy');
 
 async function setup() {
 	const canvasLayer0 = document.getElementById("canvasLayer0");
@@ -27,7 +27,7 @@ async function setup() {
 
 		console.log("Initialized canvas contexts.");
 
-		const wasmModule = await import('../../../fortresscraftmap-speedy/pkg/fortresscraftmap_speedy');
+		const wasmModule = await import('../../../fcmap-speedy/pkg/fcmap_speedy');
 		wasmModule.greet();
 
 		mainFrame = new MainFrame(glContext, drawingContext, () => {
