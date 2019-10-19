@@ -21,7 +21,7 @@
     "@types/gl-matrix": "^2.4.5",
     "@types/msgpack5": "^3.4.1",
     "big-integer": "^1.6.44",
-    "fortresscraftmap-speedy": "file:../fortresscraftmap-speedy/pkg",
+    "fortresscraftmap-speedy": "file:../fcmap-speedy/pkg",
     "gl-matrix": "^3.1.0",
     "msgpack5": "^4.2.1",
     "ts-loader": "^5.4.5",

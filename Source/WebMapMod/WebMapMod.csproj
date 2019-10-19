@@ -38,20 +38,10 @@
       <HintPath>..\packages\Lib.Harmony.1.2.0.1\lib\net35\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\FortressCraft\64\FC_64_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\..\Binaries\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="GameDevWare.Serialization, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\GameDevWare.Serialization.2.4.2\lib\net35\GameDevWare.Serialization.dll</HintPath>
-    </Reference>
-    <Reference Include="ManagedSquish, Version=2.0.0.0, Culture=neutral, PublicKeyToken=fac8b2bfeda84eab, processorArchitecture=MSIL">
-      <HintPath>..\packages\ManagedSquish.2.0.0.0\lib\net35\ManagedSquish.dll</HintPath>
-    </Reference>
-    <Reference Include="NativeSquish_x64, Version=2.0.0.0, Culture=neutral, PublicKeyToken=fac8b2bfeda84eab, processorArchitecture=AMD64">
-      <HintPath>..\packages\ManagedSquish.2.0.0.0\lib\net35\NativeSquish_x64.dll</HintPath>
-    </Reference>
-    <Reference Include="NativeSquish_x86, Version=2.0.0.0, Culture=neutral, PublicKeyToken=fac8b2bfeda84eab, processorArchitecture=x86">
-      <HintPath>..\packages\ManagedSquish.2.0.0.0\lib\net35\NativeSquish_x86.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -61,8 +51,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\FortressCraft\64\FC_64_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>..\..\Binaries\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="websocket-sharp, Version=1.0.2.59611, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
       <HintPath>..\packages\WebSocketSharp.1.0.3-rc11\lib\websocket-sharp.dll</HintPath>
@@ -106,7 +95,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)$(OutDir)." "C:\Users\Michal Piatkowski\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\" /S /Y /EXCLUDE:$(ProjectDir)buildExclusions.txt
-xcopy "$(SolutionDir)\WebClient\Public" "C:\Users\Michal Piatkowski\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\wwwroot\" /S /Y /EXCLUDE:$(ProjectDir)wwwrootExclusions.txt</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

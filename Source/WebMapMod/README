@@ -1,0 +1,4 @@
+Use the folling post-build event commands for deployment
+
+xcopy "$(ProjectDir)$(OutDir)." "%USERPROFILE%\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\" /S /Y /EXCLUDE:$(ProjectDir)buildExclusions.txt
+xcopy "$(SolutionDir)\WebClient\Public" "%USERPROFILE%\AppData\Local\ProjectorGames\FortressCraft\Mods\TechPizza.WebMap\1\wwwroot\" /S /Y /EXCLUDE:$(ProjectDir)wwwrootExclusions.txt
