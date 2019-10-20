@@ -88,8 +88,6 @@ function setupDebugInfoElements() {
             mainFrame.updateDebugInfo(null, true);
         }
     };
-
-    fpsCounterDiv.click();
 }
 
 function isVisible(element: HTMLElement) {
