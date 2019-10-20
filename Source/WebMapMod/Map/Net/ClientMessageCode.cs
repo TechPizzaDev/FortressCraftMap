@@ -1,8 +1,11 @@
 ﻿
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
-    public enum ClientMessageCode
+    public enum ClientMessageCode : ushort
     {
+        StringCode = 1,
+        Error = 2,
+
         GetSegment,
         GetSegmentBatch
     }

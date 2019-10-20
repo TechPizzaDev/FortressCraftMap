@@ -6,7 +6,7 @@
 
 using System;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     /// <summary>
     /// Implementation of the Perlin simplex noise, an improved Perlin noise algorithm.

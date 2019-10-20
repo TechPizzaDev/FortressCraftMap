@@ -3,24 +3,25 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public abstract partial class AttributedWebSocketBehavior
     {
         public class HandlerCollection
         {
-            public delegate void HandlerDelegate(AttributedWebSocketBehavior behavior, object body);
+            public delegate WebOutgoingMessage HandlerDelegate(
+                AttributedWebSocketBehavior behavior, WebIncomingMessage message);
 
-            public Dictionary<int, HandlerDelegate> ByCode { get; }
+            public Dictionary<ushort, HandlerDelegate> ByCode { get; }
             public Dictionary<string, HandlerDelegate> ByName { get; }
 
             public HandlerCollection()
             {
-                ByCode = new Dictionary<int, HandlerDelegate>();
+                ByCode = new Dictionary<ushort, HandlerDelegate>();
                 ByName = new Dictionary<string, HandlerDelegate>(StringComparer.OrdinalIgnoreCase);
             }
 
-            public void Add(int code, HandlerDelegate handler)
+            public void Add(ushort code, HandlerDelegate handler)
             {
                 ByCode.Add(code, handler);
             }
@@ -57,18 +58,14 @@ namespace TechPizza.WebMap
                         method.IsGenericMethodDefinition ||
                         method.ContainsGenericParameters)
                         throw new InvalidOperationException(
-                            "The handler method cannot be generic in any way.");
-
-                    var parameters = method.GetParameters();
-                    var paramType = parameters[0].ParameterType;
+                            "The handler method may not be generic in any way.");
 
                     var target = Expression.Parameter(typeof(AttributedWebSocketBehavior), "target");
-                    var message = Expression.Parameter(typeof(object), "message");
+                    var message = Expression.Parameter(typeof(WebIncomingMessage), "message");
                     var behavior = Expression.Convert(target, behaviorType);
-                    var body = Expression.Convert(message, paramType);
 
-                    // lambda visualized: (target, message) => ((behaviorType)target).Invoke((paramType)message)
-                    var call = Expression.Call(behavior, method, body);
+                    // lambda visualized: (target, message) => ((behaviorType)target).Invoke(message)
+                    var call = Expression.Call(behavior, method, message);
                     var handler = Expression.Lambda<HandlerDelegate>(call, target, message).Compile();
 
                     var attrib = attribs[0] as MessageHandlerAttribute;
@@ -81,7 +78,7 @@ namespace TechPizza.WebMap
                     }
                     else if (codes != null)
                     {
-                        int code;
+                        ushort code;
                         if (codes.TryGetCode(name, out code))
                             collection.Add(code, handler);
                     }

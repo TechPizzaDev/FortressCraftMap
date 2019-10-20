@@ -28,8 +28,8 @@ export default class RenderSegment extends GLResource {
 
 		super(gl);
 		if (x instanceof MapSegmentPos) {
-			this.x = x.rX;
-			this.z = x.rZ;
+			this.x = x.renderX;
+			this.z = x.renderZ;
 		}
 		else {
 			this.x = x;

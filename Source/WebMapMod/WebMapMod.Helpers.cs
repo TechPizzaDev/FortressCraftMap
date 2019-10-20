@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using UnityEngine;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public partial class WebMapMod
     {

@@ -245,6 +245,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		}
 
 		return;
+
 		const rowOffset = Math.ceil(view.y / MapSegment.size);
 		const rowCount = Math.ceil(view.height / 4 / MapSegment.size);
 

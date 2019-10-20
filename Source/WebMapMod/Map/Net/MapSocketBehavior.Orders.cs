@@ -1,5 +1,5 @@
 ﻿
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public partial class MapSocketBehavior
     {
@@ -27,28 +27,27 @@ namespace TechPizza.WebMap
             }
         }
 
-        private void SendBlockOrderBatch(BlockOrder[] orders)
+        private WebOutgoingMessage SendBlockOrderBatch(BlockOrder[] orders)
         {
-            var items = new object[orders.Length];
-            for (int i = 0; i < items.Length; i++)
-                items[i] = CreateOrderObject(orders[i]);
-
-            SendMessage(ServerMessageCode.BlockOrderBatch, items);
+            var message = CreateMessage(ServerMessageCode.BlockOrderBatch);
+            message.Write((byte)orders.Length);
+            for (int i = 0; i < orders.Length; i++)
+                WriteBlockOrder(message, orders[i]);
+            return message;
         }
 
-        private void SendBlockOrder(BlockOrder order)
+        private WebOutgoingMessage SendBlockOrder(BlockOrder order)
         {
-            SendMessage(ServerMessageCode.BlockOrder, CreateOrderObject(order));
+            var message = CreateMessage(ServerMessageCode.BlockOrder);
+            WriteBlockOrder(message, order);
+            return message;
         }
 
-        private static object[] CreateOrderObject(BlockOrder order)
+        private static void WriteBlockOrder(WebOutgoingMessage message, BlockOrder order)
         {
-            return new object[]
-            {
-                order.Segment.ToArray(),
-                order.Block.ToArray(),
-                order.Type
-            };
+            message.Write(order.Segment);
+            message.Write(order.Block);
+            message.Write(order.Type);
         }
     }
 }

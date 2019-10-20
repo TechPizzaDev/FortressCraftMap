@@ -4,7 +4,7 @@ using System.Net;
 using System.Threading;
 using WebSocketSharp;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public partial class MapSocketBehavior : AttributedWebSocketBehavior
     {
@@ -32,28 +32,11 @@ namespace TechPizza.WebMap
             _tileArray = new ushort[SegmentSize * SegmentSize];
             _loadedSegments = new List<MapSegmentPosition>();
         }
-        
-        private bool ParsePosition(
-            List<object> position, out MapSegmentPosition segmentPosition)
-        {
-            long segX;
-            long segZ;
-            if (long.TryParse(position[0].ToString(), out segX) &&
-                long.TryParse(position[1].ToString(), out segZ))
-            {
-                segmentPosition = new MapSegmentPosition(segX, segZ);
-                return true;
-            }
 
-            segmentPosition = default(MapSegmentPosition);
-            SendError(position, "Failed to parse segment position.");
-            return false;
-        }
-
-        private void GetTiles(MapSegmentPosition segPos, ushort[] output)
+        private void GetTiles(MapSegmentPosition position, ushort[] output)
         {
-            int blockX = (int)(segPos.X + 100) * SegmentSize;
-            int blockZ = (int)(segPos.Z + 100) * SegmentSize;
+            int blockX = (int)(position.X + 100) * SegmentSize;
+            int blockZ = (int)(position.Z + 100) * SegmentSize;
 
             for (int z = 0; z < SegmentSize; z++)
             {
@@ -69,71 +52,57 @@ namespace TechPizza.WebMap
         }
 
         [MessageHandler]
-        public void GetSegment(List<object> position)
+        public WebOutgoingMessage GetSegment(WebIncomingMessage reader)
         {
-            MapSegmentPosition segPos;
-            if (Missing(position) || !ParsePosition(position, out segPos))
-                return;
-
-            GetTiles(segPos, _tileArray);
+            var position = reader.ReadMapSegmentPosition();
+            GetTiles(position, _tileArray);
 
             lock (_loadedSegments)
-                _loadedSegments.Add(segPos);
+                _loadedSegments.Add(position);
 
-            SendMessage(ServerMessageCode.Segment, GetArray(segPos, _tileArray));
+            var message = CreateMessage(ServerMessageCode.Segment);
+
+            message.Write(position);
+            for (int i = 0; i < _tileArray.Length; i++)
+                message.Write(_tileArray[i]);
+
+            return message;
         }
 
         [MessageHandler]
-        public void GetSegmentBatch(List<object> positions)
+        public WebOutgoingMessage GetSegmentBatch(WebIncomingMessage message)
         {
-            if (Missing(positions))
-                return;
+            int count = message.ReadByte();
+            if (count == 0)
+                return ErrorMessage("Empty segment batch request.");
 
-            if (positions.Count > MaxSegmentsRequestsPerBatch)
-                SendError(positions, "Request too large.");
+            if (count > MaxSegmentsRequestsPerBatch)
+                return ErrorMessage("Segment batch request too large.");
 
-            foreach (var pos in positions)
+            if (count == 1)
+                return GetSegment(message);
+
+            var result = CreateMessage(ServerMessageCode.SegmentBatch);
+            result.Write((byte)count);
+
+            for (int i = 0; i < count; i++)
             {
-                if (!(pos is List<object>))
-                {
-                    SendError(positions, "Invalid segment position request.");
-                    return;
-                }
-            }
-
-            if (positions.Count == 1)
-            {
-                GetSegment((List<object>)positions[0]);
-                return;
-            }
-
-            MapSegmentPosition segPos;
-            var body = new object[positions.Count][];
-            for (int i = 0; i < positions.Count; i++)
-            {
-                if(!ParsePosition((List<object>)positions[i], out segPos))
-                    return;
-
+                var position = message.ReadMapSegmentPosition();
+                
                 // TODO: pool this kind of arrays
                 var tiles = new ushort[SegmentSize * SegmentSize];
-                GetTiles(segPos, tiles);
-                body[i] = GetArray(segPos, tiles);
+                GetTiles(position, tiles);
+
+                result.Write(position);
+                for (int t = 0; t < tiles.Length; t++)
+                    result.Write(tiles[t]);
             }
-            SendMessage(ServerMessageCode.SegmentBatch, body);
+            return result;
         }
 
-        private static object[] GetArray(MapSegmentPosition segPos, object obj)
+        protected WebOutgoingMessage CreateMessage(ServerMessageCode code)
         {
-            return new object[]
-            {
-                segPos.ToArray(),
-                obj
-            };
-        }
-
-        protected void SendMessage<T>(ServerMessageCode code, T body)
-        {
-            SendMessage((int)code, body);
+            return CreateMessage((ushort)code);
         }
 
         protected override void OnOpen()

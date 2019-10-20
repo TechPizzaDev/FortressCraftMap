@@ -1,5 +1,6 @@
 import Constants from "../Constants";
 import RenderSegment from "../../Graphics/RenderSegment";
+import * as jDataView from "jdataview";
 
 export type NumberOrPos = number | MapSegmentPos;
 
@@ -28,6 +29,8 @@ export default class MapSegment {
  * */
 export class MapSegmentPos {
 
+    public static readonly byteSize = 8 * 3;
+
 	/** The x coordinate of the segment (minus default base offset).*/
 	public readonly x: number;
 
@@ -38,12 +41,12 @@ export class MapSegmentPos {
 	public readonly z: number;
 
 	/** Gets the x coordinate for the corresponding RenderSegment. */
-	public get rX(): number {
+	public get renderX(): number {
 		return MapSegmentPos.toRenderCoord(this.x);
 	}
 
 	/** Gets the z coordinate for the corresponding RenderSegment. */
-	public get rZ(): number {
+	public get renderZ(): number {
 		return MapSegmentPos.toRenderCoord(this.z);
 	}
 
@@ -78,7 +81,20 @@ export class MapSegmentPos {
 				this.z = z;
 			}
 		}
-	}
+    }
+
+    public writeTo(view: jDataView) {
+        view.writeInt64(jDataView.Int64.fromNumber(this.x));
+        view.writeInt64(jDataView.Int64.fromNumber(this.y));
+        view.writeInt64(jDataView.Int64.fromNumber(this.z));
+    }
+
+    public static read(view: jDataView): MapSegmentPos {
+        const x = view.getInt64().valueOf();
+        const y = view.getInt64().valueOf();
+        const z = view.getInt64().valueOf();
+        return new MapSegmentPos(x, y, z);
+    }
 
 	public static toRenderCoord(coord: number): number {
 		return Math.floor(coord / RenderSegment.size);

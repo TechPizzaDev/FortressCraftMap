@@ -1,27 +1,21 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
-using GameDevWare.Serialization;
-using TechPizza.WebMap.Extensions;
 using WebSocketSharp;
 using WebSocketSharp.Server;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public abstract partial class AttributedWebSocketBehavior : WebSocketBehavior
     {
+        public const int ReservedCode = 0;
+        public const int StringCode = 1;
+        public const int ErrorCode = 2;
+
         private static Dictionary<Type, HandlerCollection> _handlerCache;
         private static Dictionary<Type, CodeCollection> _clientCodeCache;
         private static Dictionary<Type, CodeCollection> _serverCodeCache;
-
-        /// <summary>
-        /// Gets a UTF-8 encoding that does not emit an identifier.
-        /// </summary>
-        public static Encoding PlainUTF8 { get; } =
-            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
         private HandlerCollection _handlers;
         private CodeCollection _clientCodes;
@@ -102,120 +96,37 @@ namespace TechPizza.WebMap
 
         private void SendInitMessage()
         {
-            var codeInfo = GetCodeInfo();
-            SendMessage(new
-            {
-                codeInfo
-            });
+            var message = WebOutgoingMessagePool.Rent();
+
+            WriteCodeInfo(message);
+
+            SendMessage(message);
+            WebOutgoingMessagePool.Return(message);
         }
 
-        private object GetCodeInfo()
+        private void WriteCodeInfo(WebOutgoingMessage writer)
         {
             if (UseNumericCodes)
             {
-                return new
-                {
-                    numericCodes = true,
-                    client = _clientCodes?.ByName,
-                    server = _serverCodes?.ByName
-                };
+                writer.Write(UseNumericCodes);
+
+                if (_clientCodes != null)
+                    writer.Write(_clientCodes.ByName);
+
+                if (_serverCodes != null)
+                    writer.Write(_serverCodes.ByName);
             }
             else
             {
-                return new
-                {
-                    numericCodes = false,
-                    client = _handlers.ByName.Keys,
-                };
+                writer.Write(UseNumericCodes);
+
+                writer.Write(_handlers.ByName.Keys);
             }
         }
 
         #endregion
 
-        #region 'Missing' Helper
-
-        /// <summary>
-        /// Helper for checking if <paramref name="token"/> is an empty 
-        /// list or <see langword="null"/>, sending an error if it is.
-        /// </summary>
-        /// <param name="token">The token to check.</param>
-        /// <param name="sendError"><see langword="true"/> to send an error if the token is invalid.</param>
-        /// <returns></returns>
-        protected bool Missing(object token, bool sendError = true)
-        {
-            var list = token as IList;
-            if (token == null || (list != null && list.Count == 0))
-            {
-                if(sendError)
-                    SendError(token, "Missing value.");
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Helper for checking if <paramref name="token"/> is a dictionary and
-        /// has the specified property, sending an error if the property is missing.
-        /// </summary>
-        /// <param name="token">The token to check.</param>
-        /// <param name="name">The name of the property.</param>
-        /// <param name="value">The found value in the token.</param>
-        /// <param name="sendError"><see langword="true"/> to send an error if the token is invalid.</param>
-        /// <returns></returns>
-        protected bool Missing<T>(object token, string name, out T value, bool sendError = true)
-        {
-            var dic = token as IDictionary<string, object>;
-            if (dic != null)
-            {
-                object raw;
-                if (dic.TryGetValue(name, out raw))
-                {
-                    if (raw is T)
-                    {
-                        value = (T)raw;
-                        return false;
-                    }
-                }
-            }
-            if (sendError)
-                SendError(token, "Missing property '" + name + "'.");
-            value = default(T);
-            return true;
-        }
-
-        /// <summary>
-        /// Helper for checking if <paramref name="token"/> is a list and 
-        /// has an element at the specified index, sending an error if the value is missing.
-        /// </summary>
-        /// <param name="token"></param>
-        /// <param name="index">The index of the value.</param>
-        /// <param name="value">The found value in the token.</param>
-        /// <param name="sendError"><see langword="true"/> to send an error if the token is invalid.</param>
-        /// <returns></returns>
-        protected bool Missing<T>(object token, int index, out T value, bool sendError = true)
-        {
-            var list = token as IList<object>;
-            if (list != null)
-            {
-                if (index < list.Count)
-                {
-                    object raw = list[index];
-                    if (raw is T)
-                    {
-                        value = (T)raw;
-                        return false;
-                    }
-                }
-            }
-            if (sendError)
-                SendError(token, "Missing value at index '" + index + "'.");
-            value = default(T);
-            return true;
-        }
-
-        #endregion
-
-        #region OnMessage and Send
+        #region OnMessage
 
         /// <summary>
         /// Called when the WebSocket instance for a session receives a message.
@@ -226,154 +137,89 @@ namespace TechPizza.WebMap
         /// </param>
         protected override void OnMessage(MessageEventArgs e)
         {
+            WebOutgoingMessage outgoing = null;
+
             if (e.IsPing)
                 return;
 
             if (!e.IsBinary)
             {
-                SendError("Only binary messages are supported.");
-                return;
+                outgoing = ErrorMessage("Only binary messages are supported.");
+                goto Send;
             }
 
-            List<object> list;
             var rawData = new MemoryStream(e.RawData, writable: false);
-            var reader = new StreamReader(rawData, Encoding.UTF8);
-            try
-            {
-                list = MsgPack.Deserialize<List<object>>(rawData);
-            }
-            catch (Exception ex)
-            {
-                reader.DiscardBufferedData();
-                reader.BaseStream.Position = 0;
+            var message = new WebIncomingMessage(rawData);
 
-                SendError(reader.ReadToEnd(), ex.Message);
-                return;
+            ushort code = message.ReadUInt16();
+            if(code == ReservedCode)
+            {
+                outgoing = ErrorMessage("The message code '0' is reserved.");
+                goto Send;
             }
 
-            if (list == null) // this should never happen
+            HandlerCollection.HandlerDelegate handler;
+            string codeId = null;
+
+            if (code == StringCode) 
             {
-                SendError("Message was parsed as null.");
-                return;
+                string codeName = message.ReadString();
+                if (_handlers.ByName.TryGetValue(codeName, out handler))
+                    codeId = codeName;
             }
-
-            object codeToken = list.Count > 0 ? list[0] : null;
-            if (codeToken == null)
-            {
-                SendError(list, "Message code missing.");
-                return;
-            }
-
-            object bodyToken = list.Count > 1 ? list[1] : null;
-            if (bodyToken == null)
-            {
-                SendError(list, "Message body missing.");
-                return;
-            }
-
-            var typeCode = Type.GetTypeCode(codeToken.GetType());
-            switch (typeCode)
-            {
-                case TypeCode.String:
-                {
-                    HandlerCollection.HandlerDelegate handler;
-                    if (_handlers.ByName.TryGetValue((string)codeToken, out handler))
-                    {
-                        handler.Invoke(this, null);
-                        break;
-                    }
-                    SendUnknownCodeError(list, codeToken);
-                    break;
-                }
-
-                case TypeCode.SByte:
-                case TypeCode.Byte:
-                case TypeCode.Int16:
-                case TypeCode.UInt16:
-                case TypeCode.Int32:
-                {
-                    int code = codeToken.CastToInt32();
-                    if (code == -1)
-                    {
-                        SendError(list, $"Message code '{codeToken}' is reserved.");
-                        return;
-                    }
-
-                    HandlerCollection.HandlerDelegate handler;
-                    if (_handlers.ByCode.TryGetValue(code, out handler))
-                    {
-                        handler.Invoke(this, bodyToken);
-                        return;
-                    }
-                    SendUnknownCodeError(list, codeToken);
-                    break;
-                }
-
-                default:
-                    SendError(list, "Message code must be of type string or an integer within bounds of signed 32-bit.");
-                    break;
-            }
-        }
-
-        private void SendUnknownCodeError(object list, object codeToken)
-        {
-            SendError(list, $"Message code '{codeToken}' is unknown.");
-        }
-
-        protected void SendMessage(object value, SerializationContext context)
-        {
-            using (var output = new MemoryStream())
-            {
-                MsgPack.Serialize(value, output, context);
-                Send(output.ToArray());
-            }
-        }
-
-        protected void SendMessage(object value)
-        {
-            SendMessage(value, new SerializationContext());
-        }
-
-        protected void SendMessage(string key, object body, SerializationContext context)
-        {
-            using (var output = new MemoryStream())
-            {
-                MsgPack.Serialize(new object[] { key, body }, output, context);
-                Send(output.ToArray());
-            }
-        }
-
-        protected void SendMessage(string key, object body)
-        {
-            SendMessage(key, body, new SerializationContext());
-        }
-
-        protected void SendMessage(int key, object body, SerializationContext context)
-        {
-            using (var output = new MemoryStream())
-            {
-                MsgPack.Serialize(new object[] { key, body }, output, context);
-                Send(output.ToArray());
-            }
-        }
-
-        protected void SendMessage(int key, object body)
-        {
-            SendMessage(key, body, new SerializationContext());
-        }
-
-        protected void SendError(object message)
-        {
-            SendMessage(-1, message);
-        }
-
-        protected void SendError(object source, object message)
-        {
-            if (VerboseDebug)
-                SendError(new object[] { source, message });
             else
-                SendError(message);
+            {
+                if (_handlers.ByCode.TryGetValue(code, out handler))
+                    codeId = code.ToString();
+            }
+
+            if (codeId == null)
+            {
+                outgoing = ErrorMessage($"The message code '{code}' is unknown.");
+            }
+            else
+            {
+                try
+                {
+                    outgoing = handler.Invoke(this, message);
+                }
+                catch (Exception exc)
+                {
+                    outgoing = ErrorMessage("Internal server error: " + exc.Message);
+                }
+            }
+
+            Send:
+            if (outgoing != null)
+                SendMessage(outgoing);
+            WebOutgoingMessagePool.Return(outgoing);
         }
+
+        #endregion
+
+        public WebOutgoingMessage CreateMessage(ushort code)
+        {
+            var message = WebOutgoingMessagePool.Rent();
+            message.Write(code);
+            return message;
+        }
+
+        #region Send 
+
+        public void SendMessage(WebOutgoingMessage message)
+        {
+            message.Flush();
+            Send(message.Memory.ToArray());
+        }
+
+        public WebOutgoingMessage ErrorMessage(string text)
+        {
+            var message = CreateMessage(ErrorCode);
+            message.Write(text);
+            return message;
+        }
+
+        #endregion
 
         [DebuggerHidden]
         protected void AssertOpen()
@@ -381,7 +227,5 @@ namespace TechPizza.WebMap
             if (State != WebSocketState.Open)
                 throw new InvalidOperationException("The connection is not open.");
         }
-
-        #endregion
     }
 }

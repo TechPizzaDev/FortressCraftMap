@@ -19,10 +19,12 @@
   "homepage": "https://github.com/TechnologicalPizza/FortressCraftMap#readme",
   "dependencies": {
     "@types/gl-matrix": "^2.4.5",
+    "@types/jdataview": "0.0.30",
     "@types/msgpack5": "^3.4.1",
     "big-integer": "^1.6.44",
-    "fortresscraftmap-speedy": "file:../fcmap-speedy/pkg",
+    "fcmap-speedy": "file:../fcmap-speedy/pkg",
     "gl-matrix": "^3.1.0",
+    "jdataview": "^2.5.0",
     "msgpack5": "^4.2.1",
     "ts-loader": "^5.4.5",
     "typescript": "^3.6.3",

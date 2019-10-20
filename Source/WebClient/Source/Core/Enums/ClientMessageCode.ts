@@ -4,9 +4,15 @@
  * */
 const enum ClientMessageCode {
 
-	/** Small request message for a segment. */
-	GetSegment,
+    Reserved = 0,
 
-	/** Request message for multiple segments. */
-	GetSegmentBatch,
+    StringCode = 1,
+
+    Error = 2,
+
+    /** Small request message for a segment. */
+    GetSegment,
+
+    /** Request message for multiple segments. */
+    GetSegmentBatch,
 }

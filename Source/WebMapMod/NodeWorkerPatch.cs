@@ -1,7 +1,7 @@
 ﻿using System;
 using Harmony;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     [HarmonyPatch(typeof(NodeWorker), "ProcessBuildOrders", typeof(Segment))]
     internal class NodeWorkerPatch

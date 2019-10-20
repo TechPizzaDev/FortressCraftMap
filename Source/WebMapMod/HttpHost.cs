@@ -4,7 +4,7 @@ using WebSocketSharp;
 using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public partial class HttpHost
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public class BufferPool
     {
@@ -19,6 +19,9 @@ namespace TechPizza.WebMap
 
         public static void Return(byte[] buffer)
         {
+            if (buffer == null)
+                return;
+
             lock (_pool)
             {
                 if(_pool.Count < 16)

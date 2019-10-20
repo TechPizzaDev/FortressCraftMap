@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TechPizza.WebMap.Extensions
+namespace TechPizza.WebMapMod.Extensions
 {
     public static class ObjectExtensions
     {

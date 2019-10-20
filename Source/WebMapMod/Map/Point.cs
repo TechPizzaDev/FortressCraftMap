@@ -1,5 +1,5 @@
 ﻿
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public struct Point
     {

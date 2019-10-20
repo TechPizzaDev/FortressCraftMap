@@ -1,5 +1,5 @@
 ﻿
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public struct MapSegmentPosition
     {
@@ -16,11 +16,6 @@ namespace TechPizza.WebMap
 
         public MapSegmentPosition(long x, long z) : this(x, 0, z)
         {
-        }
-
-        public long[] ToArray()
-        {
-            return new long[] { X, Y, Z };
         }
 
         public override string ToString()

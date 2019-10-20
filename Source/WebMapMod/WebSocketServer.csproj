@@ -50,6 +50,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\WebIncomingMessage.cs" />
+    <Compile Include="Helpers\WebOutgoingMessage.cs" />
+    <Compile Include="Helpers\WebOutgoingMessagePool.cs" />
     <Compile Include="Helpers\ObjectExtensions.cs" />
     <Compile Include="HttpHost.cs" />
     <Compile Include="Map\BlockOrder.cs" />
@@ -70,8 +73,9 @@
     <Compile Include="Helpers\SimplexNoise.cs" />
     <Compile Include="Helpers\BufferPool.cs" />
     <Compile Include="Helpers\MimeMap.cs" />
-    <Compile Include="Map\Point.cs" />
     <Compile Include="Map\SegmentMeshLayer.cs" />
+    <Compile Include="Map\WebIncomingMessageExtensions.cs" />
+    <Compile Include="Map\WebOutgoingMessageExtensions.cs" />
     <Compile Include="ServerProgram.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helpers\StreamExtensions.cs" />

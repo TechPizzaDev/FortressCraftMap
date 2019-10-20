@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public static class WebMapMod
     {

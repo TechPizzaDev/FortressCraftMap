@@ -7,7 +7,7 @@
     <ProjectGuid>{82D81769-FF87-4727-9570-03C233EA59D9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TechPizza.WebMap</RootNamespace>
+    <RootNamespace>TechPizza.WebMapMod</RootNamespace>
     <AssemblyName>plugin_TechPizza.WebMap</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -71,6 +71,9 @@
     <Compile Include="Helpers\PathHelper.cs" />
     <Compile Include="Helpers\SimplexNoise.cs" />
     <Compile Include="Helpers\StreamExtensions.cs" />
+    <Compile Include="Helpers\WebIncomingMessage.cs" />
+    <Compile Include="Helpers\WebOutgoingMessage.cs" />
+    <Compile Include="Helpers\WebOutgoingMessagePool.cs" />
     <Compile Include="HttpHost.cs" />
     <Compile Include="HttpHost.Extra.cs" />
     <Compile Include="Map\BlockOrder.cs" />
@@ -82,6 +85,8 @@
     <Compile Include="Map\Net\MapSocketBehavior.Orders.cs" />
     <Compile Include="Map\Net\ServerMessageCode.cs" />
     <Compile Include="Map\SegmentMeshLayer.cs" />
+    <Compile Include="Map\WebIncomingMessageExtensions.cs" />
+    <Compile Include="Map\WebOutgoingMessageExtensions.cs" />
     <Compile Include="WebMapMod.Helpers.cs" />
     <Compile Include="NodeWorkerPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

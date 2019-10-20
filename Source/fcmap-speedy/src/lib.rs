@@ -2,17 +2,23 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global allocator.
-#[cfg(feature = "wee_alloc")]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 #[wasm_bindgen]
 extern {
     fn alert(s: &str);
+	
+    #[wasm_bindgen(js_namespace = console)]
+	fn log(s: &str);
 }
 
+macro_rules! log_f {
+    // uses the extern 'log' function
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
+
 #[wasm_bindgen]
-pub fn greet() {
-    alert("Hello from fcmap-speedy but wait really now owo :D?!");
+pub fn init() {
+	utils::set_panic_hook();
+
+	log("[fcmap-speedy] Library initialized");
 }

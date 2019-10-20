@@ -115,7 +115,7 @@ const webpackConfigBase = {
 		ignored: [
 			'node_modules',
 			'Public/Script',
-			PATH.resolve(fcmapSpeedyPath, "pkg")
+			PATH.resolve(fcmapSpeedyPath, "**/*.rs")
 		],
 		aggregateTimeout: 100
 	},
@@ -131,7 +131,7 @@ const webpackConfigBase = {
 			}
 		},
 		runtimeChunk: "single"
-	}, plugins: [
+	}, /* plugins: [
 		// ... other plugins here ...
 		{
 			apply: (compiler) => {
@@ -139,7 +139,7 @@ const webpackConfigBase = {
 				compiler.hooks.watchRun.tap("WasmPackRebuildPlugin", wasmPackRebuildPlugin);
 			}
 		}
-	]
+	] */
 };
 
 function getConfigBaseCopy() {

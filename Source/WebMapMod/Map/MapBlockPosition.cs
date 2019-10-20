@@ -1,10 +1,13 @@
 ﻿
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public struct MapBlockPosition
     {
         public long X;
         public long Z;
+
+        public int BaseX => (int)(X % 16);
+        public int BaseZ => (int)(Z % 16);
 
         public MapSegmentPosition Segment => new MapSegmentPosition(X / 16, Z / 16);
 
@@ -12,16 +15,6 @@ namespace TechPizza.WebMap
         {
             X = x;
             Z = y;
-        }
-
-        public long[] ToArray()
-        {
-            return new long[] { X, Z };
-        }
-
-        public byte[] ToBaseArray()
-        {
-            return new byte[] { (byte)(X % 16), (byte)(Z % 16) };
         }
 
         public override string ToString()

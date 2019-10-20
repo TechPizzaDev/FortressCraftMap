@@ -1,11 +1,11 @@
 ﻿using System;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     public sealed class MessageHandlerAttribute : Attribute
     {
-        public int Code { get; set; }
+        public ushort Code { get; set; }
         public string Name { get; set; }
         public bool HasCode { get; }
 
@@ -19,15 +19,15 @@ namespace TechPizza.WebMap
             Name = name;
         }
 
-        public MessageHandlerAttribute(int code)
+        public MessageHandlerAttribute(ushort code)
         {
-            if (code == -1)
-                throw new ArgumentException("Value -1 is reserved.", nameof(code));
+            if (code == AttributedWebSocketBehavior.ReservedCode)
+                throw new ArgumentException("The message code is reserved.", nameof(code));
             Code = code;
             HasCode = true;
         }
 
-        public MessageHandlerAttribute(ClientMessageCode code) : this((int)code)
+        public MessageHandlerAttribute(ClientMessageCode code) : this((ushort)code)
         {
         }
     }

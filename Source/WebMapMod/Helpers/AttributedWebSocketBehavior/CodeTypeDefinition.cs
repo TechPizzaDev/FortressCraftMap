@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public abstract partial class AttributedWebSocketBehavior
     {
@@ -35,8 +35,7 @@ namespace TechPizza.WebMap
 
             public static bool IsValidEnum(Type enumType)
             {
-                return enumType.IsEnum
-                    && Enum.GetUnderlyingType(enumType) == typeof(int);
+                return enumType.IsEnum && Enum.GetUnderlyingType(enumType) == typeof(ushort);
             }
         }
     }

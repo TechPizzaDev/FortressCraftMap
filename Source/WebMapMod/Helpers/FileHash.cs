@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public class FileHash
     {

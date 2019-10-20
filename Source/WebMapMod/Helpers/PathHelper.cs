@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public static class PathHelper
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public class FileHashMap
     {

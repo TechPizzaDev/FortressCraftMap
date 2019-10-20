@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public static class MimeMap
     {

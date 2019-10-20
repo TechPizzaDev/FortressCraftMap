@@ -3,12 +3,12 @@ using System.IO;
 using System.Reflection;
 using Harmony;
 
-namespace TechPizza.WebMap
+namespace TechPizza.WebMapMod
 {
     public partial class WebMapMod : FortressCraftMod
     {
         public const int ModVersion = 1;
-        public const string ModName = nameof(TechPizza) + "." + nameof(WebMap);
+        public const string ModName = nameof(TechPizza) + "." + nameof(TechPizza.WebMapMod);
 
         public static WebMapMod Instance { get; private set; }
 

@@ -4,6 +4,12 @@
  * */
 const enum ServerMessageCode {
 
+    Reserved = 0,
+
+    StringCode = 1,
+
+	Error = 2,
+
 	/** Large message containing segment data. */
 	Segment,
 
