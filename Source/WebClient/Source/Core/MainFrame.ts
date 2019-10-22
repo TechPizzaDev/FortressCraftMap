@@ -38,13 +38,23 @@ export default class MainFrame {
 	private TargetFpsWhileRequesting = MainFrame.isWeakUserAgent ? 59 : 55;
 	private SegmentRequestWindupDuration = 2;
 	private MinSegmentRequestWindupWhenIdle = 0.2;
+	private ViewCullDistance = 50; // 82
 
 	private _requestWindup = 0;
 	private _requestIdleTime = 0;
 
+	private _requestPickingMethod = 0;
+	private _lastRequestPickingMethod = this._requestPickingMethod;
+
 	private _segmentViewInterval = MainFrame.isWeakUserAgent ? (1 / 10) : (1 / 20);
 	private _segmentViewTick = this._segmentViewInterval;
-	private _cachedPos = vec2.create();
+	private _cachedPosition = vec2.create();
+
+	private _loadCenterPosition = [0, 0];
+	private _segmentRequestQueue: number[][] = [];
+	private _segmentRequestBuffer: number[][] = [];
+	private _segmentRequestedMap = new Map<number, Set<number>>();
+	private _segmentLoadedMap = new Map<number, Set<number>>(); 
 
 	private _debugInfoUpdateRate = 5;
 	private _debugInfoUpdateTime = 0;
@@ -55,8 +65,8 @@ export default class MainFrame {
 	private _debugInfoDiv: HTMLDivElement;
 	private _debugInfoSegmentTable: HTMLTableElement;
 
-	private userOffsetX = 0;
-	
+	private userOffsetX = 0; // temporary thing
+
 	constructor(
 		glCtx: WebGLRenderingContext, speedyModule: SpeedyModule,
 		drawCtx: CanvasRenderingContext2D, onLoad?: Content.LoadCallback) {
@@ -117,11 +127,6 @@ export default class MainFrame {
 		return this._content;
 	}
 
-	private loadCenter = [0, 0];
-	private _segmentRequestQueue: number[][] = [];
-	private _segmentRequestedMap = new Map<number, Set<number>>();
-	private _segmentLoadedMap = new Map<number, Set<number>>(); 
-
 	private onMapChannelReady = (ev: Event) => {
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -2]);
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -1]);
@@ -181,7 +186,7 @@ export default class MainFrame {
 		this.getCoordMapRow(this._segmentLoadedMap, pos.x, pos.z).add(pos.x);
 	}
 
-	private _viewCullDistance = 50; // 82
+
 
 	// TODO:
 	// Create a sort of "priority list";
@@ -189,14 +194,18 @@ export default class MainFrame {
 	// high priority is requested first, low priority last.
 	// This will greatly improve performance in 'sendSegmentRequests' as
 	// it won't need to pick requests for optimal visual quality, it will just
-	// follow priorities, 'requestSegmentsInView' will determine the priorites instead.
+	// follow priorities, 'requestSegmentsInView' will determine the priorities instead.
+	// This will not be as responsive as the current design, so think about when the
+	// user moves the map above a certain length threshold, 
+	// update request priorities based on a new distance.
+
 	private requestSegmentsInView(time: TimeEvent) {
 		const w = 108 - 12 + 2 + 16 * 6; //66;
 		const h = 48 + 2 + 16 * 3; //57;
 		const halfW = w / 2;
 		const halfH = h / 2;
 
-		this._viewCullDistance = Math.max(w, h);
+		this.ViewCullDistance = Math.max(w, h);
 		//const timeout = 2;
 
 		const speedX = 0; // 120
@@ -210,8 +219,8 @@ export default class MainFrame {
 		
 		this._segmentRenderer._mapTranslation[0] = (rawSegX + halfW) * -16;
 		this._segmentRenderer._mapTranslation[1] = -8; //rawSegZ * -16;
-		this.loadCenter[0] = segX + halfW;
-		this.loadCenter[1] = segZ + halfH;
+		this._loadCenterPosition[0] = segX + halfW;
+		this._loadCenterPosition[1] = segZ + halfH;
 
 		for (let z = 0; z < h; z++) {
 			for (let x = 0; x < w; x++) {
@@ -244,15 +253,15 @@ export default class MainFrame {
 
 	private cullVisibleSegments() {
 		// TODO: change cull method to viewport-based instead of range from center
-		const cullDist = this._viewCullDistance;
+		const cullDist = this.ViewCullDistance;
 		const sqrCullDist = cullDist * cullDist;
 
 		for (const [z, row] of this._segmentLoadedMap) {
 			for (const x of row) {
-				this._cachedPos[0] = x + 0.5;
-				this._cachedPos[1] = z + 0.5;
+				this._cachedPosition[0] = x + 0.5;
+				this._cachedPosition[1] = z + 0.5;
 
-				const dist = vec2.sqrDist(this._cachedPos, this.loadCenter);
+				const dist = vec2.sqrDist(this._cachedPosition, this._loadCenterPosition);
 				if (dist > sqrCullDist) {
 					const rX = MapSegmentPos.toRenderCoord(x);
 					const rZ = MapSegmentPos.toRenderCoord(z);
@@ -268,8 +277,6 @@ export default class MainFrame {
 			}
 		}
 	}
-
-	private _segmentRequestBuffer: number[][] = [];
 
 	private flushSegmentRequestBuffer() {
 		if (this._segmentRequestBuffer.length == 0)
@@ -302,9 +309,6 @@ export default class MainFrame {
 		}
 	}
 
-	private _requestPickingMethod = 0;
-	private _lastRequestPickingMethod = this._requestPickingMethod;
-
 	private sendSegmentRequests() {
 
 		this.updateRequestWindup();
@@ -313,7 +317,7 @@ export default class MainFrame {
 
 		//console.log(this._requestWindup + " | " + requestLimit + " | " + this._requestIdleTime);
 
-		const cullDist = this._viewCullDistance;
+		const cullDist = this.ViewCullDistance;
 		const sqrCullDist = cullDist * cullDist;
 
 		// adjust 'requestWindup' if the picking method changes so
@@ -341,11 +345,11 @@ export default class MainFrame {
 				let lastDist = Number.MAX_VALUE;
 				for (let i = 0; i < this._segmentRequestQueue.length; i++) {
 					const requestPos = this._segmentRequestQueue[i];
-					this._cachedPos[0] = requestPos[0] + 0.5;
-					this._cachedPos[1] = requestPos[1] + 0.5;
+					this._cachedPosition[0] = requestPos[0] + 0.5;
+					this._cachedPosition[1] = requestPos[1] + 0.5;
 
 					// remove requests outside a certain range
-					const dist = vec2.sqrDist(this._cachedPos, this.loadCenter);
+					const dist = vec2.sqrDist(this._cachedPosition, this._loadCenterPosition);
 					if (dist > sqrCullDist) {
 						this._segmentRequestQueue.splice(i, 1);
 						i--;
