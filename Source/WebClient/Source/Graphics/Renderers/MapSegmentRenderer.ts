@@ -45,7 +45,7 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _renderSegmentsDrawn = 0;
 
 	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
-	public readonly _zoom = 1 / 0.75    * (4 / 3) * 0.25;
+	public readonly _zoom = 1 / 0.75    * (4 / 3) * 1;
 	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();

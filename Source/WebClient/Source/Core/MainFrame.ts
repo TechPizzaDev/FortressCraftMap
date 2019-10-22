@@ -35,7 +35,7 @@ export default class MainFrame {
 
 	private MaxSegmentRequestRate = 255;
 	private MinSegmentRequestRate = MainFrame.isWeakUserAgent ? 5 : 10;
-	private TargetFpsWhileRequesting = MainFrame.isWeakUserAgent ? 58 : 55;
+	private TargetFpsWhileRequesting = MainFrame.isWeakUserAgent ? 59 : 55;
 	private SegmentRequestWindupDuration = 2;
 	private MinSegmentRequestWindupWhenIdle = 0.2;
 
@@ -183,9 +183,16 @@ export default class MainFrame {
 
 	private _viewCullDistance = 50; // 82
 
+	// TODO:
+	// Create a sort of "priority list";
+	// this list will contain list objects with a priority values
+	// high priority is requested first, low priority last.
+	// This will greatly improve performance in 'sendSegmentRequests' as
+	// it won't need to pick requests for optimal visual quality, it will just
+	// follow priorities, 'requestSegmentsInView' will determine the priorites instead.
 	private requestSegmentsInView(time: TimeEvent) {
-		const w = 108 - 12 + 2 + 16 * -3; //66;
-		const h = 48 + 2 + 16 * -2; //57;
+		const w = 108 - 12 + 2 + 16 * 6; //66;
+		const h = 48 + 2 + 16 * 3; //57;
 		const halfW = w / 2;
 		const halfH = h / 2;
 
@@ -295,7 +302,11 @@ export default class MainFrame {
 		}
 	}
 
+	private _requestPickingMethod = 0;
+	private _lastRequestPickingMethod = this._requestPickingMethod;
+
 	private sendSegmentRequests() {
+
 		this.updateRequestWindup();
 		let requestLimit = Math.round(Mathx.lerp(
 			this.MinSegmentRequestRate, this.MaxSegmentRequestRate, this._requestWindup));
@@ -305,52 +316,73 @@ export default class MainFrame {
 		const cullDist = this._viewCullDistance;
 		const sqrCullDist = cullDist * cullDist;
 
+		// adjust 'requestWindup' if the picking method changes so
+		// a more expensive picking method doesn't overwhelm the client
+		if (this._requestPickingMethod != this._lastRequestPickingMethod) {
+			this._requestWindup = Math.min(this._requestWindup, 0.25);
+			this._lastRequestPickingMethod = this._requestPickingMethod;
+		}
+
+		const simplePickingThresholdBase = MainFrame.isWeakUserAgent ? 5000 : 10000;
+		// taking 'requestWindup' into consideration so weak devices get more processsing
+		// for other things instead of fancy requests
+		const simplePickingThreshold = simplePickingThresholdBase * ((this._requestWindup + 1.0) / 2);
+
 		while (this._segmentRequestQueue.length > 0 && requestLimit > 0) {
 			let index = -1;
-			let lastDist = Number.MAX_VALUE;
-			for (let i = 0; i < this._segmentRequestQueue.length; i++) {
-				const requestPos = this._segmentRequestQueue[i];
-				this._cachedPos[0] = requestPos[0] + 0.5;
-				this._cachedPos[1] = requestPos[1] + 0.5;
+			if (this._requestPickingMethod == 0) {
+				// use simple queue priority; take out the most recently added request
+				index = this._segmentRequestQueue.length - 1;
+			}
+			else {
+				// picking requests closest to 'loadCenter' can get expensive if
+				// the queue has a large backlog, use this method sparingly
 
-				const dist = vec2.sqrDist(this._cachedPos, this.loadCenter);
-				if (dist > sqrCullDist) {
-					this._segmentRequestQueue.splice(i, 1);
-					i--;
-					continue;
-				}
+				let lastDist = Number.MAX_VALUE;
+				for (let i = 0; i < this._segmentRequestQueue.length; i++) {
+					const requestPos = this._segmentRequestQueue[i];
+					this._cachedPos[0] = requestPos[0] + 0.5;
+					this._cachedPos[1] = requestPos[1] + 0.5;
 
-				if (dist < lastDist) {
-					lastDist = dist;
-					index = i;
+					// remove requests outside a certain range
+					const dist = vec2.sqrDist(this._cachedPos, this.loadCenter);
+					if (dist > sqrCullDist) {
+						this._segmentRequestQueue.splice(i, 1);
+						i--;
+						continue;
+					}
+
+					if (dist < lastDist) {
+						lastDist = dist;
+						index = i;
+					}
 				}
 			}
 
-			if (index != -1) {
-				const requestPos = this._segmentRequestQueue.splice(index, 1)[0];
-				this._segmentRequestBuffer.push(requestPos);
-				requestLimit--;
+			if (index == -1)
+				break;
 
-				this._slowPendingDebugInfo.segmentRequests++;
-			}
+			const requestPos = this._segmentRequestQueue.splice(index, 1)[0];
+			this._segmentRequestBuffer.push(requestPos);
+			requestLimit--;
+
+			this._slowPendingDebugInfo.segmentRequests++;
 		}
 		this.flushSegmentRequestBuffer();
+
+		this._requestPickingMethod = this._segmentRequestQueue.length > simplePickingThreshold ? 0 : 1;
 	}
 
 	private updateRequestWindup() {
-		const increaseWindup =
-			this._fpsCounter.averageFps >= this.TargetFpsWhileRequesting &&
-			this._requestIdleTime < this.SegmentRequestWindupDuration;
-
 		const changeMultiplier = MainFrame.isWeakUserAgent ? 0.33 : 1;
+		const isIdle = this._requestIdleTime > this.SegmentRequestWindupDuration;
+		const increaseWindup = this._fpsCounter.averageFps >= this.TargetFpsWhileRequesting;
 
-		if (increaseWindup)
+		if (increaseWindup && !isIdle)
 			this._requestWindup += this._segmentViewInterval * 0.2 * changeMultiplier;
 
-		if (!increaseWindup || (
-			this._requestIdleTime > this.SegmentRequestWindupDuration &&
-			this._requestWindup > this.MinSegmentRequestWindupWhenIdle))
-			this._requestWindup -= this._segmentViewInterval * 0.2 * changeMultiplier;
+		else if (this._requestWindup > this.MinSegmentRequestWindupWhenIdle)
+			this._requestWindup -= this._segmentViewInterval * 0.25 * changeMultiplier;
 
 		this._requestWindup = Mathx.clamp(this._requestWindup, 0, 1);
 	}
