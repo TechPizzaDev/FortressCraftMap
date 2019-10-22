@@ -11,6 +11,7 @@ export default class RenderSegment extends GLResource {
 	public static readonly blockSize = RenderSegment.size * RenderSegment.size;
 
 	private _segments: MapSegment[];
+	private _segmentCount: number;
 
 	private _texCoordBuffer: WebGLBuffer;
 	private _indexBuffer: WebGLBuffer;
@@ -37,6 +38,7 @@ export default class RenderSegment extends GLResource {
 		}
 
 		this._segments = [];
+		this._segmentCount = 0;
 		this._texCoordBuffer = gl.createBuffer();
 		this._indexBuffer = gl.createBuffer();
 
@@ -50,15 +52,16 @@ export default class RenderSegment extends GLResource {
 	}
 
 	public get segmentCount(): number {
-		let sum = 0;
-		for (let i = 0; i < this._segments.length; i++) {
-			if (this._segments[i] != null)
-				sum++;
-		}
-		return sum;
+		return this._segmentCount;
 	}
 
 	public setSegmentAt(index: number, segment: MapSegment) {
+		const existing = this._segments[index];
+		if (existing != null && segment == null)
+			this._segmentCount--;
+		else if (existing == null && segment != null)
+			this._segmentCount++;
+
 		this._segments[index] = segment;
 		this.isUpToDate = false;
 	}
@@ -108,7 +111,7 @@ export default class RenderSegment extends GLResource {
 	//	}, x, z);
 	//}
 
-	public get texCoordBuffer(): WebGLBuffer {
+	public get renderDataBuffer(): WebGLBuffer {
 		this.assertNotDisposed();
 		return this._texCoordBuffer;
 	}

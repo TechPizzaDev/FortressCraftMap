@@ -12,6 +12,7 @@ import * as Debug from "./DebugInformation";
 import FramesPerSecondCounter from "./FramesPerSecondCounter";
 import { SpeedyModule } from "./Index";
 import * as jDataView from "jdataview";
+import Mathx from "../Utility/Mathx";
 
 /**
  * Loads components and handles document events (input, resizing).
@@ -28,12 +29,20 @@ export default class MainFrame {
 	// move networking into a NetworkManager class
 	private _mapChannel: ChannelSocket;
 
-    private MaxSegmentRequestsPerFlush = 64;
+	private MaxSegmentRequestRate = 255;
+	private MinSegmentRequestRate = 10;
+	private TargetFpsWhileRequesting = 55;
+	private SegmentRequestWindupDuration = 2;
+	private MinSegmentRequestWindupWhenIdle = 0.2;
 
-	private static readonly SegmentViewInterval = 1 / 39;
-	private _segmentViewTick = MainFrame.SegmentViewInterval;
+	private _requestWindup = 0;
+	private _requestIdleTime = 0;
+
+	private _segmentViewInterval = 1 / 20;
+	private _segmentViewTick = this._segmentViewInterval;
 	private _cachedPos = vec2.create();
 
+	private _debugInfoUpdateRate = 5;
 	private _debugInfoUpdateTime = 0;
 	private _debugInfoUpdateTick = 0;
 	public _slowPendingDebugInfo: Debug.SlowInformation = Object.create(Debug.EmptySlow);
@@ -41,6 +50,8 @@ export default class MainFrame {
 	private _debugInfo: Debug.Information = Object.assign({}, Debug.Empty);
 	private _debugInfoDiv: HTMLDivElement;
 	private _debugInfoSegmentTable: HTMLTableElement;
+
+	private userOffsetX = 0;
 	
 	constructor(
 		glCtx: WebGLRenderingContext, speedyModule: SpeedyModule,
@@ -103,7 +114,7 @@ export default class MainFrame {
 	}
 
 	private loadCenter = [0, 0];
-	private _requestList: number[][] = [];
+	private _segmentRequestQueue: number[][] = [];
 	private _segmentRequestedMap = new Map<number, Set<number>>();
 	private _segmentLoadedMap = new Map<number, Set<number>>(); 
 
@@ -121,13 +132,13 @@ export default class MainFrame {
 				// TODO implement this
 				break;
 
-            case ServerMessageCode.Segment:
-                this.processSegmentMessage(message.body, false);
+			case ServerMessageCode.Segment:
+				this.processSegmentMessage(message.body, false);
 				break;
 
-            case ServerMessageCode.SegmentBatch:
-                const count = message.body.getUint8();
-                for (let i = 0; i < count; i++)
+			case ServerMessageCode.SegmentBatch:
+				const count = message.body.getUint8();
+				for (let i = 0; i < count; i++)
 					this.processSegmentMessage(message.body, true);
 				break;
 		}
@@ -146,10 +157,10 @@ export default class MainFrame {
 	}
 
 	private processSegmentMessage(message: jDataView, copyTiles: boolean) {
-        const pos = MapSegmentPos.read(message);
-        const tiles = new Uint16Array(16 * 16);
-        for (let i = 0; i < tiles.length; i++)
-            tiles[i] = message.getUint16();
+		const pos = MapSegmentPos.read(message);
+		const tiles = new Uint16Array(16 * 16);
+		for (let i = 0; i < tiles.length; i++)
+			tiles[i] = message.getUint16();
 		const segment = new MapSegment(pos, tiles);
 
 		let renderSegment = this._segmentRenderer.segments.get(pos.renderX, pos.renderZ);
@@ -166,25 +177,27 @@ export default class MainFrame {
 		this.getCoordMapRow(this._segmentLoadedMap, pos.x, pos.z).add(pos.x);
 	}
 
-    private _viewCullDistance = 32; // 82
+	private _viewCullDistance = 50; // 82
 
 	private requestSegmentsInView(time: TimeEvent) {
-        const w = 20; //66;
-		const h = 20; //57;
+		const w = 108 - 12 + 2 + 16 * 32; //66;
+		const h = 48 + 2 + 16 * 0; //57;
 		const halfW = w / 2;
 		const halfH = h / 2;
+
+		this._viewCullDistance = Math.max(w, h);
 		//const timeout = 2;
 
-        const speedX = 40; // 120
+		const speedX = 0; // 120
 		const speedZ = 2;
 		const sizeZ = 0;
 
-		const rawSegX = time.total * speedX - halfW;
+		const rawSegX = this.userOffsetX + time.total * speedX - halfW;
 		const rawSegZ = Math.sin(time.total * speedZ) * sizeZ - halfH;
-        const segX = Math.round(rawSegX); // - 6
+		const segX = Math.round(rawSegX);
 		const segZ = Math.round(rawSegZ);
-
-		this._segmentRenderer._mapTranslation[0] = rawSegX * -16;
+		
+		this._segmentRenderer._mapTranslation[0] = (rawSegX + halfW) * -16;
 		this._segmentRenderer._mapTranslation[1] = -8; //rawSegZ * -16;
 		this.loadCenter[0] = segX + halfW;
 		this.loadCenter[1] = segZ + halfH;
@@ -196,7 +209,7 @@ export default class MainFrame {
 
 				const row = this.getCoordMapRow(this._segmentRequestedMap, xx, zz);
 				if (!row.has(xx)) {
-					this._requestList.push([xx, zz]);
+					this._segmentRequestQueue.push([xx, zz]);
 					row.add(xx);
 				}
 
@@ -218,18 +231,18 @@ export default class MainFrame {
 		return row;
 	}
 
-    private cullVisibleSegments() {
+	private cullVisibleSegments() {
 		// TODO: change cull method to viewport-based instead of range from center
-        //const sqrCullDistance = this._viewCullDistance * this._viewCullDistance;
+		const cullDist = this._viewCullDistance;
+		const sqrCullDist = cullDist * cullDist;
+
 		for (const [z, row] of this._segmentLoadedMap) {
 			for (const x of row) {
-				//this._cachedPos[0] = x;
-                //this._cachedPos[1] = z;
+				this._cachedPos[0] = x + 0.5;
+				this._cachedPos[1] = z + 0.5;
 
-				//const dist = vec2.sqrDist(this._cachedPos, this.loadCenter);
-				//if (dist > sqrCullDistance) {
-
-                if (this.loadCenter[0] - x > this._viewCullDistance) {
+				const dist = vec2.sqrDist(this._cachedPos, this.loadCenter);
+				if (dist > sqrCullDist) {
 					const rX = MapSegmentPos.toRenderCoord(x);
 					const rZ = MapSegmentPos.toRenderCoord(z);
 					const renderSeg = this._segmentRenderer.segments.get(rX, rZ);
@@ -250,63 +263,69 @@ export default class MainFrame {
 	private flushSegmentRequestBuffer() {
 		if (this._segmentRequestBuffer.length == 0)
 			return;
+		if (this._segmentRequestBuffer.length > 255)
+			throw new Error("Segment request buffer contains too many elements.");
+		this._requestIdleTime = 0;
 
 		while (this._segmentRequestBuffer.length > 0) {
-			const toRequest = Math.min(this._segmentRequestBuffer.length, this.MaxSegmentRequestsPerFlush);
+			const toRequest = Math.min(this._segmentRequestBuffer.length, 255);
 			if (toRequest == 1) {
 
-                const msg = this._mapChannel.createMessage(ClientMessageCode.GetSegment, MapSegmentPos.byteSize);
-                new MapSegmentPos(this._segmentRequestBuffer[0]).writeTo(msg);
+				const msg = this._mapChannel.createMessage(ClientMessageCode.GetSegment, MapSegmentPos.byteSize);
+				new MapSegmentPos(this._segmentRequestBuffer[0]).writeTo(msg);
 
-                this._mapChannel.send(msg);
+				this._mapChannel.send(msg);
 				this._segmentRequestBuffer.length = 0;
 				break;
 			}
 
-            const requestedPositions = this._segmentRequestBuffer.splice(0, toRequest);
-            const msg = this._mapChannel.createMessage(
-                ClientMessageCode.GetSegmentBatch, 1 + MapSegmentPos.byteSize * requestedPositions.length);
+			const positions = this._segmentRequestBuffer.splice(0, toRequest);
+			const msg = this._mapChannel.createMessage(
+				ClientMessageCode.GetSegmentBatch, 1 + MapSegmentPos.byteSize * positions.length);
 
-            msg.writeUint8(requestedPositions.length);
-            for (let i = 0; i < requestedPositions.length; i++)
-                new MapSegmentPos(requestedPositions[i]).writeTo(msg);
+			msg.writeUint8(positions.length);
+			for (let i = 0; i < positions.length; i++)
+				new MapSegmentPos(positions[i]).writeTo(msg);
 
-            this._mapChannel.send(msg);
+			this._mapChannel.send(msg);
 		}
 	}
 
-	private processSegmentRequestQueue() {
-		let limit = 5000;
-		while (this._requestList.length > 0 && limit > 0) {
+	private sendSegmentRequests() {
+		this.updateRequestWindup();
+		let requestLimit = Math.round(Mathx.lerp(
+			this.MinSegmentRequestRate, this.MaxSegmentRequestRate, this._requestWindup));
+
+		//console.log(this._requestWindup + " | " + requestLimit + " | " + this._requestIdleTime);
+
+		const cullDist = this._viewCullDistance;
+		const sqrCullDist = cullDist * cullDist;
+
+		while (this._segmentRequestQueue.length > 0 && requestLimit > 0) {
 			let index = -1;
 			let lastDist = Number.MAX_VALUE;
-			for (let i = 0; i < this._requestList.length; i++) {
-				const currentPos = this._requestList[i];
-				this._cachedPos[0] = currentPos[0] + 0.5;
-				this._cachedPos[1] = currentPos[1] + 0.5;
+			for (let i = 0; i < this._segmentRequestQueue.length; i++) {
+				const requestPos = this._segmentRequestQueue[i];
+				this._cachedPos[0] = requestPos[0] + 0.5;
+				this._cachedPos[1] = requestPos[1] + 0.5;
 
-				const currentDist = vec2.sqrDist(this._cachedPos, this.loadCenter);
-
-				const discardDist = 128;
-				if (currentDist > discardDist * discardDist) {
-					this._requestList.splice(i, 1);
+				const dist = vec2.sqrDist(this._cachedPos, this.loadCenter);
+				if (dist > sqrCullDist) {
+					this._segmentRequestQueue.splice(i, 1);
 					i--;
 					continue;
 				}
 
-				if (currentDist < lastDist) {
-					lastDist = currentDist;
+				if (dist < lastDist) {
+					lastDist = dist;
 					index = i;
 				}
 			}
 
 			if (index != -1) {
-				const requestPos = this._requestList.splice(index, 1)[0];
+				const requestPos = this._segmentRequestQueue.splice(index, 1)[0];
 				this._segmentRequestBuffer.push(requestPos);
-				limit--;
-
-				if (this._segmentRequestBuffer.length >= this.MaxSegmentRequestsPerFlush)
-					this.flushSegmentRequestBuffer();
+				requestLimit--;
 
 				this._slowPendingDebugInfo.segmentRequests++;
 			}
@@ -314,19 +333,46 @@ export default class MainFrame {
 		this.flushSegmentRequestBuffer();
 	}
 
+	private updateRequestWindup() {
+		const increaseWindup =
+			this._fpsCounter.averageFps >= this.TargetFpsWhileRequesting &&
+			this._requestIdleTime < this.SegmentRequestWindupDuration;
+
+		if (increaseWindup)
+			this._requestWindup += this._segmentViewInterval * 0.2;
+
+		if (!increaseWindup || (
+			this._requestIdleTime > this.SegmentRequestWindupDuration &&
+			this._requestWindup > this.MinSegmentRequestWindupWhenIdle))
+			this._requestWindup -= this._segmentViewInterval * 0.2;
+
+		this._requestWindup = Mathx.clamp(this._requestWindup, 0, 1);
+	}
+
 	public update = (time: TimeEvent) => {
+		this._fpsCounter.update(time);
+
+		this._requestIdleTime += time.delta;
+
 		if (this._mapChannel.isReady) {
-			this.updateDebugInfo(time);
+			this.updateDebugInfoDelayed(time);
 
 			this._segmentViewTick += time.delta;
-			if (this._segmentViewTick >= MainFrame.SegmentViewInterval) {
+			if (this._segmentViewTick >= this._segmentViewInterval) {
 				this._segmentViewTick = 0;
 
-				this.cullVisibleSegments();
-			}
-			this.requestSegmentsInView(time);
+				//console.time("requestSegmentsInView");
+				this.requestSegmentsInView(time);
+				//console.timeEnd("requestSegmentsInView");
 
-			this.processSegmentRequestQueue();
+				//console.time("cullVisibleSegments");
+				this.cullVisibleSegments();
+				//console.timeEnd("cullVisibleSegments");
+
+				//console.time("sendSegmentRequests");
+				this.sendSegmentRequests();
+				//console.timeEnd("sendSegmentRequests");
+			}
 		}
 	}
 
@@ -336,39 +382,42 @@ export default class MainFrame {
 		Object.assign(this._debugInfo, Debug.Empty);
 	}
 
-	public updateDebugInfo(time: TimeEvent, force: boolean = false) {
-		if (this._debugInfoDiv.classList.contains("hidden"))
-			return;
+	private updateDebugInfoDelayed(time: TimeEvent) {
+		this._debugInfoUpdateTime += time.delta;
+		if (this._debugInfoUpdateTime >= 1 / this._debugInfoUpdateRate) {
+			this._debugInfoUpdateTime = 0;
+			this._debugInfoUpdateTick++;
+			
+			this.updateDebugInfo();
+		}
 
-		if (this._debugInfoUpdateTick >= 5) {
+		if (this._debugInfoUpdateTick >= this._debugInfoUpdateRate) {
 			this._debugInfoUpdateTick = 0;
 			Object.assign(this._debugInfo, this._slowPendingDebugInfo);
 			Object.assign(this._slowPendingDebugInfo, Debug.EmptySlow);
 		}
+	}
 
-		this._debugInfoUpdateTime += force ? 0 : time.delta;
-		if (this._debugInfoUpdateTime >= 0.25 || force) {
-			this._debugInfoUpdateTime = 0;
-			this._debugInfoUpdateTick++;
+	public updateDebugInfo() {
+		const di = this._debugInfo;
+		const sr = this._segmentRenderer;
+		Object.assign(di, this._fastPendingDebugInfo);
+		Object.assign(this._fastPendingDebugInfo, Debug.EmptyFast);
 
-			const di = this._debugInfo;
-			const sr = this._segmentRenderer;
-			Object.assign(di, this._fastPendingDebugInfo);
-			Object.assign(this._fastPendingDebugInfo, Debug.EmptyFast);
+		const segmentHiddenDiff = sr.segments.segmentCount - sr.segmentsDrawnLastFrame;
+		const renderSegmentHiddenDiff = sr.segments.count - sr.renderSegmentsDrawnLastFrame;
+		const queuedRequests = this._segmentRequestQueue.length + this._segmentRequestBuffer.length;
 
-			const segmentHiddenDiff =
-				sr.segments.segmentCount -
-				sr.segmentsDrawnLastFrame;
-
-			const renderSegmentHiddenDiff =
-				sr.segments.count -
-				sr.renderSegmentsDrawnLastFrame;
-
-			this._debugInfoSegmentTable.innerHTML = `
+		this._debugInfoSegmentTable.innerHTML = `
 				<tr>
-				    <th></th>
-				    <th>Segments</th>
-				    <th>Batches</th>
+					<th></th>
+					<th>Segments</th>
+					<th>Batches</th>
+				</tr>
+				<tr>
+					<td>Queued:</td>
+					<td>${queuedRequests}</td>
+					<td></td>
 				</tr>
 				<tr>
 					<td>Requested:</td>
@@ -376,30 +425,29 @@ export default class MainFrame {
 					<td></td>
 				</tr>
 				<tr>
-					<td>Loaded:</td>
-					<td>${sr.segments.segmentCount}</td>
-					<td>${sr.segments.count}</td>
-				</tr>
-				<tr>
 					<td>Updated:</td>
 					<td>${di.segmentsBuilt}</td>
 					<td>${di.segmentBatchesBuilt}</td>
 				</tr>
 				<tr>
-					<td>Visible:</td>
-					<td>${sr.segmentsDrawnLastFrame}</td>
-					<td>${sr.renderSegmentsDrawnLastFrame}</td>
+					<td>Loaded:</td>
+					<td>${sr.segments.segmentCount}</td>
+					<td>${sr.segments.count}</td>
 				</tr>
 				<tr>
 					<td>Hidden:</td>
 					<td>${segmentHiddenDiff}</td>
 					<td>${renderSegmentHiddenDiff}</td>
+				</tr>
+				<tr>
+					<td>Visible:</td>
+					<td>${sr.segmentsDrawnLastFrame}</td>
+					<td>${sr.renderSegmentsDrawnLastFrame}</td>
 				</tr>`;
-		}
 	}
 
 	public draw = (time: TimeEvent) => {
-		this._fpsCounter.update(time);
+		this._fpsCounter.draw(time);
 		this._segmentRenderer.draw(time);
 	}
 

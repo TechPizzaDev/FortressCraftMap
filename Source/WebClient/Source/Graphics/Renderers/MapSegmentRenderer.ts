@@ -30,21 +30,22 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _tbDiffuseTexture: Texture2D;
 
 	private _bakedSegmentQuads: BakedRenderSegmentQuads;
-	private _texCoordDataBuffer: Float32Array;
+	//private _texCoordDataBuffer: Float32Array;
+	//private _colorDataBuffer: Float32Array;
+	private _renderDataBuffer: Float32Array;
 	private _indexDataBuffer: Uint16Array;
-	private _colorBuffer: WebGLBuffer;
-
+	
 	private _terrainUVMap: Map<number, TileDescription>;
 	private _defaultTileDescription: TileDescription;
 
 	private _renderSegments: RenderSegmentCollection;
 	private _viewport: Rectangle;
 
-	private _segmentsDrawn: number;
-	private _renderSegmentsDrawn: number;
+	private _segmentsDrawn = 0;
+	private _renderSegmentsDrawn = 0;
 
 	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
-	public readonly _zoom = 1 / 1;
+	public readonly _zoom = 1 / 0.75    * (4 / 3) * 4.2;
 	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();
@@ -74,24 +75,11 @@ export default class MapSegmentRenderer extends RendererBase {
 		this._tbDiffuseTexture = content.getTexture2D(ContentRegistry.TerrainTexture);
 
 		this._bakedSegmentQuads = this.bakeSegmentQuads();
-		this._texCoordDataBuffer = new Float32Array(this._bakedSegmentQuads.metricsPerSegment.vertexCount * 2 * RenderSegment.blockSize);
+		//this._texCoordDataBuffer = new Float32Array(this._bakedSegmentQuads.metricsPerSegment.vertexCount * 2 * RenderSegment.blockSize);
+		// buffer size should suffice for both 
+		this._renderDataBuffer = new Float32Array(this._bakedSegmentQuads.metricsPerSegment.vertexCount * 3 * RenderSegment.blockSize);
 		this._indexDataBuffer = new Uint16Array(this._bakedSegmentQuads.metricsPerSegment.indexCount * RenderSegment.blockSize);
 		this.loadTerrainUV(content);
-
-		//// this 'colorData' array is just for testing
-		//const colorData = new Float32Array(16 * 16 * 3 * 4);
-		//for (let i = 0; i < 16 * 16; i++) {
-		//	for (let j = 0; j < 4; j++) {
-		//		colorData[i * 12 + j * 3 + 0] = (Math.sin(i / (16.0 * 16.0) * 4) + 1) / 2;
-		//		colorData[i * 12 + j * 3 + 1] = (Math.cos(i / (16.0 * 16.0) * 2 + j * 4) + 1) / 2;
-		//		colorData[i * 12 + j * 3 + 2] = 1 - i / (16.0 * 16.0);
-		//	}
-		//}
-		//
-		//const gl = this.glContext;
-		//this._colorBuffer = gl.createBuffer();
-		//gl.bindBuffer(gl.ARRAY_BUFFER, this._colorBuffer);
-		//gl.bufferData(gl.ARRAY_BUFFER, colorData, gl.DYNAMIC_DRAW);
 	}
 
 	private prepareShaders(content: Content.Manager) {
@@ -126,7 +114,7 @@ export default class MapSegmentRenderer extends RendererBase {
 			const w = rects[i + entryCount * 3];
 
 			const desc: TileDescription = {
-				color: vec3.fromValues(1, 1, 1),
+				color: vec3.fromValues(Math.random(), Math.random(), Math.random()),
 				corners: this.createCorners(x, y, z, w)
 			};
 			this._terrainUVMap.set(indices[i], desc);
@@ -175,6 +163,8 @@ export default class MapSegmentRenderer extends RendererBase {
 		mat4.multiply(this._projViewMatrix, this._projMatrix, this._viewMatrix);
 	}
 
+	private isTextured = false;
+
 	private drawSegments(time: TimeEvent) {
 		//let chunkUploadsLeft = currentSegmentUploadsPerFrame;
 		//const isTextured = zoom > 1 / 12 && tileTexture.isLoaded;
@@ -197,12 +187,10 @@ export default class MapSegmentRenderer extends RendererBase {
 		this._segmentsDrawn = 0;
 		this._renderSegmentsDrawn = 0;
 		
-		const isTextured = true;
-
 		const gl = this.glContext;
-		const shader = isTextured ? this.bindTexturedShader() : this.bindColoredShader();
-		const posAttribPtr = isTextured ? this._texturedPosAttribPtr : this._coloredPosAttribPtr;
-		const dataAttribPtr = isTextured ? this._texturedDataAttribPtr : this._coloredDataAttribPtr;
+		const shader = this.isTextured ? this.bindTexturedShader() : this.bindColoredShader();
+		const posAttribPtr = this.isTextured ? this._texturedPosAttribPtr : this._coloredPosAttribPtr;
+		const dataAttribPtr = this.isTextured ? this._texturedDataAttribPtr : this._coloredDataAttribPtr;
 
 		posAttribPtr.enable(gl);
 		dataAttribPtr.enable(gl);
@@ -226,9 +214,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		//}
 	}
 
-	private drawVisibleSegments(view: Rectangle, shader: ShaderProgram, pointer: ShaderAttribPointer) {
-		// TODO: fix counts, they are just randomly half-hardcoded right now :/
-
+	private clearDrawCtx() {
 		this._frame.drawCtx.setTransform(1, 0, 0, 1, 0, 0);
 
 		this._frame.drawCtx.clearRect(
@@ -237,9 +223,15 @@ export default class MapSegmentRenderer extends RendererBase {
 		this._frame.drawCtx.translate(
 			Math.round(this._viewport.width / 2) + 0.5 + this._mapTranslation[0] / this._zoom,
 			Math.round(this._viewport.height / 2) + 0.5 + this._mapTranslation[1] / this._zoom);
+	}
+
+	private drawVisibleSegments(view: Rectangle, shader: ShaderProgram, pointer: ShaderAttribPointer) {
+		// TODO: fix counts, they are just randomly half-hardcoded right now :/
+
+		//this.clearDrawCtx();
 
 		// TODO: currently draws every render segment
-		for (const [, rowMap] of this._renderSegments.rows()) {
+		for (const rowMap of this._renderSegments.rows()) {
 			for (const renderSegment of rowMap.values())
 				this.drawRenderSegment(renderSegment, shader, pointer);
 		}
@@ -276,9 +268,8 @@ export default class MapSegmentRenderer extends RendererBase {
 		const metricsPS = this._bakedSegmentQuads.metricsPerSegment;
 		const indicesPerSegment = metricsPS.indexCount;
 
-		const drawing = this._frame.drawCtx;
-		drawing.lineWidth = 1;
-		
+		//const drawing = this._frame.drawCtx;
+		//drawing.lineWidth = 1;
 		//drawing.beginPath();
 		//drawing.strokeStyle = "rgba(0, 255, 0, 1)";
 		//for (let z = 0; z < RenderSegment.size; z++) {
@@ -307,10 +298,15 @@ export default class MapSegmentRenderer extends RendererBase {
 						continue;
 
 					const bakedSegmentIndex = x + z * RenderSegment.size;
+					const tileOffset = bakedSegmentIndex * MapSegment.blocks;
 
-					// generate tex coords for this segment
-					const texCoordOffset = bakedSegmentIndex * MapSegment.blocks;
-					this.generateTexCoords(segment.tiles, MapSegment.size, texCoordOffset, this._texCoordDataBuffer);
+					// generate render data for this segment
+					if (this.isTextured) {
+						this.generateTexCoords(segment.tiles, MapSegment.size, tileOffset, this._renderDataBuffer);
+					}
+					else {
+						this.generateColors(segment.tiles, MapSegment.size, tileOffset, this._renderDataBuffer);
+					}
 
 					// copy baked indices for this segment
 					const bakedIndexBegin = bakedSegmentIndex * indicesPerSegment;
@@ -331,8 +327,8 @@ export default class MapSegmentRenderer extends RendererBase {
 
 			// only update buffers when there is segment data
 			if (renderSegment.genCount > 0) {
-				gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.texCoordBuffer);
-				gl.bufferData(gl.ARRAY_BUFFER, this._texCoordDataBuffer, gl.DYNAMIC_DRAW);
+				gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, this._renderDataBuffer, gl.DYNAMIC_DRAW);
 
 				const indexSlice = this._indexDataBuffer.subarray(0, renderSegment.genCount * indicesPerSegment);
 				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderSegment.indexBuffer);
@@ -342,12 +338,13 @@ export default class MapSegmentRenderer extends RendererBase {
 		}
 
 		// only draw if there are segments in the batch
-		if (renderSegment.genCount > 0) {
+		const hideFull = renderSegment.genCount != RenderSegment.blockSize;
+		if (renderSegment.genCount > 0 && hideFull) {
 			mat4.multiply(this._mvpMatrix, this._projViewMatrix, renderSegment.matrix);
 			shader.uniformMatrix4fv("uModelViewProjection", this._mvpMatrix);
 			shader.uniform4f("uTint", 0.5, 0.5, 1, 1);
 
-			gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.texCoordBuffer);
+			gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
 			dataPointer.apply(gl);
 
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderSegment.indexBuffer);
@@ -431,22 +428,53 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	/**
 	 * Used to generate texture coordinates for a square array of tiles.
-	 * @param tiles The tiles used to get texture coordinates.
+	 * @param tiles The tiles used to determine texture coordinates.
 	 * @param size The dimensions of the tiles.
 	 * @param offset The offset in quads for texture coordinates.
 	 * @param output The output for texture coordinates.
 	 */
 	private generateTexCoords(tiles: Uint16Array, size: number, offset: number, output: Float32Array) {
+		const texCoordsPerQuad = 2 * 4;
 		for (let y = 0; y < size; y++) {
 			for (let x = 0; x < size; x++) {
 				const i = x + y * size;
 				const tileDesc = this.getTileDescription(tiles[i]);
-				this.writeCornersToOutput((i + offset) * 8, tileDesc.corners, output);
+
+				const dataOffset = (i + offset) * texCoordsPerQuad;
+				this.writeTexCoordCornersToOutput(dataOffset, tileDesc.corners, output);
 			}
 		}
 	}
 
-	private writeCornersToOutput(offset: number, corners: UVCorners, output: Float32Array) {
+	/**
+	 * Used to generate colors for a square array of tiles.
+	 * @param tiles The tiles used to determine colors.
+	 * @param size The dimensions of the tiles.
+	 * @param offset The offset in quads for colors.
+	 * @param output The output for colors.
+	 */
+	private generateColors(tiles: Uint16Array, size: number, offset: number, output: Float32Array) {
+		const colorsPerQuad = 3 * 4;
+		for (let y = 0; y < size; y++) {
+			for (let x = 0; x < size; x++) {
+				const i = x + y * size;
+				const tileDesc = this.getTileDescription(tiles[i]);
+
+				const dataOffset = (i + offset) * colorsPerQuad;
+				this.writeColorCornersToOutput(dataOffset, tileDesc.color, output);
+			}
+		}
+	}
+
+	private writeColorCornersToOutput(offset: number, color: vec3, output: Float32Array) {
+		for (let i = 0; i < 4; i++) {
+			output[offset + i * 3 + 0] = color[0];
+			output[offset + i * 3 + 1] = color[1];
+			output[offset + i * 3 + 2] = color[2];
+		}
+	}
+
+	private writeTexCoordCornersToOutput(offset: number, corners: UVCorners, output: Float32Array) {
 		// top left
 		output[offset + 0] = corners.TL[0];
 		output[offset + 1] = corners.TL[1];

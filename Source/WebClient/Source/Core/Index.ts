@@ -1,4 +1,5 @@
 import MainFrame from "./MainFrame";
+import TimeEvent from "../Utility/TimeEvent";
 
 let mainFrame: MainFrame;
 
@@ -84,10 +85,12 @@ function setupDebugInfoElements() {
 
         if (mainFrame != null) {
             if (!wasVisible) // clear to prevent stacked values
-                mainFrame.clearDebugInfo();
-            mainFrame.updateDebugInfo(null, true);
+				mainFrame.clearDebugInfo();
+			mainFrame.updateDebugInfo();
         }
     };
+
+    fpsCounterDiv.click();
 }
 
 function isVisible(element: HTMLElement) {

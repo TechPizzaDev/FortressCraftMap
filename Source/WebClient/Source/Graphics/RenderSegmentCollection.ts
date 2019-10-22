@@ -18,15 +18,15 @@ export default class RenderSegmentCollection {
 
 	public get count(): number {
 		let c = 0;
-		for (let row of this._rows.values())
+		for (const row of this._rows.values())
 			c += row.size;
 		return c;
 	}
 
 	public get segmentCount(): number {
 		let c = 0;
-		for (let row of this._rows.values())
-			for (let [i, rs] of row)
+		for (const row of this._rows.values())
+			for (const rs of row.values())
 				c += rs.segmentCount;
 		return c;
 	}
@@ -36,7 +36,11 @@ export default class RenderSegmentCollection {
 		this._version = 0;
 	}
 
-	public rows(): IterableIterator<[number, Row]> {
+	public rows(): IterableIterator<Row> {
+		return this._rows.values();
+	}
+
+	public entries(): IterableIterator<[number, Row]> {
 		return this._rows.entries();
 	}
 

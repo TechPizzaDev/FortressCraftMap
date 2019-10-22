@@ -9,7 +9,7 @@ namespace TechPizza.WebMapMod
     public partial class MapSocketBehavior : AttributedWebSocketBehavior
     {
         public const int SegmentSize = 16;
-        public const int MaxSegmentsRequestsPerBatch = 64;
+        public const int MaxSegmentsRequestsPerBatch = 255;
 
         private static SimplexNoise _noise = new SimplexNoise(250); // 0 for equality between mono and net35
         private static Random _rng = new Random();

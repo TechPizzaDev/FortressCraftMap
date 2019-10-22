@@ -34,6 +34,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utility", "Utility", "{1D3063F4-E788-4911-8E21-C4A6A1821175}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Utility\ChannelSocket.ts = WebClient\Source\Utility\ChannelSocket.ts
+		WebClient\Source\Utility\ClassWatcher.ts = WebClient\Source\Utility\ClassWatcher.ts
 		WebClient\Source\Utility\Disposable.ts = WebClient\Source\Utility\Disposable.ts
 		WebClient\Source\Utility\EventEmitter.ts = WebClient\Source\Utility\EventEmitter.ts
 		WebClient\Source\Utility\FrameDispatcher.ts = WebClient\Source\Utility\FrameDispatcher.ts
