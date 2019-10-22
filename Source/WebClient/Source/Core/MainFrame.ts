@@ -18,6 +18,10 @@ import Mathx from "../Utility/Mathx";
  * Loads components and handles document events (input, resizing).
  * */
 export default class MainFrame {
+	
+	// TODO: make this detect device by user-agent or do some performance test
+	public static readonly isWeakUserAgent = false;
+	
 	private _glCtx: WebGLRenderingContext;
 	private _speedyModule: SpeedyModule;
 	private _drawCtx: CanvasRenderingContext2D;
@@ -30,15 +34,15 @@ export default class MainFrame {
 	private _mapChannel: ChannelSocket;
 
 	private MaxSegmentRequestRate = 255;
-	private MinSegmentRequestRate = 10;
-	private TargetFpsWhileRequesting = 55;
+	private MinSegmentRequestRate = MainFrame.isWeakUserAgent ? 5 : 10;
+	private TargetFpsWhileRequesting = MainFrame.isWeakUserAgent ? 58 : 55;
 	private SegmentRequestWindupDuration = 2;
 	private MinSegmentRequestWindupWhenIdle = 0.2;
 
 	private _requestWindup = 0;
 	private _requestIdleTime = 0;
 
-	private _segmentViewInterval = 1 / 20;
+	private _segmentViewInterval = MainFrame.isWeakUserAgent ? (1 / 10) : (1 / 20);
 	private _segmentViewTick = this._segmentViewInterval;
 	private _cachedPos = vec2.create();
 
@@ -180,8 +184,8 @@ export default class MainFrame {
 	private _viewCullDistance = 50; // 82
 
 	private requestSegmentsInView(time: TimeEvent) {
-		const w = 108 - 12 + 2 + 16 * 32; //66;
-		const h = 48 + 2 + 16 * 0; //57;
+		const w = 108 - 12 + 2 + 16 * -3; //66;
+		const h = 48 + 2 + 16 * -2; //57;
 		const halfW = w / 2;
 		const halfH = h / 2;
 
@@ -338,13 +342,15 @@ export default class MainFrame {
 			this._fpsCounter.averageFps >= this.TargetFpsWhileRequesting &&
 			this._requestIdleTime < this.SegmentRequestWindupDuration;
 
+		const changeMultiplier = MainFrame.isWeakUserAgent ? 0.33 : 1;
+
 		if (increaseWindup)
-			this._requestWindup += this._segmentViewInterval * 0.2;
+			this._requestWindup += this._segmentViewInterval * 0.2 * changeMultiplier;
 
 		if (!increaseWindup || (
 			this._requestIdleTime > this.SegmentRequestWindupDuration &&
 			this._requestWindup > this.MinSegmentRequestWindupWhenIdle))
-			this._requestWindup -= this._segmentViewInterval * 0.2;
+			this._requestWindup -= this._segmentViewInterval * 0.2 * changeMultiplier;
 
 		this._requestWindup = Mathx.clamp(this._requestWindup, 0, 1);
 	}
