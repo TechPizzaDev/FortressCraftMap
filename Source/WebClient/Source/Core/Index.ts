@@ -1,5 +1,4 @@
 import MainFrame from "./MainFrame";
-import TimeEvent from "../Utility/TimeEvent";
 
 let mainFrame: MainFrame;
 

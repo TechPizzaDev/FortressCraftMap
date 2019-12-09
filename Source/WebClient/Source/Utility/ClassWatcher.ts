@@ -6,7 +6,7 @@ export default class ClassWatcher extends EventEmitter {
 	private _lastState: DOMTokenList;
 	private _observer: MutationObserver;
 	
-	constructor(watchClass: string) {
+	constructor() {
 		super();
 
 		this._classFilter = new DOMTokenList();

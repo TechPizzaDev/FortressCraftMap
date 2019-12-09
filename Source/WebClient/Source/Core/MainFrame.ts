@@ -142,13 +142,13 @@ export default class MainFrame {
 				break;
 
 			case ServerMessageCode.Segment:
-				this.processSegmentMessage(message.body, false);
+				this.processSegmentMessage(message.body);
 				break;
 
 			case ServerMessageCode.SegmentBatch:
 				const count = message.body.getUint8();
 				for (let i = 0; i < count; i++)
-					this.processSegmentMessage(message.body, true);
+					this.processSegmentMessage(message.body);
 				break;
 		}
 		//console.log("%c" + message.code.name, "color: pink", message.body);
@@ -165,7 +165,7 @@ export default class MainFrame {
 		this._frameDispatcher.run();
 	}
 
-	private processSegmentMessage(message: jDataView, copyTiles: boolean) {
+	private processSegmentMessage(message: jDataView) {
 		const pos = MapSegmentPos.read(message);
 		const tiles = new Uint16Array(16 * 16);
 		for (let i = 0; i < tiles.length; i++)
@@ -187,7 +187,6 @@ export default class MainFrame {
 	}
 
 
-
 	// TODO:
 	// Create a sort of "priority list";
 	// this list will contain list objects with a priority values
@@ -198,10 +197,9 @@ export default class MainFrame {
 	// This will not be as responsive as the current design, so think about when the
 	// user moves the map above a certain length threshold, 
 	// update request priorities based on a new distance.
-
 	private requestSegmentsInView(time: TimeEvent) {
-		const w = 108 - 12 + 2 + 16 * 6; //66;
-		const h = 48 + 2 + 16 * 3; //57;
+		const w = 108 - 12 + 16 * 6; //66;
+		const h = 48 + 16 * 3; //57;
 		const halfW = w / 2;
 		const halfH = h / 2;
 

@@ -45,7 +45,7 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _renderSegmentsDrawn = 0;
 
 	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
-	public readonly _zoom = 1 / 0.75    * (4 / 3) * 1;
+	public readonly _zoom = 1 / 0.75    * (4 / 2) * 1;
 	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();
@@ -228,7 +228,7 @@ export default class MapSegmentRenderer extends RendererBase {
 	private drawVisibleSegments(view: Rectangle, shader: ShaderProgram, pointer: ShaderAttribPointer) {
 		// TODO: fix counts, they are just randomly half-hardcoded right now :/
 
-		//this.clearDrawCtx();
+		this.clearDrawCtx();
 
 		// TODO: currently draws every render segment
 		for (const rowMap of this._renderSegments.rows()) {
@@ -268,7 +268,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		const metricsPS = this._bakedSegmentQuads.metricsPerSegment;
 		const indicesPerSegment = metricsPS.indexCount;
 
-		//const drawing = this._frame.drawCtx;
+		const drawing = this._frame.drawCtx;
 		//drawing.lineWidth = 1;
 		//drawing.beginPath();
 		//drawing.strokeStyle = "rgba(0, 255, 0, 1)";
@@ -338,8 +338,8 @@ export default class MapSegmentRenderer extends RendererBase {
 		}
 
 		// only draw if there are segments in the batch
-		const hideFull = renderSegment.genCount != RenderSegment.blockSize;
-		if (renderSegment.genCount > 0 && hideFull) {
+		const showNonFull = true; // renderSegment.genCount != RenderSegment.blockSize;
+		if (renderSegment.genCount > 0 && showNonFull) {
 			mat4.multiply(this._mvpMatrix, this._projViewMatrix, renderSegment.matrix);
 			shader.uniformMatrix4fv("uModelViewProjection", this._mvpMatrix);
 			shader.uniform4f("uTint", 0.5, 0.5, 1, 1);
@@ -354,11 +354,11 @@ export default class MapSegmentRenderer extends RendererBase {
 			this._renderSegmentsDrawn++;
 		}
 
-		//drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
-		//drawing.strokeRect(
-		//	renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
-		//	renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
-		//	16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
+		drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
+		drawing.strokeRect(
+			renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
+			renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
+			16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
 	}
 
 	/** Prepares the needed texture and binds the shader program for textured segments. */
