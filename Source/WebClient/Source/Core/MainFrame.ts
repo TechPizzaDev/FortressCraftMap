@@ -40,8 +40,9 @@ export default class MainFrame {
 	private MinSegmentRequestWindupWhenIdle = 0.2;
 	private ViewCullDistance = 50; // 82
 
-	private _requestWindup = 0;
+	private _requestWindup = MainFrame.maxWindup / 4;
 	private _requestIdleTime = 0;
+	public static readonly maxWindup = 1;
 
 	private _requestPickingMethod = 0;
 	private _lastRequestPickingMethod = this._requestPickingMethod;
@@ -51,7 +52,10 @@ export default class MainFrame {
 	private _cachedPosition = vec2.create();
 
 	private _loadCenterPosition = [0, 0];
+	
+	// TODO: split up _segmentRequestQueue into smaller lists (array chunking)
 	private _segmentRequestQueue: number[][] = [];
+
 	private _segmentRequestBuffer: number[][] = [];
 	private _segmentRequestedMap = new Map<number, Set<number>>();
 	private _segmentLoadedMap = new Map<number, Set<number>>(); 
@@ -59,8 +63,8 @@ export default class MainFrame {
 	private _debugInfoUpdateRate = 5;
 	private _debugInfoUpdateTime = 0;
 	private _debugInfoUpdateTick = 0;
-	public _slowPendingDebugInfo: Debug.SlowInformation = Object.create(Debug.EmptySlow);
-	public _fastPendingDebugInfo: Debug.FastInformation = Object.create(Debug.EmptyFast);
+	public _infrequentPendingDebugInfo: Debug.InfrequentInformation = Object.create(Debug.EmptySlow);
+	public _frequentPendingDebugInfo: Debug.FrequentInformation = Object.create(Debug.EmptyFast);
 	private _debugInfo: Debug.Information = Object.assign({}, Debug.Empty);
 	private _debugInfoDiv: HTMLDivElement;
 	private _debugInfoSegmentTable: HTMLTableElement;
@@ -174,7 +178,7 @@ export default class MainFrame {
 
 		let renderSegment = this._segmentRenderer.segments.get(pos.renderX, pos.renderZ);
 		if (renderSegment == null) {
-			renderSegment = new RenderSegment(this.glCtx, pos);
+			renderSegment = new RenderSegment(this.glCtx, this._segmentRenderer.bakedSegmentQuads, pos);
 			this._segmentRenderer.segments.set(pos.renderX, pos.renderZ, renderSegment);
 		}
 
@@ -198,10 +202,10 @@ export default class MainFrame {
 	// user moves the map above a certain length threshold, 
 	// update request priorities based on a new distance.
 	private requestSegmentsInView(time: TimeEvent) {
-		const w = 108 - 12 + 16 * 6; //66;
-		const h = 48 + 16 * 3; //57;
-		const halfW = w / 2;
-		const halfH = h / 2;
+		const w = /*24;*/ 2 // 108 - 12 + 16 * 6; //66;
+		const h = /*16;*/ 1 // 48 + 16 * 3; //57;
+		const halfW = 0 //w / 2;
+		const halfH = 0 //h / 2;
 
 		this.ViewCullDistance = Math.max(w, h);
 		//const timeout = 2;
@@ -286,7 +290,6 @@ export default class MainFrame {
 		while (this._segmentRequestBuffer.length > 0) {
 			const toRequest = Math.min(this._segmentRequestBuffer.length, 255);
 			if (toRequest == 1) {
-
 				const msg = this._mapChannel.createMessage(ClientMessageCode.GetSegment, MapSegmentPos.byteSize);
 				new MapSegmentPos(this._segmentRequestBuffer[0]).writeTo(msg);
 
@@ -327,7 +330,7 @@ export default class MainFrame {
 
 		const simplePickingThresholdBase = MainFrame.isWeakUserAgent ? 5000 : 10000;
 		// taking 'requestWindup' into consideration so weak devices get more processsing
-		// for other things instead of fancy requests
+		// for other things instead of massive requests
 		const simplePickingThreshold = simplePickingThresholdBase * ((this._requestWindup + 1.0) / 2);
 
 		while (this._segmentRequestQueue.length > 0 && requestLimit > 0) {
@@ -368,7 +371,7 @@ export default class MainFrame {
 			this._segmentRequestBuffer.push(requestPos);
 			requestLimit--;
 
-			this._slowPendingDebugInfo.segmentRequests++;
+			this._infrequentPendingDebugInfo.segmentRequests++;
 		}
 		this.flushSegmentRequestBuffer();
 
@@ -386,7 +389,7 @@ export default class MainFrame {
 		else if (this._requestWindup > this.MinSegmentRequestWindupWhenIdle)
 			this._requestWindup -= this._segmentViewInterval * 0.25 * changeMultiplier;
 
-		this._requestWindup = Mathx.clamp(this._requestWindup, 0, 1);
+		this._requestWindup = Mathx.clamp(this._requestWindup, 0, MainFrame.maxWindup);
 	}
 
 	public update = (time: TimeEvent) => {
@@ -417,8 +420,8 @@ export default class MainFrame {
 	}
 
 	public clearDebugInfo() {
-		Object.assign(this._slowPendingDebugInfo, Debug.EmptySlow);
-		Object.assign(this._fastPendingDebugInfo, Debug.EmptyFast);
+		Object.assign(this._infrequentPendingDebugInfo, Debug.EmptySlow);
+		Object.assign(this._frequentPendingDebugInfo, Debug.EmptyFast);
 		Object.assign(this._debugInfo, Debug.Empty);
 	}
 
@@ -433,16 +436,16 @@ export default class MainFrame {
 
 		if (this._debugInfoUpdateTick >= this._debugInfoUpdateRate) {
 			this._debugInfoUpdateTick = 0;
-			Object.assign(this._debugInfo, this._slowPendingDebugInfo);
-			Object.assign(this._slowPendingDebugInfo, Debug.EmptySlow);
+			Object.assign(this._debugInfo, this._infrequentPendingDebugInfo);
+			Object.assign(this._infrequentPendingDebugInfo, Debug.EmptySlow);
 		}
 	}
 
 	public updateDebugInfo() {
 		const di = this._debugInfo;
 		const sr = this._segmentRenderer;
-		Object.assign(di, this._fastPendingDebugInfo);
-		Object.assign(this._fastPendingDebugInfo, Debug.EmptyFast);
+		Object.assign(di, this._frequentPendingDebugInfo);
+		Object.assign(this._frequentPendingDebugInfo, Debug.EmptyFast);
 
 		const segmentHiddenDiff = sr.segments.segmentCount - sr.segmentsDrawnLastFrame;
 		const renderSegmentHiddenDiff = sr.segments.count - sr.renderSegmentsDrawnLastFrame;

@@ -49,7 +49,7 @@ export default class ShapeGenerator {
 	 * @param existing Optional plane of the same dimensions to be filled with data and returned.
 	 */
 	public static generatePlane(
-		width: number, height: number, offset: vec2, quadSize: number = 1, existing?: RectangularShape
+		width: number, height: number, offset: vec2, indexOffset: number, quadSize: number = 1, existing?: RectangularShape
 	): RectangularShape {
 		if (existing != null) {
 			if (existing.width != width)
@@ -84,13 +84,13 @@ export default class ShapeGenerator {
 				// indices per quad
 				const ii = i * 6;
 				const vii = i * 4;
-				indices[ii + 0] = vii;
-				indices[ii + 1] = vii + 1;
-				indices[ii + 2] = vii + 2;
+				indices[ii + 0] = vii + indexOffset;
+				indices[ii + 1] = vii + 1 + indexOffset;
+				indices[ii + 2] = vii + 2 + indexOffset;
 
-				indices[ii + 3] = vii + 1;
-				indices[ii + 4] = vii + 3;
-				indices[ii + 5] = vii + 2;
+				indices[ii + 3] = vii + 1 + indexOffset;
+				indices[ii + 4] = vii + 3 + indexOffset;
+				indices[ii + 5] = vii + 2 + indexOffset;
 			}
 		}
 

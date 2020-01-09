@@ -2,23 +2,23 @@
 /**
  * Contains debug information that is updated once per second.
  * */
-export interface SlowInformation {
+export interface InfrequentInformation {
 	segmentRequests: number;
 }
 
-export const EmptySlow: SlowInformation = {
+export const EmptySlow: InfrequentInformation = {
 	segmentRequests: 0
 }
 
 /**
  * Contains debug information that is updated more than once per second.
  * */
-export interface FastInformation {
+export interface FrequentInformation {
 	segmentsBuilt: number;
 	segmentBatchesBuilt: number;
 }
 
-export const EmptyFast: FastInformation = {
+export const EmptyFast: FrequentInformation = {
 	segmentsBuilt: 0,
 	segmentBatchesBuilt: 0
 };
@@ -26,7 +26,7 @@ export const EmptyFast: FastInformation = {
 /**
  * Contains debug information combined from slow and fast information.
  * */
-export interface Information extends SlowInformation, FastInformation {
+export interface Information extends InfrequentInformation, FrequentInformation {
 }
 
 export const Empty: Information = Object.assign({}, EmptySlow, EmptyFast);

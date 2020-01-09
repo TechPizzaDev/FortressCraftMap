@@ -1,6 +1,28 @@
 type TextureZoneCallback = (gl: WebGLRenderingContext, texture: WebGLTexture) => void;
 
 export default class GLHelper {
+	
+	public static setBufferLength(
+		gl: WebGLRenderingContext,
+		target: number,
+		buffer: WebGLBuffer,
+		size: number,
+		usage: number) {
+
+		gl.bindBuffer(target, buffer);
+		gl.bufferData(target, size, usage);
+	}
+
+	public static createBufferWithLength(
+		gl: WebGLRenderingContext,
+		target: number,
+		size: number,
+		usage: number): WebGLBuffer {
+
+		const buffer = gl.createBuffer();
+		GLHelper.setBufferLength(gl, target, buffer, size, usage);
+		return buffer;
+	}
 
 	/**
 	 * Unbinds the currently bound texture and binds the provided texture.
