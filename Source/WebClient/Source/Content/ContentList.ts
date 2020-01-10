@@ -63,7 +63,7 @@ export class List {
 		return new Promise<number>(async (resolve) => {
 			const status = {
 				percentage: 0,
-				totalBytesDownloaded: 0,
+				bytesDownloaded: 0,
 				totalFiles: this._items.length
 			};
 			// give the caller early access to the status
@@ -89,7 +89,7 @@ export class List {
 					request.onprogress = (ev: ProgressEvent) => {
 						const loadDiff = ev.loaded - state.lastLoaded;
 						state.lastLoaded = ev.loaded;
-						status.totalBytesDownloaded += loadDiff;
+						status.bytesDownloaded += loadDiff;
 
 						if (ev.lengthComputable) {
 							state.hasLength = true;

@@ -161,6 +161,14 @@ export class ShaderAttribPointer {
 	}
 
 	/**
+	 * Disables the attribute location for this pointer.
+	 * @param gl
+	 */
+	public disable(gl: WebGLRenderingContext) {
+		gl.disableVertexAttribArray(this.location);
+	}
+
+	/**
 	 * Applies the vertex attribute pointer.
 	 * @param gl The GL context.
 	 */

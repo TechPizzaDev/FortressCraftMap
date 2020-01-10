@@ -13,7 +13,7 @@ export default class ContentRegistry {
 		"mapsegment-textured"
 	];
 
-	public static readonly messagePacks = [
+	public static readonly blobs = [
 		"TerrainUV"
 	];
 

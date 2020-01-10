@@ -84,8 +84,8 @@ function setupDebugInfoElements() {
 
         if (mainFrame != null) {
             if (!wasVisible) // clear to prevent stacked values
-				mainFrame.clearDebugInfo();
-			mainFrame.updateDebugInfo();
+                mainFrame.clearDebugInfo();
+            mainFrame.updateDebugInfo();
         }
     };
 

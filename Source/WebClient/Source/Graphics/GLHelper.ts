@@ -24,6 +24,18 @@ export default class GLHelper {
 		return buffer;
 	}
 
+	public static createBufferWithData(
+		gl: WebGLRenderingContext,
+		target: number,
+		data: BufferSource,
+		usage: number): WebGLBuffer {
+
+		const buffer = gl.createBuffer();
+		gl.bindBuffer(target, buffer);
+		gl.bufferData(target, data, usage);
+		return buffer;
+	}
+
 	/**
 	 * Unbinds the currently bound texture and binds the provided texture.
 	 * Then after the callback, the previously bound texture is rebound.

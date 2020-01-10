@@ -2,6 +2,11 @@ import * as Content from "../Namespaces/Content";
 import { Common } from "../Namespaces/Helper";
 import ContentRegistry from "./ContentRegistry";
 
+declare var appLoadState: {
+	filesDownloaded: number,
+	bytesDownloaded: number
+};
+
 export default class AppContent {
 
 	private _manager: Content.Manager;
@@ -14,8 +19,7 @@ export default class AppContent {
 	constructor(gl: WebGLRenderingContext, onLoad?: Content.LoadCallback) {
 		this._manager = new Content.Manager(gl);
 
-		this.initializeContentList();
-		this.downloadContent().then(() => {
+		this.downloadAssets().then(() => {
 			this._manager.linkShaderPairs();
 
 			try {
@@ -35,48 +39,57 @@ export default class AppContent {
 		return this._manager;
 	}
 
-	private initializeContentList() {
-		this._list = new Content.List();
+	private static createContentList(): Content.List {
+		const list = new Content.List();
 
 		for (const texture of ContentRegistry.textures) {
-			const tDesc = Content.getDescription(Content.Type.Texture);
-			this._list.push(`${tDesc.path}/${texture}${tDesc.extension}`);
+			const texDesc = Content.getDescription(Content.Type.Texture);
+			list.push(`${texDesc.path}/${texture}${texDesc.extension}`);
 		}
 
 		for (const shader of ContentRegistry.shaders) {
 			const vsDesc = Content.getDescription(Content.Type.VertexShader);
 			const fsDesc = Content.getDescription(Content.Type.FragmentShader);
-			this._list.push(`${vsDesc.path}/${shader}${vsDesc.extension}`);
-			this._list.push(`${fsDesc.path}/${shader}${fsDesc.extension}`);
+			list.push(`${vsDesc.path}/${shader}${vsDesc.extension}`);
+			list.push(`${fsDesc.path}/${shader}${fsDesc.extension}`);
 		}
 
-		for (const binData of ContentRegistry.messagePacks) {
-			const bdDesc = Content.getDescription(Content.Type.MessagePack);
-			this._list.push(`${bdDesc.path}/${binData}${bdDesc.extension}`);
+		for (const binData of ContentRegistry.blobs) {
+			const binDesc = Content.getDescription(Content.Type.MessagePack);
+			list.push(`${binDesc.path}/${binData}${binDesc.extension}`);
 		}
+
+		return list;
 	}
 
-	private async downloadContent(onLoad?: () => void) {
+	private async downloadAssets(onLoad?: () => void) {
 		const progressBar = document.getElementById("loading-bar-percentage");
 		const progressSpan = progressBar.getElementsByTagName("span")[0];
 
-		let downloadCount = 0;
+		let assetsDownloaded = 0;
 		let status: Content.DownloadStatus = null;
 
-		const successCount = await this._manager.downloadAsync(
+		const assetDownloads = await this._manager.downloadAsync(
 			this._list,
 			() => {
-				downloadCount++;
+				assetsDownloaded++;
 			},
 			(s) => {
 				status = s;
-				progressBar.style.width = (Math.round(s.percentage * 1000) / 10) + "%";
-				progressSpan.innerText = `${downloadCount}/${s.totalFiles}`;
+
+				const filesToDownload = s.totalFiles + appLoadState.filesDownloaded;
+				const filesDownloaded = assetsDownloaded + appLoadState.filesDownloaded;
+				progressSpan.innerText = `${filesDownloaded}/${filesToDownload}`;
+				
+				const appLoadPercentagePart = appLoadState.filesDownloaded / filesToDownload;
+				const assetPercentagePart = s.percentage * assetsDownloaded / filesToDownload;
+				const percentage = appLoadPercentagePart + assetPercentagePart;
+				progressBar.style.width = (Math.round(percentage * 1000) / 10) + "%";
 			}
 		);
 
-		const size = Common.bytesToReadable(status.totalBytesDownloaded);
-		console.log(`Downloaded ${successCount} out of ${status.totalFiles} assets, ${size}`);
+		const size = Common.bytesToReadable(status.bytesDownloaded);
+		console.log(`Downloaded ${assetDownloads} out of ${status.totalFiles} assets, ${size}`);
 
 		const loader = document.getElementById("initial-loader");
 		loader.addEventListener("transitionend", () => loader.remove(), false);

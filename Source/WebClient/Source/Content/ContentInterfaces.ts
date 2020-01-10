@@ -6,7 +6,7 @@ export interface DownloadStatus {
 	readonly percentage: number;
 
 	/** Gets the total amount of bytes that the request has downloaded. */
-	readonly totalBytesDownloaded: number;
+	readonly bytesDownloaded: number;
 
 	/** Gets the total amount of files that the request will download. */
 	readonly totalFiles: number;

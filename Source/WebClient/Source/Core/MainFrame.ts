@@ -34,13 +34,13 @@ export default class MainFrame {
 	private _mapChannel: ChannelSocket;
 
 	private MaxSegmentRequestRate = 255;
-	private MinSegmentRequestRate = MainFrame.isWeakUserAgent ? 5 : 10;
+	private MinSegmentRequestRate = 5;
 	private TargetFpsWhileRequesting = MainFrame.isWeakUserAgent ? 59 : 55;
 	private SegmentRequestWindupDuration = 2;
 	private MinSegmentRequestWindupWhenIdle = 0.2;
 	private ViewCullDistance = 50; // 82
-
-	private _requestWindup = MainFrame.maxWindup / 4;
+	
+	private _requestWindup = MainFrame.maxWindup / (MainFrame.isWeakUserAgent ? 8 : 4);
 	private _requestIdleTime = 0;
 	public static readonly maxWindup = 1;
 
@@ -202,12 +202,13 @@ export default class MainFrame {
 	// user moves the map above a certain length threshold, 
 	// update request priorities based on a new distance.
 	private requestSegmentsInView(time: TimeEvent) {
-		const w = /*24;*/ 2 // 108 - 12 + 16 * 6; //66;
-		const h = /*16;*/ 1 // 48 + 16 * 3; //57;
-		const halfW = 0 //w / 2;
-		const halfH = 0 //h / 2;
 
-		this.ViewCullDistance = Math.max(w, h);
+		const w = 24 //108 - 12 + 16 * 6; //66;
+		const h = 16 // 48 + 16 * 3; //57;
+		const halfW = w / 2;
+		const halfH = h / 2;
+
+		this.ViewCullDistance = Math.max(w * w, h * h);
 		//const timeout = 2;
 
 		const speedX = 0; // 120
@@ -313,6 +314,7 @@ export default class MainFrame {
 	private sendSegmentRequests() {
 
 		this.updateRequestWindup();
+
 		let requestLimit = Math.round(Mathx.lerp(
 			this.MinSegmentRequestRate, this.MaxSegmentRequestRate, this._requestWindup));
 
@@ -328,9 +330,9 @@ export default class MainFrame {
 			this._lastRequestPickingMethod = this._requestPickingMethod;
 		}
 
-		const simplePickingThresholdBase = MainFrame.isWeakUserAgent ? 5000 : 10000;
+		const simplePickingThresholdBase = MainFrame.isWeakUserAgent ? 4096 : 8192;
 		// taking 'requestWindup' into consideration so weak devices get more processsing
-		// for other things instead of massive requests
+		// for other things instead of sending massive requests
 		const simplePickingThreshold = simplePickingThresholdBase * ((this._requestWindup + 1.0) / 2);
 
 		while (this._segmentRequestQueue.length > 0 && requestLimit > 0) {
@@ -343,22 +345,22 @@ export default class MainFrame {
 				// picking requests closest to 'loadCenter' can get expensive if
 				// the queue has a large backlog, use this method sparingly
 
-				let lastDist = Number.MAX_VALUE;
+				let lastSqrDist = Number.MAX_VALUE;
 				for (let i = 0; i < this._segmentRequestQueue.length; i++) {
 					const requestPos = this._segmentRequestQueue[i];
 					this._cachedPosition[0] = requestPos[0] + 0.5;
 					this._cachedPosition[1] = requestPos[1] + 0.5;
 
 					// remove requests outside a certain range
-					const dist = vec2.sqrDist(this._cachedPosition, this._loadCenterPosition);
-					if (dist > sqrCullDist) {
+					const sqrDist = vec2.sqrDist(this._cachedPosition, this._loadCenterPosition);
+					if (sqrDist > sqrCullDist) {
 						this._segmentRequestQueue.splice(i, 1);
 						i--;
 						continue;
 					}
 
-					if (dist < lastDist) {
-						lastDist = dist;
+					if (sqrDist < lastSqrDist) {
+						lastSqrDist = sqrDist;
 						index = i;
 					}
 				}

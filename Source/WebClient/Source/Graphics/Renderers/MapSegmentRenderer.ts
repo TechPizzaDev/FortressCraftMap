@@ -8,9 +8,10 @@ import ShaderProgram, { ShaderAttribPointer } from "../Shaders/ShaderProgram";
 import ShapeGenerator, { QuadDataMetrics } from "../ShapeGenerator";
 import Texture2D from "../Texture2D";
 import RenderSegmentCollection from "../RenderSegmentCollection";
-import MapSegment from "../../Core/World/MapSegment";
+import MapSegment, { MapSegmentPos } from "../../Core/World/MapSegment";
 import RenderSegment from "../RenderSegment";
 import ContentRegistry from "../../Content/ContentRegistry";
+import GLHelper from "../GLHelper";
 
 /**
  * Renders map segments that are currently visible through the viewport.
@@ -29,10 +30,9 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	private _tbDiffuseTexture: Texture2D;
 
-	private _bakedSegmentQuads: BakedRenderSegmentQuads;
+	private _bakedRenderSegmentQuads: BakedRenderSegmentQuads;
 	private _renderDataBuffer: Float32Array;
-	private _indexDataBuffer: Uint16Array;
-	
+
 	private _terrainUVMap: Map<number, TileDescription>;
 	private _defaultTileDescription: TileDescription;
 
@@ -43,7 +43,7 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _renderSegmentsDrawn = 0;
 
 	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
-	public readonly _zoom = 1 / 0.75  * (4 / 2) * 1;
+	public readonly _zoom = 1 / 0.75 * (4 / 2) * 1;
 	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();
@@ -60,7 +60,7 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	public get segments(): RenderSegmentCollection { return this._renderSegments; }
 	public get viewport(): Rectangle { return this._viewport; }
-	public get bakedSegmentQuads(): BakedRenderSegmentQuads { return this._bakedSegmentQuads; }
+	public get bakedSegmentQuads(): BakedRenderSegmentQuads { return this._bakedRenderSegmentQuads; }
 
 	public get viewMatrix(): mat4 { return this._viewMatrix; }
 	public get projMatrix(): mat4 { return this._projMatrix; }
@@ -73,10 +73,11 @@ export default class MapSegmentRenderer extends RendererBase {
 		this.prepareShaders(content);
 		this._tbDiffuseTexture = content.getTexture2D(ContentRegistry.TerrainTexture);
 
-		this._bakedSegmentQuads = this.bakeSegmentQuads();
+		this._bakedRenderSegmentQuads = this.bakeRenderSegmentQuads();
+
 		// buffer size should suffice for both colors and texture UV
-		this._renderDataBuffer = new Float32Array(this._bakedSegmentQuads.metricsPerSegment.vertexCount * 3);
-		this._indexDataBuffer = new Uint16Array(this._bakedSegmentQuads.metricsPerSegment.indexCount);
+		this._renderDataBuffer = new Float32Array(this._bakedRenderSegmentQuads.metricsPerSegment.vertexCount * 3);
+
 		this.loadTerrainUV(content);
 	}
 
@@ -127,7 +128,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		this.glContext.viewport(0, 0, viewport.width, viewport.height);
 
 		//const s = 1 / zoom; i don't really have access to a zoom value yet ;/
-		
+
 		const w = viewport.width;
 		const h = viewport.height;
 		mat4.ortho(this._projMatrix,
@@ -184,7 +185,7 @@ export default class MapSegmentRenderer extends RendererBase {
 
 		this._segmentsDrawn = 0;
 		this._renderSegmentsDrawn = 0;
-		
+
 		const gl = this.glContext;
 		const shader = this.isTextured ? this.bindTexturedShader() : this.bindColoredShader();
 		const posAttribPtr = this.isTextured ? this._texturedPosAttribPtr : this._coloredPosAttribPtr;
@@ -195,11 +196,10 @@ export default class MapSegmentRenderer extends RendererBase {
 
 		shader.uniform4fv("uTint", [1.0, 1.0, 1.0, 1.0]);
 
-		// vertices are constant and only need this single bind
-		gl.bindBuffer(gl.ARRAY_BUFFER, this._bakedSegmentQuads.vertexBuffer);
-		posAttribPtr.apply(gl);
+		// indices are constant and only need this single bind
+		this.glContext.bindBuffer(this.glContext.ELEMENT_ARRAY_BUFFER, this._bakedRenderSegmentQuads.indexBuffer);
 
-		this.drawVisibleSegments(this._viewport, shader, dataAttribPtr);
+		this.drawVisibleSegments(this._viewport, shader, posAttribPtr, dataAttribPtr);
 
 		//if (segment.isDirty && chunkUploadsLeft > 0) {
 		//	buildAndUploadSegment(segment, isTextured);
@@ -210,6 +210,9 @@ export default class MapSegmentRenderer extends RendererBase {
 		//	segment.alpha += delta / fadeDuration;
 		//	drawSegment(segment, shader, locationName);
 		//}
+
+		posAttribPtr.disable(gl);
+		dataAttribPtr.disable(gl);
 	}
 
 	private clearDrawCtx() {
@@ -223,48 +226,52 @@ export default class MapSegmentRenderer extends RendererBase {
 			Math.round(this._viewport.height / 2) + 0.5 + this._mapTranslation[1] / this._zoom);
 	}
 
-	private drawVisibleSegments(view: Rectangle, shader: ShaderProgram, pointer: ShaderAttribPointer) {
+	private drawVisibleSegments(
+		view: Rectangle, shader: ShaderProgram,
+		posAttrib: ShaderAttribPointer, dataAttrib: ShaderAttribPointer) {
 
-		this.clearDrawCtx();
+		//this.clearDrawCtx();
 
 		// TODO: currently draws every render segment, needs to draw in visible rect
 		for (const rowMap of this._renderSegments.rows()) {
 			for (const renderSegment of rowMap.values())
-				this.drawRenderSegment(renderSegment, shader, pointer);
+				this.drawRenderSegment(renderSegment, shader, posAttrib, dataAttrib);
 		}
 
 		return;
 
 		// TODO: fix this
-		const rowOffset = Math.ceil(view.y / MapSegment.size);
-		const rowCount = Math.ceil(view.height / 4 / MapSegment.size);
-
-		const columnOffset = Math.ceil(view.x / MapSegment.size);
-		const columnCount = Math.ceil(view.width / 4 / MapSegment.size);
-
-		for (let i = 0; i < rowCount; i++) {
-			const segmentZ = i + rowOffset - 5;
-			const row = this._renderSegments.getRow(segmentZ);
-			if (!row)
-				continue;
-
-			for (let j = 0; j < columnCount; j++) {
-				const segmentX = j + columnOffset - 5;
-				const segment = row.get(segmentX);
-				if (segment != null) {
-					// we finally have the visible segments here
-					this.drawRenderSegment(segment, shader, pointer);
-				}
-			}
-		}
+		//const rowOffset = Math.ceil(view.y / MapSegment.size);
+		//const rowCount = Math.ceil(view.height / 4 / MapSegment.size);
+		//
+		//const columnOffset = Math.ceil(view.x / MapSegment.size);
+		//const columnCount = Math.ceil(view.width / 4 / MapSegment.size);
+		//
+		//for (let i = 0; i < rowCount; i++) {
+		//	const segmentZ = i + rowOffset - 5;
+		//	const row = this._renderSegments.getRow(segmentZ);
+		//	if (!row)
+		//		continue;
+		//
+		//	for (let j = 0; j < columnCount; j++) {
+		//		const segmentX = j + columnOffset - 5;
+		//		const segment = row.get(segmentX);
+		//		if (segment != null) {
+		//			// we finally have the visible segments here
+		//			this.drawRenderSegment(segment, shader, dataAttrib);
+		//		}
+		//	}
+		//}
 	}
 
 	private x = 0;
 
-	private drawRenderSegment(renderSegment: RenderSegment, shader: ShaderProgram, dataPointer: ShaderAttribPointer) {
+	private drawRenderSegment(
+		renderSegment: RenderSegment, shader: ShaderProgram,
+		posAttrib: ShaderAttribPointer, dataAttrib: ShaderAttribPointer) {
+		
 		const gl = this.glContext;
-		const segmentMetrics = this._bakedSegmentQuads.metricsPerSegment;
-		const indicesPerSegment = segmentMetrics.indexCount;
+		const metrics = this._bakedRenderSegmentQuads.metricsPerSegment;
 
 		const drawing = this._frame.drawCtx;
 		//drawing.lineWidth = 1;
@@ -287,8 +294,6 @@ export default class MapSegmentRenderer extends RendererBase {
 		//drawing.stroke();
 
 		if (renderSegment.isDirty) {
-			renderSegment.genCount = 0;
-
 			for (let i = 0; i < RenderSegment.blockSize; i++) {
 				const segment = renderSegment.getSegmentAt(i);
 				if (segment == null || !segment.isDirty)
@@ -298,20 +303,22 @@ export default class MapSegmentRenderer extends RendererBase {
 				if (isNew) {
 					segment.renderSegmentIndex = renderSegment.genCount;
 					renderSegment.genCount++;
-				}
-
-				if (isNew) {
-					// copy baked indices for the segment
+				
+					// upload baked data for the segment
+					const count = metrics.vertexCount * 2;
+					const data = this._bakedRenderSegmentQuads.vertexData;
+					
 					const segmentPositionIndex = RenderSegment.getIndex(segment.position.x, segment.position.z);
-					const bakedIndexOffset = segmentPositionIndex * indicesPerSegment;
-					const indexSlice = this._bakedSegmentQuads.indexData.subarray(bakedIndexOffset, indicesPerSegment);
+					const bakedOffset = segmentPositionIndex * count;
+					const sliceEnd = bakedOffset + count;
+					const slice = data.subarray(bakedOffset, sliceEnd);
 
-					const renderIndexOffset = segment.renderSegmentIndex * indicesPerSegment;
-					gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderSegment.indexBuffer);
-					gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, renderIndexOffset, indexSlice);
+					const bufferOffset = segment.renderSegmentIndex * count * data.BYTES_PER_ELEMENT;
+					gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.vertexBuffer);
+					gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset, slice);
 				}
 
-				// generate render data for the segment
+				// generate fresh render data for the segment
 				if (this.isTextured) {
 					this.generateTexCoords(segment.tiles, MapSegment.size, 0, this._renderDataBuffer);
 				}
@@ -319,10 +326,10 @@ export default class MapSegmentRenderer extends RendererBase {
 					this.generateColors(segment.tiles, MapSegment.size, 0, this._renderDataBuffer);
 				}
 
-				const renderDataOffset = segment.renderSegmentIndex * segmentMetrics.vertexCount * 3;
+				const renderDataOffset = segment.renderSegmentIndex * metrics.vertexCount * 3 * Float32Array.BYTES_PER_ELEMENT;
 				gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
 				gl.bufferSubData(gl.ARRAY_BUFFER, renderDataOffset, this._renderDataBuffer);
-				
+
 				segment.isDirty = false;
 				this._frame._frequentPendingDebugInfo.segmentsBuilt++;
 			}
@@ -334,28 +341,31 @@ export default class MapSegmentRenderer extends RendererBase {
 		// only draw if there are segments in the batch
 		const showNonFull = true; // renderSegment.genCount != RenderSegment.blockSize;
 		if (renderSegment.genCount > 0 && showNonFull) {
+
 			mat4.multiply(this._mvpMatrix, this._projViewMatrix, renderSegment.matrix);
 			shader.uniformMatrix4fv("uModelViewProjection", this._mvpMatrix);
 			shader.uniform4f("uTint", 0.5, 0.5, 1, 1);
 
-			gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
-			dataPointer.apply(gl);
+			gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.vertexBuffer);
+			posAttrib.apply(gl);
 
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, renderSegment.indexBuffer);
-			gl.drawElements(gl.TRIANGLES, renderSegment.genCount * indicesPerSegment, gl.UNSIGNED_SHORT, 0);
+			gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
+			dataAttrib.apply(gl);
+
+			gl.drawElements(gl.TRIANGLES, renderSegment.genCount * metrics.indexCount, gl.UNSIGNED_SHORT, 0);
 
 			this._segmentsDrawn += renderSegment.genCount;
 			this._renderSegmentsDrawn++;
 		}
 
-		drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
-		drawing.strokeRect(
-			renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
-			renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
-			16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
+		//drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
+		//drawing.strokeRect(
+		//	renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
+		//	renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
+		//	16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
 	}
 
-	/** Prepares the needed texture and binds the shader program for textured segments. */
+	/** Binds the needed texture and binds the shader program for textured segments. */
 	private bindTexturedShader(): ShaderProgram {
 		const gl = this.glContext;
 		gl.activeTexture(gl.TEXTURE0);
@@ -374,33 +384,32 @@ export default class MapSegmentRenderer extends RendererBase {
 		return shader;
 	}
 
-	private bakeSegmentQuads(): BakedRenderSegmentQuads {
+	private bakeRenderSegmentQuads(): BakedRenderSegmentQuads {
 		const gl = this.glContext;
-		const quadMetrics = ShapeGenerator.getQuadMetrics(MapSegment.size, MapSegment.size);
-		const vertexData = new Float32Array(quadMetrics.vertexCount * 2 * RenderSegment.blockSize);
-		const indexData = new Uint16Array(quadMetrics.indexCount * RenderSegment.blockSize);
+		const segmentMetrics = ShapeGenerator.getQuadMetrics(MapSegment.size, MapSegment.size);
+		const vertexData = new Float32Array(segmentMetrics.vertexCount * 2 * RenderSegment.blockSize);
+		const indexData = new Uint16Array(segmentMetrics.indexCount * RenderSegment.blockSize);
 
-		const planeBuffer = ShapeGenerator.createPlane(MapSegment.size, MapSegment.size);
+		const shape = ShapeGenerator.createPlane(MapSegment.size, MapSegment.size);
 		for (let z = 0; z < RenderSegment.size; z++) {
 			for (let x = 0; x < RenderSegment.size; x++) {
 				const posOffset = vec2.fromValues(x * MapSegment.size, z * MapSegment.size);
 				const i = x + z * RenderSegment.size;
-				const vertexOffset = i * quadMetrics.vertexCount;
-				const plane = ShapeGenerator.generatePlane(MapSegment.size, MapSegment.size, posOffset, vertexOffset, 1, planeBuffer);
+				const vertexOffset = i * segmentMetrics.vertexCount;
+				const plane = ShapeGenerator.generatePlane(MapSegment.size, MapSegment.size, posOffset, vertexOffset, 1, shape);
 
-				vertexData.set(plane.vertices, i * quadMetrics.vertexCount * 2);
-				indexData.set(plane.indices, i * quadMetrics.indexCount);
+				vertexData.set(plane.vertices, i * segmentMetrics.vertexCount * 2);
+				indexData.set(plane.indices, i * segmentMetrics.indexCount);
 			}
 		}
 
-		const vertexBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+		const indexBuffer = GLHelper.createBufferWithData(
+			gl, gl.ELEMENT_ARRAY_BUFFER, indexData, gl.STATIC_DRAW);
 
 		return {
-			vertexBuffer,
-			indexData,
-			metricsPerSegment: quadMetrics
+			vertexData,
+			indexBuffer,
+			metricsPerSegment: segmentMetrics
 		};
 	}
 
@@ -518,7 +527,7 @@ interface TileDescription {
 }
 
 export interface BakedRenderSegmentQuads {
-	readonly vertexBuffer: WebGLBuffer,
-	readonly indexData: Uint16Array,
+	readonly vertexData: Float32Array,
+	readonly indexBuffer: WebGLBuffer,
 	readonly metricsPerSegment: QuadDataMetrics
 }

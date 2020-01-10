@@ -15,10 +15,10 @@ export default class RenderSegment extends GLResource {
 	private _segments: MapSegment[];
 	private _segmentCount: number;
 
+	private _vertexBuffer: WebGLBuffer;
 	private _renderDataBuffer: WebGLBuffer;
-	private _indexBuffer: WebGLBuffer;
-	public readonly matrix: mat4;
 
+	public readonly matrix: mat4;
 	public readonly x: number;
 	public readonly z: number;
 
@@ -50,11 +50,11 @@ export default class RenderSegment extends GLResource {
 		this.isDirty = false;
 		this.genCount = 0;
 
-		const renderDataLength = RenderSegment.blockSize * quads.metricsPerSegment.vertexCount * 3;
-		const indexLength = RenderSegment.blockSize * quads.metricsPerSegment.indexCount;
-		this._renderDataBuffer = GLHelper.createBufferWithLength(gl, gl.ARRAY_BUFFER, renderDataLength, gl.DYNAMIC_DRAW);
-		this._indexBuffer = GLHelper.createBufferWithLength(gl, gl.ELEMENT_ARRAY_BUFFER, indexLength, gl.DYNAMIC_DRAW);
-
+		const vertexBytes = RenderSegment.blockSize * quads.metricsPerSegment.vertexCount * 2 * Float32Array.BYTES_PER_ELEMENT;
+		this._vertexBuffer = GLHelper.createBufferWithLength(gl, gl.ARRAY_BUFFER, vertexBytes, gl.DYNAMIC_DRAW);
+		const renderDataBytes = RenderSegment.blockSize * quads.metricsPerSegment.vertexCount * 3 * Float32Array.BYTES_PER_ELEMENT;
+		this._renderDataBuffer = GLHelper.createBufferWithLength(gl, gl.ARRAY_BUFFER, renderDataBytes, gl.DYNAMIC_DRAW);
+		
 		this.matrix = mat4.create();
 		mat4.translate(this.matrix, this.matrix, vec3.fromValues(
 			this.x * MapSegment.size * RenderSegment.size,
@@ -131,16 +131,17 @@ export default class RenderSegment extends GLResource {
 		return this._renderDataBuffer;
 	}
 
-	public get indexBuffer(): WebGLBuffer {
+	public get vertexBuffer(): WebGLBuffer {
 		this.assertNotDisposed();
-		return this._indexBuffer;
+		return this._vertexBuffer;
 	}
 
 	protected destroy() {
+		this.glContext.deleteBuffer(this._vertexBuffer);
 		this.glContext.deleteBuffer(this._renderDataBuffer);
-		this.glContext.deleteBuffer(this._indexBuffer);
 	}
 
+	/*
 	public static createCoordKey(x: number, y: number): string {
 		return x + "," + y;
 	}
@@ -151,4 +152,5 @@ export default class RenderSegment extends GLResource {
 			throw new SyntaxError("Not enough coordinates in 'value'.");
 		return [parseInt(split[0]), parseInt(split[1])];
 	}
+	*/
 }
