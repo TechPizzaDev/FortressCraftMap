@@ -1,6 +1,5 @@
 import * as Content from "../Namespaces/Content";
 import { Common } from "../Namespaces/Helper";
-import ContentRegistry from "./ContentRegistry";
 
 declare var appLoadState: {
 	filesDownloaded: number,
@@ -37,29 +36,6 @@ export default class AppContent {
 
 	public get manager(): Content.Manager {
 		return this._manager;
-	}
-
-	private static createContentList(): Content.List {
-		const list = new Content.List();
-
-		for (const texture of ContentRegistry.textures) {
-			const texDesc = Content.getDescription(Content.Type.Texture);
-			list.push(`${texDesc.path}/${texture}${texDesc.extension}`);
-		}
-
-		for (const shader of ContentRegistry.shaders) {
-			const vsDesc = Content.getDescription(Content.Type.VertexShader);
-			const fsDesc = Content.getDescription(Content.Type.FragmentShader);
-			list.push(`${vsDesc.path}/${shader}${vsDesc.extension}`);
-			list.push(`${fsDesc.path}/${shader}${fsDesc.extension}`);
-		}
-
-		for (const binData of ContentRegistry.blobs) {
-			const binDesc = Content.getDescription(Content.Type.MessagePack);
-			list.push(`${binDesc.path}/${binData}${binDesc.extension}`);
-		}
-
-		return list;
 	}
 
 	private async downloadAssets(onLoad?: () => void) {

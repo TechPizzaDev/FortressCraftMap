@@ -54,6 +54,6 @@ export class Common {
 		if (extension == null || extension.length == 0)
 			return path.substring(0, lastDot);
 
-		throw "not done";
+		throw "not implemented";
 	}
 }

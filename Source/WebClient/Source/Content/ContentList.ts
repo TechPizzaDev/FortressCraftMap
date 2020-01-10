@@ -7,7 +7,7 @@ interface ListObject {
 }
 
 /**
- * List of content URIs that can be downloaded in batch later.
+ * List of content URIs that can be downloaded in batch.
  * */
 export class List {
 
