@@ -6,7 +6,7 @@ export default class Constants {
 	public static readonly resolution = 64;
 
 	public static readonly segmentSize = 16;
-	public static readonly segmentBaseOffset = BigInt(4611686017890516992);
+	//public static readonly segmentBaseOffset = BigInt(4611686017890516992);
 
 	// settings constants
 	public static readonly requestDelayMillis = 2;

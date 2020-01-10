@@ -18,9 +18,15 @@ export default class MapSegment {
 	public readonly position: MapSegmentPos;
 	public readonly tiles: Uint16Array;
 
+	public renderSegmentIndex: number;
+	public isDirty: boolean;
+
 	constructor(position: MapSegmentPos, tiles: Uint16Array) {
 		this.position = position;
 		this.tiles = tiles;
+
+		this.renderSegmentIndex = -1;
+		this.isDirty = true;
 	}
 }
 
