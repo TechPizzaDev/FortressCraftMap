@@ -5,9 +5,13 @@ import Shader from "../Graphics/Shaders/Shader";
 import { Web, Common } from "../Namespaces/Helper";
 import ShaderProgram from "../Graphics/Shaders/ShaderProgram";
 import * as msgpack5 from "msgpack5";
+import { ShaderPath } from "../Namespaces/Content";
 
 type ResourceIterator<T> = IterableIterator<[string, T]>;
 type ResourceMap<T> = Array<[string, T]>;
+
+/** Callback for a successful content load. */
+export type LoadCallback = (content: Manager) => void;
 
 /** Used for easier management of external content. */
 export class Manager extends GLResource {
@@ -35,7 +39,7 @@ export class Manager extends GLResource {
 	}
 
 	public getShader(name: string): ShaderProgram {
-		const resource = this.get(`${Content.ShaderPath}/${name}`);
+		const resource = this.get(`${ShaderPath}/${name}`);
 		if (resource instanceof ShaderProgram)
 			return resource;
 		throw new Error(`Could not find shader program named '${name}'.`);
@@ -65,7 +69,8 @@ export class Manager extends GLResource {
 		list: Content.List,
 		onDownload?: (uri: string) => void,
 		onProgress?: Content.StatusCallback
-	): Promise<number> {
+	): Promise<Content.DownloadStatus> {
+
 		this.assertNotDisposed();
 		const decoderPromises = new Array<Promise<void>>();
 
@@ -80,9 +85,9 @@ export class Manager extends GLResource {
 		};
 
 		const downloadPromise = list.downloadAsync(downloadCallback, onProgress);
-		return downloadPromise.then(async (value) => {
+		return downloadPromise.then(async (status) => {
 			await Promise.all(decoderPromises);
-			return value;
+			return status;
 		});
 	}
 
@@ -104,7 +109,7 @@ export class Manager extends GLResource {
 			
 			this._resources.delete(vertexUri);
 			this._resources.delete(fragShaderPair[0]);
-			this._resources.set(`${Content.ShaderPath}/${vertexName}`, program);
+			this._resources.set(`${ShaderPath}/${vertexName}`, program);
 		}
 	}
 

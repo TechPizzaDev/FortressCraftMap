@@ -16,13 +16,8 @@
 		</div>
 
 		<div id="debugInfoContainer">
-			<div id="fpsCounter" title="Frames per second">
-				<span></span>
-			</div>
-
-			<div id="debugInfo" class="hidden">
-				<table></table>
-			</div>
+			<div id="fpsCounter" title="Frames per second"> <span></span> </div>
+			<div id="debugInfo" class="hidden"> <table></table> </div>
 		</div>
 
 		<div id="fullscreenButton" title="Fullscreen toggle">
@@ -51,13 +46,32 @@
 	</div>
 
 	<script>
-		var appLoadState = {
-			filesDownloaded: 1,
+		// Variables required for ContentRegistry
+		let appContentList;
+		let appUpdateLoadingProgress;
+	</script>
+	<script src="./Script/runtime.js"></script>
+	<script src="./Script/bootstrap.js"></script>
+
+	<script>
+		const appLoadingProgressBar = document.getElementById("loading-bar-percentage");
+		const appLoadingProgressSpan = appLoadingProgressBar.getElementsByTagName("span")[0];
+
+		const baseStatus = {
+			percentage: 0,
+			bytesDownloaded: 0,
+			files: 0,
+			totalFiles: appContentList.count
+		};
+
+		const appLoadState = {
+			filesDownloaded: 3,
 			bytesDownloaded: 0
 		};
 
+		appUpdateLoadingProgress(baseStatus);
 	</script>
-	<script src="./Script/runtime.js"></script>
+
 	<script src="./Script/dependencies.js"></script>
 	<script src="./Script/main.js"></script>
 </body>

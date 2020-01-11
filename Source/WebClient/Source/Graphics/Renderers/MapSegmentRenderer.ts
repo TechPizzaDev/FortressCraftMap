@@ -8,10 +8,10 @@ import ShaderProgram, { ShaderAttribPointer } from "../Shaders/ShaderProgram";
 import ShapeGenerator, { QuadDataMetrics } from "../ShapeGenerator";
 import Texture2D from "../Texture2D";
 import RenderSegmentCollection from "../RenderSegmentCollection";
-import MapSegment, { MapSegmentPos } from "../../Core/World/MapSegment";
+import MapSegment from "../../Core/World/MapSegment";
 import RenderSegment from "../RenderSegment";
-import ContentRegistry from "../../Content/ContentRegistry";
 import GLHelper from "../GLHelper";
+import ContentRegistry from "../../Content/ContentRegistry";
 
 /**
  * Renders map segments that are currently visible through the viewport.

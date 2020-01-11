@@ -113,9 +113,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{DD561571-8B92-4F07-B7FE-08DDE3902A92}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Content\AppContent.ts = WebClient\Source\Content\AppContent.ts
-		WebClient\Source\Content\ContentFunctions.ts = WebClient\Source\Content\ContentFunctions.ts
+		WebClient\Source\Content\ContentDescriptions.ts = WebClient\Source\Content\ContentDescriptions.ts
 		WebClient\Source\Content\ContentInterfaces.ts = WebClient\Source\Content\ContentInterfaces.ts
 		WebClient\Source\Content\ContentList.ts = WebClient\Source\Content\ContentList.ts
+		WebClient\Source\Content\ContentLoading.ts = WebClient\Source\Content\ContentLoading.ts
 		WebClient\Source\Content\ContentManager.ts = WebClient\Source\Content\ContentManager.ts
 		WebClient\Source\Content\ContentRegistry.ts = WebClient\Source\Content\ContentRegistry.ts
 		WebClient\Source\Content\ContentType.ts = WebClient\Source\Content\ContentType.ts

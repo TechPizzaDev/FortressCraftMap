@@ -1,7 +1,21 @@
 import { Type } from "./ContentType";
-import { TypeDescription } from "./ContentInterfaces";
 
 export const ShaderPath = "/Shaders";
+
+/** Defines attributes about a content type. */
+export interface TypeDescription {
+
+	/** Gets the root path to the content.
+	 * Content root paths should;
+	 *  * use forward slash for path separation.
+	 *  * begin with a slash.
+	 *  * not end with a slash.
+	 */
+	readonly path: string;
+
+	/** Gets the file extension used by the content type. */
+	readonly extension: string;
+}
 
 const Descriptions = new Map<Type, TypeDescription>([
 	[Type.Texture, { path: "/Textures", extension: ".png" }],

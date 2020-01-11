@@ -25,12 +25,12 @@
     "fcmap-speedy": "file:../fcmap-speedy/pkg",
     "gl-matrix": "^3.1.0",
     "jdataview": "^2.5.0",
-    "msgpack5": "^4.2.1",
+    "msgpack5": "^4.2.1"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.10",
     "ts-loader": "^5.4.5",
     "typescript": "^3.7.4",
     "webpack": "^4.41.5"
-  },
-  "devDependencies": {
-    "webpack-cli": "^3.3.10"
   }
 }

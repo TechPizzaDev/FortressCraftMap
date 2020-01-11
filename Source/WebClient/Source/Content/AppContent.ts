@@ -1,15 +1,11 @@
 import * as Content from "../Namespaces/Content";
 import { Common } from "../Namespaces/Helper";
-
-declare var appLoadState: {
-	filesDownloaded: number,
-	bytesDownloaded: number
-};
+import { getAppContentList } from "../Content/ContentRegistry";
+import { updateLoadingProgress } from "./ContentLoading";
 
 export default class AppContent {
 
 	private _manager: Content.Manager;
-	private _list: Content.List;
 
 	/**
 	 * Constructs the app content.
@@ -38,34 +34,12 @@ export default class AppContent {
 		return this._manager;
 	}
 
-	private async downloadAssets(onLoad?: () => void) {
-		const progressBar = document.getElementById("loading-bar-percentage");
-		const progressSpan = progressBar.getElementsByTagName("span")[0];
+	private async downloadAssets() {
+		const result = await this._manager.downloadAsync(
+			getAppContentList(), null, updateLoadingProgress);
 
-		let assetsDownloaded = 0;
-		let status: Content.DownloadStatus = null;
-
-		const assetDownloads = await this._manager.downloadAsync(
-			this._list,
-			() => {
-				assetsDownloaded++;
-			},
-			(s) => {
-				status = s;
-
-				const filesToDownload = s.totalFiles + appLoadState.filesDownloaded;
-				const filesDownloaded = assetsDownloaded + appLoadState.filesDownloaded;
-				progressSpan.innerText = `${filesDownloaded}/${filesToDownload}`;
-				
-				const appLoadPercentagePart = appLoadState.filesDownloaded / filesToDownload;
-				const assetPercentagePart = s.percentage * assetsDownloaded / filesToDownload;
-				const percentage = appLoadPercentagePart + assetPercentagePart;
-				progressBar.style.width = (Math.round(percentage * 1000) / 10) + "%";
-			}
-		);
-
-		const size = Common.bytesToReadable(status.bytesDownloaded);
-		console.log(`Downloaded ${assetDownloads} out of ${status.totalFiles} assets, ${size}`);
+		const size = Common.bytesToReadable(result.bytesDownloaded);
+		console.log(`Downloaded ${result.files} out of ${result.totalFiles} assets, ${size}`);
 
 		const loader = document.getElementById("initial-loader");
 		loader.addEventListener("transitionend", () => loader.remove(), false);

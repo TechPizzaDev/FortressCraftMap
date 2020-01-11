@@ -81,7 +81,13 @@ function wasmPackRebuildPlugin(compilation) {
 }
 
 const webpackConfigBase = {
-	entry: './Source/Core/Index.ts',
+	entry: {
+		bootstrap: [
+			'./Source/Content/ContentRegistry.ts',
+			'./Source/Content/ContentLoading.ts'
+		],
+		main: './Source/Core/Index.ts'
+	},
 	module: {
 		rules: [
 			{
@@ -121,6 +127,7 @@ const webpackConfigBase = {
 	},
 	optimization: {
 		namedChunks: true,
+		runtimeChunk: "single",
 		splitChunks: {
 			cacheGroups: {
 				dependencies: {
@@ -129,9 +136,8 @@ const webpackConfigBase = {
 					filename: "dependencies.js"
 				}
 			}
-		},
-		runtimeChunk: "single"
-	}, /* plugins: [
+		}
+	} /*, plugins: [
 		// ... other plugins here ...
 		{
 			apply: (compiler) => {

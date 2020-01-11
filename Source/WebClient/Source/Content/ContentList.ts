@@ -1,5 +1,6 @@
-import * as Content from "../Namespaces/Content";
 import { Web, Common } from "../Namespaces/Helper";
+import { DownloadStatus, DownloadCallback, StatusCallback } from "./ContentInterfaces";
+import { getXHRType } from "./ContentDescriptions";
 
 interface ListObject {
 	readonly uri: string;
@@ -38,7 +39,7 @@ export class List {
 		this.assertNotLocked();
 		List.assertValidUri(uri);
 
-		const type = Content.getXHRType(uri);
+		const type = getXHRType(uri);
 		this._items.push({ uri, type });
 	}
 
@@ -55,26 +56,28 @@ export class List {
 	 * @returns Promise that resolves into the amount of successfully downloaded resources.
 	 */
 	public async downloadAsync(
-		onDownload: Content.DownloadCallback,
-		onProgress?: Content.StatusCallback
-	): Promise<number> {
+		onDownload: DownloadCallback,
+		onProgress?: StatusCallback
+	): Promise<DownloadStatus> {
+
 		this._lockCount++;
 
-		return new Promise<number>(async (resolve) => {
+		return new Promise<DownloadStatus>(async (resolve) => {
+
 			const status = {
 				percentage: 0,
 				bytesDownloaded: 0,
+				files: 0,
 				totalFiles: this._items.length
 			};
-			// give the caller early access to the status
 			const reportProgress = () => {
 				if (onProgress)
 					onProgress(status);
 			};
+			// give the caller early access to the status
 			reportProgress();
 
 			const progressMul = 1 / this._items.length;
-			let successCount = 0;
 
 			for (let i = 0; i < this._items.length; i++) {
 				const state = {
@@ -112,7 +115,7 @@ export class List {
 				};
 
 				const onSuccess = (result: Web.HttpResponse) => {
-					successCount++;
+					status.files++;
 					onFinish(result);
 				};
 
@@ -121,7 +124,7 @@ export class List {
 			}
 
 			reportProgress();
-			resolve(successCount);
+			resolve(status);
 
 		}).finally(() => {
 			this._lockCount--;
@@ -130,7 +133,8 @@ export class List {
 
 	protected assertNotLocked() {
 		if (this.isLocked)
-			throw new Error("This list is locked because of an ongoing download.");
+			throw new Error(
+				"This list is locked because of an ongoing download and can not be modified.");
 	}
 
 	/**
