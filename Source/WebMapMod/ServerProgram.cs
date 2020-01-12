@@ -21,7 +21,7 @@ namespace TechPizza.WebMapMod
 
         static void Main(string[] args)
         {
-            var host = new HttpHost(_wwwRoot, 1337);
+            var host = new HttpHost(_wwwRoot, "Cache", 1337);
 
             host.Start();
             Console.WriteLine("Listening on port " + host.Port);

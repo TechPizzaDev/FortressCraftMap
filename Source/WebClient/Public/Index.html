@@ -40,15 +40,14 @@
 
 		<div id="loading-bar">
 			<div id="loading-bar-percentage" style="width: 0%">
-				<span></span>
+				<span>Loading runtime...</span>
 			</div>
 		</div>
 	</div>
 
 	<script>
-		// Variables required for ContentRegistry
-		let appContentList;
-		let appUpdateLoadingProgress;
+		let appContentList; // used by ContentRegistry
+		let appUpdateLoadingProgress; // used by ContentLoadingInfo
 	</script>
 	<script src="./Script/runtime.js"></script>
 	<script src="./Script/bootstrap.js"></script>
@@ -57,22 +56,49 @@
 		const appLoadingProgressBar = document.getElementById("loading-bar-percentage");
 		const appLoadingProgressSpan = appLoadingProgressBar.getElementsByTagName("span")[0];
 
-		const baseStatus = {
+		const assetStatus = {
 			percentage: 0,
 			bytesDownloaded: 0,
 			files: 0,
 			totalFiles: appContentList.count
 		};
 
-		const appLoadState = {
-			filesDownloaded: 3,
-			bytesDownloaded: 0
+		const scriptsToLoad = [
+			"./Script/dependencies.js",
+			"./Script/main.js"
+		];
+
+		const resourcesToLoad = [...scriptsToLoad];
+		
+		const appLoadStatus = {
+			percentage: 0,
+			bytesDownloaded: 0,
+			files: 0,
+			totalFiles: resourcesToLoad.length
 		};
 
-		appUpdateLoadingProgress(baseStatus);
+		appUpdateLoadingProgress([appLoadStatus, assetStatus]);
+
+		resourcesToLoad.map(resource => {
+			if (resource.startsWith("./Script/")) {
+				const scriptNode = document.createElement("script");
+				scriptNode.src = resource;
+				scriptNode.onload = () => {
+					appLoadStatus.percentage += 1 / resourcesToLoad.length;
+					appLoadStatus.files++;
+					appUpdateLoadingProgress([appLoadStatus, assetStatus]);
+				};
+				document.documentElement.appendChild(scriptNode);
+			}
+			else {
+				throw new Error(`Could not determine resource type from "${resource}"`);
+			}
+		});
 	</script>
 
+	<!--
 	<script src="./Script/dependencies.js"></script>
 	<script src="./Script/main.js"></script>
+	-->
 </body>
 </html>

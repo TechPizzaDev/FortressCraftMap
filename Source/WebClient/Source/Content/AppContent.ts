@@ -1,7 +1,7 @@
 import * as Content from "../Namespaces/Content";
 import { Common } from "../Namespaces/Helper";
 import { getAppContentList } from "../Content/ContentRegistry";
-import { updateLoadingProgress } from "./ContentLoading";
+import { updateLoadingProgress } from "./ContentLoadingInfo";
 
 export default class AppContent {
 

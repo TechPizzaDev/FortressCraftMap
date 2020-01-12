@@ -4,7 +4,8 @@ import TimeEvent from "../../Utility/TimeEvent";
 import { Rectangle } from "../../Utility/Shapes";
 import { mat4, vec3, vec2 } from "gl-matrix";
 import * as Content from "../../Namespaces/Content";
-import ShaderProgram, { ShaderAttribPointer } from "../Shaders/ShaderProgram";
+import ShaderProgram from "../Shaders/ShaderProgram";
+import { ShaderAttribPointer } from "../Shaders/ShaderAttribPointer";
 import ShapeGenerator, { QuadDataMetrics } from "../ShapeGenerator";
 import Texture2D from "../Texture2D";
 import RenderSegmentCollection from "../RenderSegmentCollection";
@@ -38,6 +39,7 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	private _renderSegments: RenderSegmentCollection;
 	private _viewport: Rectangle;
+	private _segmentTint = new Float32Array([1, 1, 1, 1]);
 
 	private _segmentsDrawn = 0;
 	private _renderSegmentsDrawn = 0;
@@ -82,16 +84,15 @@ export default class MapSegmentRenderer extends RendererBase {
 	}
 
 	private prepareShaders(content: Content.Manager) {
-		const gl = this.glContext;
 		this._coloredShader = content.getShader("mapsegment-colored");
 		const coloredDesc = this._coloredShader.description;
-		this._coloredPosAttribPtr = ShaderAttribPointer.createFrom(gl, coloredDesc.getAttributeField("aPosition"), 2);
-		this._coloredDataAttribPtr = ShaderAttribPointer.createFrom(gl, coloredDesc.getAttributeField("aColor"), 3);
+		this._coloredPosAttribPtr = ShaderAttribPointer.createFrom(this.gl, coloredDesc.getAttributeField("aPosition"), 2);
+		this._coloredDataAttribPtr = ShaderAttribPointer.createFrom(this.gl, coloredDesc.getAttributeField("aColor"), 3);
 
 		this._texturedShader = content.getShader("mapsegment-textured");
 		const texturedDesc = this._texturedShader.description;
-		this._texturedPosAttribPtr = ShaderAttribPointer.createFrom(gl, texturedDesc.getAttributeField("aPosition"), 2);
-		this._texturedDataAttribPtr = ShaderAttribPointer.createFrom(gl, texturedDesc.getAttributeField("aTexCoord"), 2);
+		this._texturedPosAttribPtr = ShaderAttribPointer.createFrom(this.gl, texturedDesc.getAttributeField("aPosition"), 2);
+		this._texturedDataAttribPtr = ShaderAttribPointer.createFrom(this.gl, texturedDesc.getAttributeField("aTexCoord"), 2);
 	}
 
 	private loadTerrainUV(content: Content.Manager) {
@@ -125,7 +126,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		this.assertNotDisposed();
 
 		this._viewport = viewport;
-		this.glContext.viewport(0, 0, viewport.width, viewport.height);
+		this.gl.viewport(0, 0, viewport.width, viewport.height);
 
 		//const s = 1 / zoom; i don't really have access to a zoom value yet ;/
 
@@ -141,9 +142,8 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	public draw(time: TimeEvent) {
 
-		const gl = this.glContext;
-		gl.clearColor(0, 0, 0, 0);
-		gl.clear(this.glContext.COLOR_BUFFER_BIT);
+		this.gl.clearColor(0, 0, 0, 0);
+		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
 		this.updateMatrices();
 		this.drawSegments(time);
@@ -165,54 +165,25 @@ export default class MapSegmentRenderer extends RendererBase {
 	private isTextured = false;
 
 	private drawSegments(time: TimeEvent) {
-		//let chunkUploadsLeft = currentSegmentUploadsPerFrame;
-		//const isTextured = zoom > 1 / 12 && tileTexture.isLoaded;
-		//if (isMapTextured !== isTextured) {
-		//	isMapTextured = isTextured;
-		//	for (const segment of segmentMap.values()) {
-		//		if (immediateUploadsOnDetailChange) {
-		//			if (!segment.isDirty)
-		//				buildAndUploadSegment(segment, isTextured);
-		//		}
-		//		else
-		//			segment.markDirty(true);
-		//	}
-		//
-		//	// skip building more chunks this frame
-		//	if (immediateUploadsOnDetailChange)
-		//		chunkUploadsLeft = 0;
-		//}
-
 		this._segmentsDrawn = 0;
 		this._renderSegmentsDrawn = 0;
 
-		const gl = this.glContext;
 		const shader = this.isTextured ? this.bindTexturedShader() : this.bindColoredShader();
 		const posAttribPtr = this.isTextured ? this._texturedPosAttribPtr : this._coloredPosAttribPtr;
 		const dataAttribPtr = this.isTextured ? this._texturedDataAttribPtr : this._coloredDataAttribPtr;
 
-		posAttribPtr.enable(gl);
-		dataAttribPtr.enable(gl);
+		posAttribPtr.enable();
+		dataAttribPtr.enable();
 
-		shader.uniform4fv("uTint", [1.0, 1.0, 1.0, 1.0]);
+		shader.uniform4fv("uTint", this._segmentTint);
 
 		// indices are constant and only need this single bind
-		this.glContext.bindBuffer(this.glContext.ELEMENT_ARRAY_BUFFER, this._bakedRenderSegmentQuads.indexBuffer);
+		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this._bakedRenderSegmentQuads.indexBuffer);
 
 		this.drawVisibleSegments(this._viewport, shader, posAttribPtr, dataAttribPtr);
 
-		//if (segment.isDirty && chunkUploadsLeft > 0) {
-		//	buildAndUploadSegment(segment, isTextured);
-		//	chunkUploadsLeft--;
-		//}
-		//
-		//if (!segment.isDirty) {
-		//	segment.alpha += delta / fadeDuration;
-		//	drawSegment(segment, shader, locationName);
-		//}
-
-		posAttribPtr.disable(gl);
-		dataAttribPtr.disable(gl);
+		posAttribPtr.disable();
+		dataAttribPtr.disable();
 	}
 
 	private clearDrawCtx() {
@@ -264,13 +235,10 @@ export default class MapSegmentRenderer extends RendererBase {
 		//}
 	}
 
-	private x = 0;
-
 	private drawRenderSegment(
 		renderSegment: RenderSegment, shader: ShaderProgram,
 		posAttrib: ShaderAttribPointer, dataAttrib: ShaderAttribPointer) {
 		
-		const gl = this.glContext;
 		const metrics = this._bakedRenderSegmentQuads.metricsPerSegment;
 
 		const drawing = this._frame.drawCtx;
@@ -314,8 +282,8 @@ export default class MapSegmentRenderer extends RendererBase {
 					const slice = data.subarray(bakedOffset, sliceEnd);
 
 					const bufferOffset = segment.renderSegmentIndex * count * data.BYTES_PER_ELEMENT;
-					gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.vertexBuffer);
-					gl.bufferSubData(gl.ARRAY_BUFFER, bufferOffset, slice);
+					this.gl.bindBuffer(this.gl.ARRAY_BUFFER, renderSegment.vertexBuffer);
+					this.gl.bufferSubData(this.gl.ARRAY_BUFFER, bufferOffset, slice);
 				}
 
 				// generate fresh render data for the segment
@@ -327,8 +295,8 @@ export default class MapSegmentRenderer extends RendererBase {
 				}
 
 				const renderDataOffset = segment.renderSegmentIndex * metrics.vertexCount * 3 * Float32Array.BYTES_PER_ELEMENT;
-				gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
-				gl.bufferSubData(gl.ARRAY_BUFFER, renderDataOffset, this._renderDataBuffer);
+				this.gl.bindBuffer(this.gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
+				this.gl.bufferSubData(this.gl.ARRAY_BUFFER, renderDataOffset, this._renderDataBuffer);
 
 				segment.isDirty = false;
 				this._frame._frequentPendingDebugInfo.segmentsBuilt++;
@@ -344,15 +312,15 @@ export default class MapSegmentRenderer extends RendererBase {
 
 			mat4.multiply(this._mvpMatrix, this._projViewMatrix, renderSegment.matrix);
 			shader.uniformMatrix4fv("uModelViewProjection", this._mvpMatrix);
-			shader.uniform4f("uTint", 0.5, 0.5, 1, 1);
+			
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, renderSegment.vertexBuffer);
+			posAttrib.apply();
 
-			gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.vertexBuffer);
-			posAttrib.apply(gl);
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
+			dataAttrib.apply();
 
-			gl.bindBuffer(gl.ARRAY_BUFFER, renderSegment.renderDataBuffer);
-			dataAttrib.apply(gl);
-
-			gl.drawElements(gl.TRIANGLES, renderSegment.genCount * metrics.indexCount, gl.UNSIGNED_SHORT, 0);
+			const elementCount = renderSegment.genCount * metrics.indexCount;
+			this.gl.drawElements(this.gl.TRIANGLES, elementCount, this.gl.UNSIGNED_SHORT, 0);
 
 			this._segmentsDrawn += renderSegment.genCount;
 			this._renderSegmentsDrawn++;
@@ -367,9 +335,8 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	/** Binds the needed texture and binds the shader program for textured segments. */
 	private bindTexturedShader(): ShaderProgram {
-		const gl = this.glContext;
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, this._tbDiffuseTexture.glTexture);
+		this.gl.activeTexture(this.gl.TEXTURE0);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this._tbDiffuseTexture.glTexture);
 
 		const shader = this._texturedShader;
 		shader.useProgram();
@@ -385,7 +352,6 @@ export default class MapSegmentRenderer extends RendererBase {
 	}
 
 	private bakeRenderSegmentQuads(): BakedRenderSegmentQuads {
-		const gl = this.glContext;
 		const segmentMetrics = ShapeGenerator.getQuadMetrics(MapSegment.size, MapSegment.size);
 		const vertexData = new Float32Array(segmentMetrics.vertexCount * 2 * RenderSegment.blockSize);
 		const indexData = new Uint16Array(segmentMetrics.indexCount * RenderSegment.blockSize);
@@ -404,7 +370,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		}
 
 		const indexBuffer = GLHelper.createBufferWithData(
-			gl, gl.ELEMENT_ARRAY_BUFFER, indexData, gl.STATIC_DRAW);
+			this.gl, this.gl.ELEMENT_ARRAY_BUFFER, indexData, this.gl.STATIC_DRAW);
 
 		return {
 			vertexData,

@@ -84,7 +84,7 @@ const webpackConfigBase = {
 	entry: {
 		bootstrap: [
 			'./Source/Content/ContentRegistry.ts',
-			'./Source/Content/ContentLoading.ts'
+			'./Source/Content/ContentLoadingInfo.ts'
 		],
 		main: './Source/Core/Index.ts'
 	},

@@ -104,7 +104,7 @@ export class Manager extends GLResource {
 			const vertexName = Manager.getShaderName(vertexUri, ShaderType.Vertex);
 			const fragShaderPair = Manager.findShader(vertexName, ShaderType.Fragment, fragmentShaders);
 
-			const program = new ShaderProgram(this.glContext);
+			const program = new ShaderProgram(this.gl);
 			program.link(vertexShader, fragShaderPair[1]);
 			
 			this._resources.delete(vertexUri);
@@ -181,7 +181,7 @@ export class Manager extends GLResource {
 	private async decodeTexture(data: ImageBitmapSource) {
 		const bitmap = await createImageBitmap(data);
 		try {
-			const texture = new Texture2D(this.glContext, bitmap.width, bitmap.height);
+			const texture = new Texture2D(this.gl, bitmap.width, bitmap.height);
 			texture.setData(bitmap);
 			return texture;
 		}
@@ -191,7 +191,7 @@ export class Manager extends GLResource {
 	}
 
 	private decodeShader(data: string, type: ShaderType) {
-		const shader = new Shader(this.glContext, type);
+		const shader = new Shader(this.gl, type);
 		shader.compile(data);
 		return shader;
 	}

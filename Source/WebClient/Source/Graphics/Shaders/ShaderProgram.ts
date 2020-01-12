@@ -1,6 +1,6 @@
 import GLResource from "./../GLResource";
 import Shader from "./Shader";
-import ShaderDescription, { ShaderField, ShaderDataType } from "./ShaderDescription";
+import ShaderDescription from "./ShaderDescription";
 
 export type ShaderAttribDataType = "float" | "byte" | "ubyte" | "short" | "ushort";
 
@@ -61,7 +61,7 @@ export default class ShaderProgram extends GLResource {
 		if (fragmentShader.type != ShaderType.Fragment)
 			throw new SyntaxError("The 'fragmentShader' must be of ShaderType Fragment.");
 
-		const gl = this.glContext;
+		const gl = this.gl;
 		gl.attachShader(this._program, vertexShader.glShader);
 		gl.attachShader(this._program, fragmentShader.glShader);
 		gl.linkProgram(this._program);
@@ -89,7 +89,7 @@ export default class ShaderProgram extends GLResource {
 	 */
 	public getUniformLocation(name: string): WebGLUniformLocation {
 		this.assertLinked();
-		return this.glContext.getUniformLocation(this.glProgram, name);
+		return this.gl.getUniformLocation(this.glProgram, name);
 	}
 
 	/**
@@ -98,28 +98,28 @@ export default class ShaderProgram extends GLResource {
 	 */
 	public getAttribLocation(name: string): GLint {
 		this.assertLinked();
-		return this.glContext.getAttribLocation(this.glProgram, name);
+		return this.gl.getAttribLocation(this.glProgram, name);
 	}
 
 	public useProgram() {
 		this.assertLinked();
-		return this.glContext.useProgram(this.glProgram);
+		return this.gl.useProgram(this.glProgram);
 	}
 
 	public uniform1i(name: string, x: number) {
-		this.glContext.uniform1i(this.description.getUniformLocation(name), x);
+		this.gl.uniform1i(this._description.getUniformLocation(name), x);
 	}
 
 	public uniform4f(name: string, x: number, y: number, z: number, w: number) {
-		this.glContext.uniform4f(this.description.getUniformLocation(name), x, y, z, w);
+		this.gl.uniform4f(this._description.getUniformLocation(name), x, y, z, w);
 	}
 
 	public uniform4fv(name: string, value: Float32List) {
-		this.glContext.uniform4fv(this.description.getUniformLocation(name), value);
+		this.gl.uniform4fv(this._description.getUniformLocation(name), value);
 	}
 
 	public uniformMatrix4fv(name: string, value: Float32List, transpose: boolean = false) {
-		this.glContext.uniformMatrix4fv(this.description.getUniformLocation(name), transpose, value);
+		this.gl.uniformMatrix4fv(this._description.getUniformLocation(name), transpose, value);
 	}
 
 	protected assertLinked() {
@@ -129,97 +129,9 @@ export default class ShaderProgram extends GLResource {
 	}
 
 	protected destroy() {
-		this.glContext.deleteProgram(this._program);
+		this._description.dispose();
+		this.gl.deleteProgram(this._program);
 		this._isLinked = false;
 	}
 }
 
-export class ShaderAttribPointer {
-
-	public location: GLint;
-	public size: number;
-	public type: number;
-	public normalized: boolean;
-	public stride: number;
-	public offset: number;
-
-	constructor() {
-		this.location = -1;
-		this.size = -1;
-		this.type = -1;
-		this.normalized = false;
-		this.stride = 0;
-		this.offset = 0;
-	}
-
-	/**
-	 * Enables the attribute location for this pointer.
-	 * @param gl
-	 */
-	public enable(gl: WebGLRenderingContext) {
-		gl.enableVertexAttribArray(this.location);
-	}
-
-	/**
-	 * Disables the attribute location for this pointer.
-	 * @param gl
-	 */
-	public disable(gl: WebGLRenderingContext) {
-		gl.disableVertexAttribArray(this.location);
-	}
-
-	/**
-	 * Applies the vertex attribute pointer.
-	 * @param gl The GL context.
-	 */
-	public apply(gl: WebGLRenderingContext) {
-		gl.vertexAttribPointer(
-			this.location, this.size, this.type, this.normalized, this.stride, this.offset);
-	}
-
-	public static createFrom(
-		gl: WebGLRenderingContext,
-		field: ShaderField<GLint, ShaderDataType>,
-		size: number,
-		type?: ShaderAttribDataType
-	): ShaderAttribPointer {
-		const ptr = new ShaderAttribPointer();
-		ptr.location = field.location;
-		ptr.size = size;
-		ptr.type = type ? this.getDataType(gl, type) : this.guessDataType(gl, field.type);
-		return ptr;
-	}
-
-	public static getDataType(gl: WebGLRenderingContext, type: ShaderAttribDataType): number {
-		switch (type) {
-			case "float": return gl.FLOAT;
-			case "byte": return gl.BYTE;
-			case "ubyte": return gl.UNSIGNED_BYTE;
-			case "short": return gl.SHORT;
-			case "ushort": return gl.UNSIGNED_SHORT;
-
-			default:
-				throw new Error(`Invalid 'type' '${type}'.`);
-		}
-	}
-
-	public static guessDataType(gl: WebGLRenderingContext, type: ShaderDataType): number {
-		switch (type) {
-			case "int":
-			case "bool":
-				return gl.BYTE;
-
-			case "float":
-			case "mat2": 
-			case "mat3": 
-			case "mat4":
-			case "vec2": 
-			case "vec3": 
-			case "vec4":
-				return gl.FLOAT;
-
-			default:
-				throw new Error(`Invalid 'type' '${type}'.`);
-		}
-	}
-}

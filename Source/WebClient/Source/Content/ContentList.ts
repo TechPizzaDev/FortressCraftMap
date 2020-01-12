@@ -21,9 +21,13 @@ export class List {
 	 */
 	private _lockCount: number;
 
-	/** Used to disallow further pushing of URIs after a download starts. */
+	/** Gets whether further pushing of URIs is disallowed after a download starts. */
 	public get isLocked(): boolean {
 		return this._lockCount > 0;
+	}
+
+	public get count(): number {
+		return this._items.length;
 	}
 
 	constructor() {
@@ -70,6 +74,7 @@ export class List {
 				files: 0,
 				totalFiles: this._items.length
 			};
+
 			const reportProgress = () => {
 				if (onProgress)
 					onProgress(status);

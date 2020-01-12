@@ -137,8 +137,8 @@ export default class RenderSegment extends GLResource {
 	}
 
 	protected destroy() {
-		this.glContext.deleteBuffer(this._vertexBuffer);
-		this.glContext.deleteBuffer(this._renderDataBuffer);
+		this.gl.deleteBuffer(this._vertexBuffer);
+		this.gl.deleteBuffer(this._renderDataBuffer);
 	}
 
 	/*

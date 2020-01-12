@@ -28,7 +28,7 @@ export class Web {
 
 			for (const [key, value] of options.headers)
 				xhr.setRequestHeader(key, value);
-
+			
 			xhr.onload = () => resolve(new Web.HttpResponse(xhr.response, xhr.status));
 
 			const onFailure = (ev: ProgressEvent) => reject(new Web.HttpResponse(ev.type, -1));

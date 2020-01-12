@@ -19,8 +19,8 @@ export default class Shader extends GLResource {
 	constructor(gl: WebGLRenderingContext, type: ShaderType) {
 		super(gl);
 
-		const glType = Shader.getShaderTypeId(this.glContext, type);
-		this._shader = this.glContext.createShader(glType);
+		const glType = Shader.getShaderTypeId(this.gl, type);
+		this._shader = this.gl.createShader(glType);
 		this._type = type;
 		this._isCompiled = false;
 		this._source = null;
@@ -61,7 +61,7 @@ export default class Shader extends GLResource {
 		if (this._isCompiled)
 			throw new Error("This shader has already been compiled.");
 
-		const gl = this.glContext;
+		const gl = this.gl;
 		gl.shaderSource(this._shader, source);
 		gl.compileShader(this._shader);
 
@@ -80,7 +80,7 @@ export default class Shader extends GLResource {
 	}
 
 	protected destroy() {
-		this.glContext.deleteShader(this._shader);
+		this.gl.deleteShader(this._shader);
 		this._isCompiled = false;
 		this._source = null;
 	}

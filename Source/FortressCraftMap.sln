@@ -74,6 +74,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{6955D86F-E34A-40B0-BBFE-7A095D453671}"
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Graphics\Shaders\Shader.ts = WebClient\Source\Graphics\Shaders\Shader.ts
+		WebClient\Source\Graphics\Shaders\ShaderAttribPointer.ts = WebClient\Source\Graphics\Shaders\ShaderAttribPointer.ts
 		WebClient\Source\Graphics\Shaders\ShaderDescription.ts = WebClient\Source\Graphics\Shaders\ShaderDescription.ts
 		WebClient\Source\Graphics\Shaders\ShaderProgram.ts = WebClient\Source\Graphics\Shaders\ShaderProgram.ts
 		WebClient\Source\Graphics\Shaders\ShaderType.ts = WebClient\Source\Graphics\Shaders\ShaderType.ts
@@ -82,8 +83,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketServer", "WebMapMod\WebSocketServer.csproj", "{13DF0FD0-A85A-4466-A587-8E4D8BC5236F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{497FF5B9-8132-4F8B-AEE6-8D3DC576465E}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Textures", "Textures", "{C4E44E20-E6FF-4F4A-9E1F-0F755ECDC03B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Vertex", "Vertex", "{B93A2540-655A-4AF2-8CE0-E43F488CE60B}"
 	ProjectSection(SolutionItems) = preProject
@@ -116,7 +115,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{DD56
 		WebClient\Source\Content\ContentDescriptions.ts = WebClient\Source\Content\ContentDescriptions.ts
 		WebClient\Source\Content\ContentInterfaces.ts = WebClient\Source\Content\ContentInterfaces.ts
 		WebClient\Source\Content\ContentList.ts = WebClient\Source\Content\ContentList.ts
-		WebClient\Source\Content\ContentLoading.ts = WebClient\Source\Content\ContentLoading.ts
+		WebClient\Source\Content\ContentLoadingInfo.ts = WebClient\Source\Content\ContentLoadingInfo.ts
 		WebClient\Source\Content\ContentManager.ts = WebClient\Source\Content\ContentManager.ts
 		WebClient\Source\Content\ContentRegistry.ts = WebClient\Source\Content\ContentRegistry.ts
 		WebClient\Source\Content\ContentType.ts = WebClient\Source\Content\ContentType.ts
@@ -131,7 +130,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Namespaces", "Namespaces", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Data", "Data", "{7C122634-F527-4DCA-801B-6668F6B126C9}"
 	ProjectSection(SolutionItems) = preProject
-		WebClient\Public\Data\TerrainData.msgpack = WebClient\Public\Data\TerrainData.msgpack
+		WebClient\Public\Data\TerrainUV.blob = WebClient\Public\Data\TerrainUV.blob
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fcmap-speedy", "fcmap-speedy", "{F8638657-3B07-4D92-B587-E4EDE4625C98}"
@@ -235,7 +234,6 @@ Global
 		{9DC8B626-FA2A-4CB6-BE48-AA5EE4536471} = {47F6A3EA-BAA5-4E8F-897A-683E9BF1ED1D}
 		{6955D86F-E34A-40B0-BBFE-7A095D453671} = {47F6A3EA-BAA5-4E8F-897A-683E9BF1ED1D}
 		{497FF5B9-8132-4F8B-AEE6-8D3DC576465E} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}
-		{C4E44E20-E6FF-4F4A-9E1F-0F755ECDC03B} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}
 		{B93A2540-655A-4AF2-8CE0-E43F488CE60B} = {497FF5B9-8132-4F8B-AEE6-8D3DC576465E}
 		{4D43B7F1-1086-4ECB-85DE-878F40BDB04C} = {497FF5B9-8132-4F8B-AEE6-8D3DC576465E}
 		{8ABD6A22-0950-4D9D-983A-737EFFEB8734} = {1D3063F4-E788-4911-8E21-C4A6A1821175}

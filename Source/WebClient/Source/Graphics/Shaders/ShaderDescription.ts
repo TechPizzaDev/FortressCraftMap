@@ -1,5 +1,6 @@
 import Disposable from "../../Utility/Disposable";
-import ShaderProgram, { ShaderAttribPointer } from "./ShaderProgram";
+import ShaderProgram from "./ShaderProgram";
+import { ShaderAttribPointer } from "./ShaderAttribPointer";
 import { Common } from "../../Namespaces/Helper";
 
 // these types are ordered the way the are so linting hover-over is well sorted
@@ -149,7 +150,7 @@ export default class ShaderDescription extends Disposable {
 	}
 }
 
-/** Generic object for some shader fields. */
+/** Generic object for shader fields. */
 export class ShaderField<TLocation, TType>
 {
 	/** The location of the shader field. */
@@ -175,7 +176,7 @@ export class ShaderField<TLocation, TType>
 	 * Checks if the other field has the same type and name.
 	 * @param other The other field to compare to this one.
 	 */
-	public definitionEquals(other: ShaderField<TLocation, TType>): boolean {
+	public definitionEqual(other: ShaderField<TLocation, TType>): boolean {
 		return this.type == other.type && this.name == other.name;
 	}
 }

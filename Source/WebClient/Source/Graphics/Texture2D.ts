@@ -41,15 +41,15 @@ export default class Texture2D extends GLResource {
 		// We could make the format independent of a context
 		// but that would require a lot of enums.
 		if (format == null)
-			format = TextureFormat.createDefault(this.glContext);
+			format = TextureFormat.createDefault(this.gl);
 
 		this.width = width;
 		this.height = height;
 		this._format = format;
 
 		// init the texture
-		this._texture = this.glContext.createTexture();
-		GLHelper.zoneTexture2D(this.glContext, this._texture, (gl) => {
+		this._texture = this.gl.createTexture();
+		GLHelper.zoneTexture2D(this.gl, this._texture, (gl) => {
 			// init texture memory
 			gl.texImage2D(
 				gl.TEXTURE_2D,
@@ -106,18 +106,18 @@ export default class Texture2D extends GLResource {
 
 		if (data instanceof ImageBitmap)
 			this._format = TextureFormat.createBitmapFormat(
-				this.glContext, this._format.filter, this._format.generateMipmaps);
+				this.gl, this._format.filter, this._format.generateMipmaps);
 
 		const glFormat = this._format.dataFormat;
-		if (!TextureFormat.isValidDataFormat(this.glContext, glFormat))
+		if (!TextureFormat.isValidDataFormat(this.gl, glFormat))
 			throw new TypeError(`Invalid texture format (${glFormat}).`);
 
 		const type = this._format.dataType;
-		const formatSize = TextureFormat.getFormatSize(this.glContext, glFormat, type);
+		const formatSize = TextureFormat.getFormatSize(this.gl, glFormat, type);
 		if (formatSize == -1)
 			throw new TypeError(`Invalid texture format (${glFormat} + ${type})`);
 
-		GLHelper.zoneTexture2D(this.glContext, this._texture, (gl) => {
+		GLHelper.zoneTexture2D(this.gl, this._texture, (gl) => {
 			const level = 0;
 			if (data instanceof ImageBitmap) {
 				this._dataWidth = Texture2D.checkImageDimension("width", rect.width, data.width);
@@ -150,7 +150,7 @@ export default class Texture2D extends GLResource {
 	}
 
 	protected destroy() {
-		this.glContext.deleteTexture(this._texture);
+		this.gl.deleteTexture(this._texture);
 
 		this._dataWidth = 0;
 		this._dataHeight = 0;

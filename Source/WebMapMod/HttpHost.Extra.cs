@@ -24,7 +24,7 @@ namespace TechPizza.WebMapMod
 
             long length = _cachedTerrainUV.Length;
             byte[] data = _cachedTerrainUV.GetBuffer();
-
+            
             e.Response.ContentType = MimeMap.AppOctetStream;
             e.Response.ContentLength64 = length;
             e.Response.OutputStream.Write(data, 0, (int)length);

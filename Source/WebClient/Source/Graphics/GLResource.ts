@@ -5,7 +5,8 @@ import Disposable from "../Utility/Disposable";
  * */
 export default abstract class GLResource extends Disposable {
 
-	private _gl: WebGLRenderingContext;
+	/** The GL context that this object was constructed with. */
+	public readonly gl: WebGLRenderingContext;
 
 	/**
 	 * Constructs the resource.
@@ -16,12 +17,6 @@ export default abstract class GLResource extends Disposable {
 
 		if (gl == null)
 			throw new SyntaxError("'gl' may not be null.");
-		this._gl = gl;
-	}
-
-	/** Gets the GL context that this object was constructed with. */
-	public get glContext(): WebGLRenderingContext {
-		this.assertNotDisposed();
-		return this._gl;
+		this.gl = gl;
 	}
 }

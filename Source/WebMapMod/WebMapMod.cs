@@ -62,9 +62,12 @@ namespace TechPizza.WebMapMod
 
             string assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string wwwRoot = assemblyDir + "/wwwroot";
-            Log("Serving assets from " + wwwRoot);
+            Log("Serving files from " + wwwRoot);
 
-            _httpHost = new HttpHost(wwwRoot, 1338);
+            string cachePath = assemblyDir + "/Cache";
+            Log("Caching files in " + cachePath);
+
+            _httpHost = new HttpHost(wwwRoot, cachePath, 1338);
             _httpHost.LogOutput = (data, str) =>
             {
                 LogWarning(data);
