@@ -17,7 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Public", "Public", "{FA54B3
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Public\favicon.png = WebClient\Public\favicon.png
 		WebClient\Public\icons.png = WebClient\Public\icons.png
+		WebClient\Public\Index.css = WebClient\Public\Index.css
 		WebClient\Public\Index.html = WebClient\Public\Index.html
+		WebClient\Public\loader.js = WebClient\Public\loader.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{DC7BD409-48CE-41C6-AA8A-F76E12564DF4}"
@@ -100,13 +102,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Helper", "Helper", "{8ABD6A
 	ProjectSection(SolutionItems) = preProject
 		WebClient\Source\Utility\Helper\CommonHelper.ts = WebClient\Source\Utility\Helper\CommonHelper.ts
 		WebClient\Source\Utility\Helper\WebHelper.ts = WebClient\Source\Utility\Helper\WebHelper.ts
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Style", "Style", "{4E623EE2-E826-4563-9D2F-F2B7772E4E7B}"
-	ProjectSection(SolutionItems) = preProject
-		WebClient\Public\Style\Icons.css = WebClient\Public\Style\Icons.css
-		WebClient\Public\Style\Index.css = WebClient\Public\Style\Index.css
-		WebClient\Public\Style\Initial-Loader.css = WebClient\Public\Style\Initial-Loader.css
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Content", "Content", "{DD561571-8B92-4F07-B7FE-08DDE3902A92}"
@@ -237,7 +232,6 @@ Global
 		{B93A2540-655A-4AF2-8CE0-E43F488CE60B} = {497FF5B9-8132-4F8B-AEE6-8D3DC576465E}
 		{4D43B7F1-1086-4ECB-85DE-878F40BDB04C} = {497FF5B9-8132-4F8B-AEE6-8D3DC576465E}
 		{8ABD6A22-0950-4D9D-983A-737EFFEB8734} = {1D3063F4-E788-4911-8E21-C4A6A1821175}
-		{4E623EE2-E826-4563-9D2F-F2B7772E4E7B} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}
 		{DD561571-8B92-4F07-B7FE-08DDE3902A92} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
 		{85AF45C6-27FD-469B-8DC1-00E404148F28} = {DC7BD409-48CE-41C6-AA8A-F76E12564DF4}
 		{7C122634-F527-4DCA-801B-6668F6B126C9} = {FA54B345-910C-4CBF-AE63-4A6A503BD00E}

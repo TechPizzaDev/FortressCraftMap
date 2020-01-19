@@ -4,8 +4,8 @@ import Texture2D from "../Graphics/Texture2D";
 import Shader from "../Graphics/Shaders/Shader";
 import { Web, Common } from "../Namespaces/Helper";
 import ShaderProgram from "../Graphics/Shaders/ShaderProgram";
-import * as msgpack5 from "msgpack5";
 import { ShaderPath } from "../Namespaces/Content";
+import * as MsgPack from "../../node_modules/@msgpack/msgpack/dist/index";
 
 type ResourceIterator<T> = IterableIterator<[string, T]>;
 type ResourceMap<T> = Array<[string, T]>;
@@ -17,7 +17,6 @@ export type LoadCallback = (content: Manager) => void;
 export class Manager extends GLResource {
 
 	private _resources = new Map<string, any>();
-	private _msgPack: msgpack5.MessagePack;
 
 	/**
 	 * Constructs the manager.
@@ -25,7 +24,6 @@ export class Manager extends GLResource {
 	 */
 	constructor(gl: WebGLRenderingContext) {
 		super(gl);
-		this._msgPack = msgpack5();
 	}
 
 	public has(name: string): boolean {
@@ -161,7 +159,7 @@ export class Manager extends GLResource {
 					return this.decodeShader(data, ShaderType.Fragment);
 
 				case Content.Type.MessagePack:
-					return this._msgPack.decode(data);
+					return MsgPack.decode(data);
 
 				default:
 					throw new Error(`Failed to identify resource type from URI '${uri}'.`);

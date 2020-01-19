@@ -49,8 +49,14 @@ export default class ShapeGenerator {
 	 * @param existing Optional plane of the same dimensions to be filled with data and returned.
 	 */
 	public static generatePlane(
-		width: number, height: number, offset: vec2, indexOffset: number, quadSize: number = 1, existing?: RectangularShape
+		width: number,
+		height: number,
+		offset: vec2,
+		indexOffset: number,
+		quadSize: number = 1,
+		existing?: RectangularShape
 	): RectangularShape {
+
 		if (existing != null) {
 			if (existing.width != width)
 				throw new Error("The 'existing' width does not equal new 'width'.");
@@ -62,7 +68,7 @@ export default class ShapeGenerator {
 		const metrics = this.getQuadMetrics(width, height);
 		const vertices = existing ? existing.vertices : new Float32Array(metrics.vertexCount * 2);
 		const indices = existing ? existing.indices : new Uint16Array(metrics.indexCount);
-		
+
 		for (let y = 0; y < height; y++) {
 			for (let x = 0; x < width; x++) {
 				const i = x + y * width;

@@ -1,13 +1,14 @@
 {
 	"compilerOptions": {
-		"lib": [ "es2016", "dom" ],
-		"target": "ES6",
 		"module": "ESNext",
+		"target": "ES2018",
+		"lib": [ "ES2018", "DOM" ],
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
 		"removeComments": true,
 		"preserveConstEnums": true,
 		"downlevelIteration": true,
+		"noFallthroughCasesInSwitch": true,
 		"sourceMap": true,
 		"outDir": "Public/"
 	},

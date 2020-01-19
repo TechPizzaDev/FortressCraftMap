@@ -55,7 +55,7 @@ export class List {
 
 	/**
 	 * Downloads the list asynchronously.
-	 * @param onDownload Callback for an both successful and failed resource downloads.
+	 * @param onDownload Callback for both successful and failed resource downloads.
 	 * @param onProgress Callback that gives access to download statistics.
 	 * @returns Promise that resolves into the amount of successfully downloaded resources.
 	 */

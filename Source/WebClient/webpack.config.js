@@ -2,18 +2,24 @@ const PATH = require('path');
 const FS = require('fs');
 const CHILD_PROCESS = require('child_process');
 
-// constants
-const CReset = "\x1b[0m";
-const CRed = "\x1b[31m";
-const CGreen = "\x1b[32m";
-const CYellow = "\x1b[1m";
-const CGreenB = "\x1b[42m";
-
-const wasmPackCommmand = "wasm-pack";
 const fcmapSpeedyPath = PATH.resolve(__dirname, "..", "fcmap-speedy");
 
-// webpack settings
+//#region Webpack Settings
+
 const isProduction = false;
+
+const packPath = "Webpack/";
+const packDirectoryPath = "Public/" + packPath;
+
+const packMain = './Source/Core/Index.ts';
+const packBootstrap = [
+	'./Source/Content/ContentRegistry.ts',
+	'./Source/Content/ContentLoadingInfo.ts'
+];
+
+//#endregion
+
+//#region wasmCleanupPlugin
 
 function wasmCleanupPlugin(compilation) {
 	const stats = compilation.getStats();
@@ -44,6 +50,18 @@ function wasmCleanupPlugin(compilation) {
 	}
 }
 
+//#endregion
+
+//#region wasmPackRebuildPlugin
+
+const wasmPackProgram = "wasm-pack";
+
+const CReset = "\x1b[0m";
+const CRed = "\x1b[31m";
+const CGreen = "\x1b[32m";
+const CYellow = "\x1b[1m";
+const CGreenB = "\x1b[42m";
+
 function wasmPackRebuildPlugin(compilation) {
 	const successFormat = `${CGreenB}%s${CReset}${CGreen}%s${CReset}`;
 	const failFormat = `${CGreenB}%s${CReset}${CRed}%s${CReset}`;
@@ -54,21 +72,21 @@ function wasmPackRebuildPlugin(compilation) {
 
 		const finishFormat = error ? failFormat : successFormat;
 		const state = error ? "failed" : "finished";
-		console.log(finishFormat, wasmPackCommmand, ` ${state} in ${timeInMs}ms`);
+		console.log(finishFormat, wasmPackProgram, ` ${state} in ${timeInMs}ms`);
 
 		if (error) {
 			console.error(`${CYellow}%s${CReset}`, error.message);
 		}
 		else {
-			if (stdout && stdout.length > 0) console.log(`${wasmPackCommmand} stdout: ${stdout}`);
-			if (stderr && stderr.length > 0) console.log(`${wasmPackCommmand} output: \n${stderr}`);
+			if (stdout && stdout.length > 0) console.log(`${wasmPackProgram} stdout: ${stdout}`);
+			if (stderr && stderr.length > 0) console.log(`${wasmPackProgram} output: \n${stderr}`);
 		}
 		console.log();
 	}
 
-	console.log(successFormat, wasmPackCommmand, " is starting...");
+	console.log(successFormat, wasmPackProgram, " is starting...");
 
-	const command = `${wasmPackCommmand} build`;
+	const command = `${wasmPackProgram} build`;
 	const settings = {
 		cwd: fcmapSpeedyPath,
 		timeout: 30 * 1000
@@ -80,13 +98,12 @@ function wasmPackRebuildPlugin(compilation) {
 	endCallback(null, buffer, null);
 }
 
+//#endregion
+
 const webpackConfigBase = {
 	entry: {
-		bootstrap: [
-			'./Source/Content/ContentRegistry.ts',
-			'./Source/Content/ContentLoadingInfo.ts'
-		],
-		main: './Source/Core/Index.ts'
+		bootstrap: packBootstrap,
+		main: packMain
 	},
 	module: {
 		rules: [
@@ -100,15 +117,15 @@ const webpackConfigBase = {
 	resolve: {
 		extensions: ['.ts', '.js'],
 		modules: [
-			PATH.resolve(__dirname, 'node_modules'),
+			'node_modules',
 			fcmapSpeedyPath
 		]
 	},
 	output: {
 		chunkFilename: '[name].js',
 		filename: '[name].js',
-		publicPath: "/Script/",
-		path: PATH.resolve(__dirname, 'Public/Script')
+		publicPath: packPath,
+		path: PATH.resolve(__dirname, packDirectoryPath)
 	},
 	stats: {
 		warnings: true,
@@ -120,7 +137,7 @@ const webpackConfigBase = {
 	watchOptions: {
 		ignored: [
 			'node_modules',
-			'Public/Script',
+			packDirectoryPath,
 			PATH.resolve(fcmapSpeedyPath, "**/*.rs")
 		],
 		aggregateTimeout: 100

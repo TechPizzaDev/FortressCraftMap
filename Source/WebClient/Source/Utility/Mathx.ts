@@ -12,9 +12,9 @@ export default class Mathx {
 		return (value & (value - 1)) == 0;
 	}
 
-	public static toBigInt(value: any): bigint {
-		if (typeof value == "bigint")
-			return value;
-		return BigInt(value);
-	}
+	//public static toBigInt(value: any): bigint {
+	//	if (typeof value == "bigint")
+	//		return value;
+	//	return BigInt(value);
+	//}
 }

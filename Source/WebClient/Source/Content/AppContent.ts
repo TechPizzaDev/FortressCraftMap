@@ -5,21 +5,21 @@ import { updateLoadingProgress } from "./ContentLoadingInfo";
 
 export default class AppContent {
 
-	private _manager: Content.Manager;
+	public readonly manager: Content.Manager;
 
 	/**
 	 * Constructs the app content.
 	 * @param gl The GL context used for constructing GL resources.
 	 */
 	constructor(gl: WebGLRenderingContext, onLoad?: Content.LoadCallback) {
-		this._manager = new Content.Manager(gl);
+		this.manager = new Content.Manager(gl);
 
 		this.downloadAssets().then(() => {
-			this._manager.linkShaderPairs();
+			this.manager.linkShaderPairs();
 
 			try {
 				if (onLoad)
-					onLoad(this._manager);
+					onLoad(this.manager);
 			}
 			catch (e) {
 				console.error("'onLoad' callback threw an error:\n", e);
@@ -30,12 +30,8 @@ export default class AppContent {
 		});
 	}
 
-	public get manager(): Content.Manager {
-		return this._manager;
-	}
-
 	private async downloadAssets() {
-		const result = await this._manager.downloadAsync(
+		const result = await this.manager.downloadAsync(
 			getAppContentList(), null, updateLoadingProgress);
 
 		const size = Common.bytesToReadable(result.bytesDownloaded);

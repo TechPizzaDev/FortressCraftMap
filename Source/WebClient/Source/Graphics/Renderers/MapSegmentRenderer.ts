@@ -36,13 +36,14 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	private _terrainUVMap: Map<number, TileDescription>;
 	private _defaultTileDescription: TileDescription;
+	private _tileDescGetFailures = new Set<number>();
 
 	private _renderSegments: RenderSegmentCollection;
 	private _viewport: Rectangle;
 	private _segmentTint = new Float32Array([1, 1, 1, 1]);
 
-	private _segmentsDrawn = 0;
-	private _renderSegmentsDrawn = 0;
+	private _segmentsDrawnLastFrame = 0;
+	private _renderSegmentsDrawnLastFrame = 0;
 
 	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
 	public readonly _zoom = 1 / 0.75 * (4 / 2) * 1;
@@ -54,10 +55,15 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _mvpMatrix = mat4.create();
 
 	constructor(frame: MainFrame) {
-		super(frame.glCtx);
+		super(frame.gl);
 		this._frame = frame;
 
 		this._renderSegments = new RenderSegmentCollection();
+
+		this._bakedRenderSegmentQuads = this.bakeRenderSegmentQuads();
+
+		// buffer size should suffice for both colors and texture UV
+		this._renderDataBuffer = new Float32Array(this._bakedRenderSegmentQuads.metricsPerSegment.vertexCount * 3);
 	}
 
 	public get segments(): RenderSegmentCollection { return this._renderSegments; }
@@ -68,22 +74,18 @@ export default class MapSegmentRenderer extends RendererBase {
 	public get projMatrix(): mat4 { return this._projMatrix; }
 	public get projViewMatrix(): mat4 { return this._projViewMatrix; }
 
-	public get segmentsDrawnLastFrame(): number { return this._segmentsDrawn; }
-	public get renderSegmentsDrawnLastFrame(): number { return this._renderSegmentsDrawn; }
+	public get segmentsDrawnLastFrame(): number { return this._segmentsDrawnLastFrame; }
+	public get renderSegmentsDrawnLastFrame(): number { return this._renderSegmentsDrawnLastFrame; }
 
-	public prepare(content: Content.Manager) {
-		this.prepareShaders(content);
+	//#region Content Loading
+
+	public loadContent(content: Content.Manager) {
 		this._tbDiffuseTexture = content.getTexture2D(ContentRegistry.TerrainTexture);
-
-		this._bakedRenderSegmentQuads = this.bakeRenderSegmentQuads();
-
-		// buffer size should suffice for both colors and texture UV
-		this._renderDataBuffer = new Float32Array(this._bakedRenderSegmentQuads.metricsPerSegment.vertexCount * 3);
-
+		this.loadShaders(content);
 		this.loadTerrainUV(content);
 	}
 
-	private prepareShaders(content: Content.Manager) {
+	private loadShaders(content: Content.Manager) {
 		this._coloredShader = content.getShader("mapsegment-colored");
 		const coloredDesc = this._coloredShader.description;
 		this._coloredPosAttribPtr = ShaderAttribPointer.createFrom(this.gl, coloredDesc.getAttributeField("aPosition"), 2);
@@ -121,6 +123,8 @@ export default class MapSegmentRenderer extends RendererBase {
 		}
 		console.log("Parsed UV:", this._terrainUVMap);
 	}
+
+	//#endregion
 
 	public onViewportChanged(viewport: Rectangle) {
 		this.assertNotDisposed();
@@ -165,8 +169,8 @@ export default class MapSegmentRenderer extends RendererBase {
 	private isTextured = false;
 
 	private drawSegments(time: TimeEvent) {
-		this._segmentsDrawn = 0;
-		this._renderSegmentsDrawn = 0;
+		this._segmentsDrawnLastFrame = 0;
+		this._renderSegmentsDrawnLastFrame = 0;
 
 		const shader = this.isTextured ? this.bindTexturedShader() : this.bindColoredShader();
 		const posAttribPtr = this.isTextured ? this._texturedPosAttribPtr : this._coloredPosAttribPtr;
@@ -187,12 +191,12 @@ export default class MapSegmentRenderer extends RendererBase {
 	}
 
 	private clearDrawCtx() {
-		this._frame.drawCtx.setTransform(1, 0, 0, 1, 0, 0);
+		this._frame.debugCanvas.setTransform(1, 0, 0, 1, 0, 0);
 
-		this._frame.drawCtx.clearRect(
+		this._frame.debugCanvas.clearRect(
 			this._viewport.x, this._viewport.y, this._viewport.width, this._viewport.height);
 
-		this._frame.drawCtx.translate(
+		this._frame.debugCanvas.translate(
 			Math.round(this._viewport.width / 2) + 0.5 + this._mapTranslation[0] / this._zoom,
 			Math.round(this._viewport.height / 2) + 0.5 + this._mapTranslation[1] / this._zoom);
 	}
@@ -236,30 +240,32 @@ export default class MapSegmentRenderer extends RendererBase {
 	}
 
 	private drawRenderSegment(
-		renderSegment: RenderSegment, shader: ShaderProgram,
-		posAttrib: ShaderAttribPointer, dataAttrib: ShaderAttribPointer) {
+		renderSegment: RenderSegment,
+		shader: ShaderProgram,
+		posAttrib: ShaderAttribPointer,
+		dataAttrib: ShaderAttribPointer) {
 		
 		const metrics = this._bakedRenderSegmentQuads.metricsPerSegment;
 
-		const drawing = this._frame.drawCtx;
-		//drawing.lineWidth = 1;
-		//drawing.beginPath();
-		//drawing.strokeStyle = "rgba(0, 255, 0, 1)";
+		const debugCanvas = this._frame.debugCanvas;
+		//debugCanvas.lineWidth = 1;
+		//debugCanvas.beginPath();
+		//debugCanvas.strokeStyle = "rgba(0, 255, 0, 1)";
 		//for (let z = 0; z < RenderSegment.size; z++) {
 		//	for (let x = 0; x < RenderSegment.size; x++) {
 		//		const segment = renderSegment.getSegment(x, z);
 		//		if (segment == null)
 		//			continue;
 		//
-		//		drawing.rect(
+		//		debugCanvas.rect(
 		//			(x * MapSegment.size + renderSegment.x * RenderSegment.size * MapSegment.size) / this._zoom + 2,
 		//			(z * MapSegment.size + renderSegment.z * RenderSegment.size * MapSegment.size) / this._zoom + 2,
 		//			16 / this._zoom - 4,
 		//			16 / this._zoom - 4);
 		//	}
 		//}
-		//drawing.closePath();
-		//drawing.stroke();
+		//debugCanvas.closePath();
+		//debugCanvas.stroke();
 
 		if (renderSegment.isDirty) {
 			for (let i = 0; i < RenderSegment.blockSize; i++) {
@@ -322,12 +328,12 @@ export default class MapSegmentRenderer extends RendererBase {
 			const elementCount = renderSegment.genCount * metrics.indexCount;
 			this.gl.drawElements(this.gl.TRIANGLES, elementCount, this.gl.UNSIGNED_SHORT, 0);
 
-			this._segmentsDrawn += renderSegment.genCount;
-			this._renderSegmentsDrawn++;
+			this._segmentsDrawnLastFrame += renderSegment.genCount;
+			this._renderSegmentsDrawnLastFrame++;
 		}
 
-		//drawing.strokeStyle = "rgba(200, 0, 0, 0.5)";
-		//drawing.strokeRect(
+		//debugCanvas.strokeStyle = "rgba(200, 0, 0, 0.5)";
+		//debugCanvas.strokeRect(
 		//	renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
 		//	renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
 		//	16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
@@ -356,13 +362,14 @@ export default class MapSegmentRenderer extends RendererBase {
 		const vertexData = new Float32Array(segmentMetrics.vertexCount * 2 * RenderSegment.blockSize);
 		const indexData = new Uint16Array(segmentMetrics.indexCount * RenderSegment.blockSize);
 
-		const shape = ShapeGenerator.createPlane(MapSegment.size, MapSegment.size);
+		const planeBuffer = ShapeGenerator.createPlane(MapSegment.size, MapSegment.size);
 		for (let z = 0; z < RenderSegment.size; z++) {
 			for (let x = 0; x < RenderSegment.size; x++) {
 				const posOffset = vec2.fromValues(x * MapSegment.size, z * MapSegment.size);
 				const i = x + z * RenderSegment.size;
 				const vertexOffset = i * segmentMetrics.vertexCount;
-				const plane = ShapeGenerator.generatePlane(MapSegment.size, MapSegment.size, posOffset, vertexOffset, 1, shape);
+				const plane = ShapeGenerator.generatePlane(
+					MapSegment.size, MapSegment.size, posOffset, vertexOffset, 1, planeBuffer);
 
 				vertexData.set(plane.vertices, i * segmentMetrics.vertexCount * 2);
 				indexData.set(plane.indices, i * segmentMetrics.indexCount);
@@ -383,13 +390,11 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	}
 
-	private _tileDescGetFailures = new Map<number, void>();
-
 	private getTileDescription(tile: number): TileDescription {
 		if (!this._terrainUVMap.has(tile)) {
 			if (!this._tileDescGetFailures.has(tile)) {
 				console.warn(`Failed to get description for tile '${tile}'.`);
-				this._tileDescGetFailures.set(tile, null);
+				this._tileDescGetFailures.add(tile);
 			}
 			return this._defaultTileDescription;
 		}

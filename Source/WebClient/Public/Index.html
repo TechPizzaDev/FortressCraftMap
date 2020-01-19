@@ -1,26 +1,86 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="en-us">
 <head>
-	<meta charset="UTF-8">
-	<link rel="icon" href="./favicon.png">
+	<meta charset="UTF-8" />
+	<meta name="theme-color" content="#6d9ea9" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta name="description" content="Map of a FortressCraft game world.">
 
-	<link href="./Style/Initial-Loader.css" rel="stylesheet" type="text/css" />
-	<link href="./Style/Index.css" rel="stylesheet" type="text/css" />
-	<link href="./Style/Icons.css" rel="stylesheet" type="text/css" />
+	<title>FortressCraft Map</title>
+	<link rel="icon" href="favicon.png" />
+
+	<link href="Index.css" rel="stylesheet" type="text/css" />
+
+	<script>
+		// This script is used to define variables that are shared between JS and TS.
+
+		let appContentList; // used by "ContentRegistry"
+		let appUpdateLoadingProgress; // used by "ContentLoadingInfo"
+	</script>
+
+	<script defer src="Webpack/runtime.js"></script>
+	<script defer src="Webpack/bootstrap.js"></script>
+	<script defer src="loader.js"></script>
 </head>
 <body>
-	<div id="mainContainer" class="hidden">
+	<div id="app-container" class="hidden">
 		<div>
-			<canvas id="canvasLayer0" class="renderCanvas"></canvas>
-			<canvas id="canvasLayer1" class="renderCanvas"></canvas>
+			<canvas id="canvas-layer-main"></canvas>
+			<canvas id="canvas-layer-debug"></canvas>
 		</div>
 
-		<div id="debugInfoContainer">
-			<div id="fpsCounter" title="Frames per second"> <span></span> </div>
-			<div id="debugInfo" class="hidden"> <table></table> </div>
+		<div id="debug-info-container">
+			<div id="fps-counter" title="Frames per second">
+				<span></span>
+			</div>
+
+			<div id="debug-info" class="hidden">
+				<table>
+					<tr>
+						<th></th>
+						<th>Segments</th>
+						<th>Batches</th>
+					</tr>
+					<tr>
+						<th>Queued:</th>
+						<td data-debugfield="segments.queued"></td>
+						<td></td>
+					</tr>
+					<tr>
+						<th>Requested:</th>
+						<td data-debugfield="segments.requested"></td>
+						<td></td>
+					</tr>
+					<tr>
+						<th>Updated:</th>
+						<td data-debugfield="segments.updated"></td>
+						<td data-debugfield="segmentBatches.updated"></td>
+					</tr>
+					<tr>
+						<th>Loaded:</th>
+						<td data-debugfield="segments.loaded"></td>
+						<td data-debugfield="segmentBatches.loaded"></td>
+					</tr>
+					<tr>
+						<th>Visible:</th>
+						<td data-debugfield="segments.visible"></td>
+						<td data-debugfield="segmentBatches.visible"></td>
+					</tr>
+					<tr>
+						<th>Hidden:</th>
+						<td data-debugfield="segments.hidden"></td>
+						<td data-debugfield="segmentBatches.hidden"></td>
+					</tr>
+				</table>
+				<hr />
+				<div>
+					<span>Resolution:</span>
+					<span data-debugfield="resolution"></span>
+				</div>
+			</div>
 		</div>
 
-		<div id="fullscreenButton" title="Fullscreen toggle">
+		<div id="fullscreen-button" title="Fullscreen toggle">
 			<div class="icon-fullscreen"></div>
 		</div>
 	</div>
@@ -44,61 +104,5 @@
 			</div>
 		</div>
 	</div>
-
-	<script>
-		let appContentList; // used by ContentRegistry
-		let appUpdateLoadingProgress; // used by ContentLoadingInfo
-	</script>
-	<script src="./Script/runtime.js"></script>
-	<script src="./Script/bootstrap.js"></script>
-
-	<script>
-		const appLoadingProgressBar = document.getElementById("loading-bar-percentage");
-		const appLoadingProgressSpan = appLoadingProgressBar.getElementsByTagName("span")[0];
-
-		const assetStatus = {
-			percentage: 0,
-			bytesDownloaded: 0,
-			files: 0,
-			totalFiles: appContentList.count
-		};
-
-		const scriptsToLoad = [
-			"./Script/dependencies.js",
-			"./Script/main.js"
-		];
-
-		const resourcesToLoad = [...scriptsToLoad];
-		
-		const appLoadStatus = {
-			percentage: 0,
-			bytesDownloaded: 0,
-			files: 0,
-			totalFiles: resourcesToLoad.length
-		};
-
-		appUpdateLoadingProgress([appLoadStatus, assetStatus]);
-
-		resourcesToLoad.map(resource => {
-			if (resource.startsWith("./Script/")) {
-				const scriptNode = document.createElement("script");
-				scriptNode.src = resource;
-				scriptNode.onload = () => {
-					appLoadStatus.percentage += 1 / resourcesToLoad.length;
-					appLoadStatus.files++;
-					appUpdateLoadingProgress([appLoadStatus, assetStatus]);
-				};
-				document.documentElement.appendChild(scriptNode);
-			}
-			else {
-				throw new Error(`Could not determine resource type from "${resource}"`);
-			}
-		});
-	</script>
-
-	<!--
-	<script src="./Script/dependencies.js"></script>
-	<script src="./Script/main.js"></script>
-	-->
 </body>
 </html>

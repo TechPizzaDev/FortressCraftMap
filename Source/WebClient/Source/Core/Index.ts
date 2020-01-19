@@ -5,18 +5,20 @@ let mainFrame: MainFrame;
 export type SpeedyModule = typeof import('../../../fcmap-speedy/pkg/fcmap_speedy');
 
 async function setup() {
-    const canvasLayer0 = document.getElementById("canvasLayer0"); // main rendering canvas
-    const canvasLayer1 = document.getElementById("canvasLayer1"); // canvas for debugging
+    const canvasLayerMain = document.getElementById("canvas-layer-main"); // main rendering canvas
+    const canvasLayerDebug = document.getElementById("canvas-layer-debug"); // canvas for debugging
 
-    if (canvasLayer0 instanceof HTMLCanvasElement && canvasLayer1 instanceof HTMLCanvasElement) {
-        const glContext = canvasLayer0.getContext("webgl");
+    if (canvasLayerMain instanceof HTMLCanvasElement &&
+        canvasLayerDebug instanceof HTMLCanvasElement) {
+        const glContext = canvasLayerMain.getContext("webgl");
         if (!glContext) {
             console.error("Failed to initialize WebGL context.");
             return;
         }
 
-        const drawingContext = canvasLayer1.getContext("2d");
-        if (!drawingContext) {
+        // TODO: remove debug canvas
+        const debugCanvas = canvasLayerDebug.getContext("2d");
+        if (!debugCanvas) {
             console.error("Failed to initialize 2D context.");
             return;
         }
@@ -30,11 +32,11 @@ async function setup() {
         const speedyModule: SpeedyModule = await import('../../../fcmap-speedy/pkg/fcmap_speedy');
         speedyModule.init();
 
-        mainFrame = new MainFrame(glContext, speedyModule, drawingContext, () => {
+        mainFrame = new MainFrame(glContext, speedyModule, debugCanvas, () => {
             setupFullscreenElements();
             setupDebugInfoElements();
 
-            setVisibility(document.getElementById("mainContainer"), true);
+            setVisibility(document.getElementById("app-container"), true);
             mainFrame.run();
         });
     }
@@ -44,7 +46,7 @@ async function setup() {
 }
 
 function setupFullscreenElements() {
-    const fullscreenButton = document.getElementById("fullscreenButton");
+    const fullscreenButton = document.getElementById("fullscreen-button");
     const fullscreenIcon = fullscreenButton.firstElementChild;
 
     if (!document.fullscreenEnabled) {
@@ -75,8 +77,8 @@ function setupFullscreenElements() {
 }
 
 function setupDebugInfoElements() {
-    const fpsCounterDiv = document.getElementById("fpsCounter");
-    const debugInfoDiv = document.getElementById("debugInfo");
+    const fpsCounterDiv = document.getElementById("fps-counter");
+    const debugInfoDiv = document.getElementById("debug-info");
 
     fpsCounterDiv.onclick = (ev) => {
         const wasVisible = isVisible(debugInfoDiv);

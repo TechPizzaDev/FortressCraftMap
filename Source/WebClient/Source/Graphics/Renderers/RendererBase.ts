@@ -20,7 +20,7 @@ export default abstract class RendererBase extends GLResource {
 	 * Used to prepare data needed for rendering.
 	 * @param content The manager used to get loaded content.
 	 */
-	public abstract prepare(content: Content.Manager): void;
+	public abstract loadContent(content: Content.Manager): void;
 
 	/**
 	 * Called every time the viewport is changed.

@@ -22,10 +22,11 @@ export default class MainFrame {
 	// TODO: make this detect device by user-agent or do some performance test
 	public static readonly isWeakUserAgent = false;
 	
-	private _glCtx: WebGLRenderingContext;
-	private _speedyModule: SpeedyModule;
-	private _drawCtx: CanvasRenderingContext2D;
-	private _content: AppContent;
+	public readonly gl: WebGLRenderingContext;
+	public readonly speedyModule: SpeedyModule;
+	public readonly debugCanvas: CanvasRenderingContext2D;
+	public readonly content: AppContent;
+
 	private _frameDispatcher: FrameDispatcher;
 	private _segmentRenderer: MapSegmentRenderer;
 	private _fpsCounter: FramesPerSecondCounter;
@@ -66,70 +67,66 @@ export default class MainFrame {
 	public _infrequentPendingDebugInfo: Debug.InfrequentInformation = Object.create(Debug.EmptySlow);
 	public _frequentPendingDebugInfo: Debug.FrequentInformation = Object.create(Debug.EmptyFast);
 	private _debugInfo: Debug.Information = Object.assign({}, Debug.Empty);
-	private _debugInfoDiv: HTMLDivElement;
-	private _debugInfoSegmentTable: HTMLTableElement;
+	private _debugFieldMap: Map<string, HTMLElement>;
 
 	private userOffsetX = 0; // temporary thing
 
 	constructor(
-		glCtx: WebGLRenderingContext, speedyModule: SpeedyModule,
-		drawCtx: CanvasRenderingContext2D, onLoad?: Content.LoadCallback) {
-		if (glCtx == null) throw new TypeError("GL context is undefined.");
+		gl: WebGLRenderingContext,
+		speedyModule: SpeedyModule,
+		debugCanvas: CanvasRenderingContext2D,
+		onLoad?: Content.LoadCallback) {
+
+		if (gl == null) throw new TypeError("GL context is undefined.");
 		if (speedyModule == null) throw new TypeError("Speedy module is undefined.");
-		if (drawCtx == null) throw new TypeError("Canvas rendering context is undefined.");
+		if (debugCanvas == null) throw new TypeError("Canvas rendering context is undefined.");
 
-		this._glCtx = glCtx;
-		this._speedyModule = speedyModule;
-		this._drawCtx = drawCtx;
+		this.gl = gl;
+		this.speedyModule = speedyModule;
+		this.debugCanvas = debugCanvas;
 
-		const loadCallback = (manager: Content.Manager) => {
-			let prepareErrored = false;
-			try {
-				this._segmentRenderer.prepare(manager);
-			}
-			catch (e) {
-				prepareErrored = true;
-				console.error("Failed to prepare renderers:\n", e);
-			}
-
-			if (!prepareErrored) {
-				if (onLoad)
-					onLoad(manager);
-			}
-			else {
-				// TODO: add some kind of error message for the user
-				throw new Error("Prepare Errored (TODO: Add an error message box for the user)");
-			}
-		};
-
-		this._content = new AppContent(this._glCtx, loadCallback);
-		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
-		this._segmentRenderer = new MapSegmentRenderer(this);
-
-		this._mapChannel = ChannelSocket.create("map", this._speedyModule, false);
+		this._mapChannel = ChannelSocket.create("map", this.speedyModule, false);
 		this._mapChannel.subscribeToEvent("ready", this.onMapChannelReady);
 		this._mapChannel.subscribeToEvent("message", this.onMapChannelMessage);
 		this._mapChannel.connect();
 
-		const fpsCounterDiv = document.getElementById("fpsCounter") as HTMLDivElement;
+		this.content = new AppContent(this.gl, (manager) => this.contentLoadCallback(manager, onLoad));
+		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
+		this._segmentRenderer = new MapSegmentRenderer(this);
+
+		const fpsCounterDiv = document.getElementById("fps-counter") as HTMLDivElement;
 		const fpsCounterSpan = fpsCounterDiv.firstElementChild as HTMLSpanElement;
 		this._fpsCounter = new FramesPerSecondCounter(fpsCounterSpan);
 		
-		this._debugInfoDiv = document.getElementById("debugInfo") as HTMLDivElement;
-		this._debugInfoSegmentTable = this._debugInfoDiv.children.item(0) as HTMLTableElement;
+		this._debugFieldMap = new Map<string, HTMLElement>();
+		const debugDiv = document.getElementById("debug-info") as HTMLDivElement;
+		const debugFieldAttributeName = "data-debugfield";
+		const debugFields = debugDiv.querySelectorAll(`[${debugFieldAttributeName}]`);
+		debugFields.forEach((debugField) => {
+			const name = debugField.getAttribute(debugFieldAttributeName);
+			this._debugFieldMap.set(name, debugField as HTMLElement);
+		});
 	}
 
-	public get glCtx(): WebGLRenderingContext {
-		return this._glCtx;
-	}
+	private contentLoadCallback = (manager: Content.Manager, onLoad?: Content.LoadCallback) => {
+		let prepareErrored = false;
+		try {
+			this._segmentRenderer.loadContent(manager);
+		}
+		catch (e) {
+			prepareErrored = true;
+			console.error("Failed to prepare renderers:\n", e);
+		}
 
-	public get drawCtx(): CanvasRenderingContext2D {
-		return this._drawCtx;
-	}
-
-	public get content(): AppContent {
-		return this._content;
-	}
+		if (!prepareErrored) {
+			if (onLoad)
+				onLoad(manager);
+		}
+		else {
+			// TODO: add some kind of error message for the user
+			throw new Error("Prepare Errored (TODO: Add an error message box for the user)");
+		}
+	};
 
 	private onMapChannelReady = (ev: Event) => {
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -2]);
@@ -178,7 +175,7 @@ export default class MainFrame {
 
 		let renderSegment = this._segmentRenderer.segments.get(pos.renderX, pos.renderZ);
 		if (renderSegment == null) {
-			renderSegment = new RenderSegment(this.glCtx, this._segmentRenderer.bakedSegmentQuads, pos);
+			renderSegment = new RenderSegment(this.gl, this._segmentRenderer.bakedSegmentQuads, pos);
 			this._segmentRenderer.segments.set(pos.renderX, pos.renderZ, renderSegment);
 		}
 
@@ -453,42 +450,20 @@ export default class MainFrame {
 		const renderSegmentHiddenDiff = sr.segments.count - sr.renderSegmentsDrawnLastFrame;
 		const queuedRequests = this._segmentRequestQueue.length + this._segmentRequestBuffer.length;
 
-		this._debugInfoSegmentTable.innerHTML = `
-				<tr>
-					<th></th>
-					<th>Segments</th>
-					<th>Batches</th>
-				</tr>
-				<tr>
-					<td>Queued:</td>
-					<td>${queuedRequests}</td>
-					<td></td>
-				</tr>
-				<tr>
-					<td>Requested:</td>
-					<td>${di.segmentRequests}</td>
-					<td></td>
-				</tr>
-				<tr>
-					<td>Updated:</td>
-					<td>${di.segmentsBuilt}</td>
-					<td>${di.segmentBatchesBuilt}</td>
-				</tr>
-				<tr>
-					<td>Loaded:</td>
-					<td>${sr.segments.segmentCount}</td>
-					<td>${sr.segments.count}</td>
-				</tr>
-				<tr>
-					<td>Hidden:</td>
-					<td>${segmentHiddenDiff}</td>
-					<td>${renderSegmentHiddenDiff}</td>
-				</tr>
-				<tr>
-					<td>Visible:</td>
-					<td>${sr.segmentsDrawnLastFrame}</td>
-					<td>${sr.renderSegmentsDrawnLastFrame}</td>
-				</tr>`;
+		this._debugFieldMap.get("segments.queued").innerText = queuedRequests.toString();
+		this._debugFieldMap.get("segments.updated").innerText = di.segmentsBuilt.toString();
+		this._debugFieldMap.get("segments.loaded").innerText = sr.segments.segmentCount.toString();
+		this._debugFieldMap.get("segments.requested").innerText = di.segmentRequests.toString();
+		this._debugFieldMap.get("segments.visible").innerText = sr.segmentsDrawnLastFrame.toString();
+		this._debugFieldMap.get("segments.hidden").innerText = segmentHiddenDiff.toString();
+
+		this._debugFieldMap.get("segmentBatches.updated").innerText = di.segmentBatchesBuilt.toString();
+		this._debugFieldMap.get("segmentBatches.loaded").innerText = sr.segments.count.toString();
+		this._debugFieldMap.get("segmentBatches.visible").innerText = sr.renderSegmentsDrawnLastFrame.toString();
+		this._debugFieldMap.get("segmentBatches.hidden").innerText = renderSegmentHiddenDiff.toString();
+
+		const viewport = this._segmentRenderer.viewport;
+		this._debugFieldMap.get("resolution").innerText = `${viewport.width}x${viewport.height}`;
 	}
 
 	public draw = (time: TimeEvent) => {
@@ -506,11 +481,11 @@ export default class MainFrame {
 			Math.floor(window.innerWidth * dpr),
 			Math.floor(window.innerHeight * dpr));
 
-		this.glCtx.canvas.width = viewport.width;
-		this.glCtx.canvas.height = viewport.height;
+		this.gl.canvas.width = viewport.width;
+		this.gl.canvas.height = viewport.height;
 
-		this._drawCtx.canvas.width = viewport.width;
-		this._drawCtx.canvas.height = viewport.height;
+		this.debugCanvas.canvas.width = viewport.width;
+		this.debugCanvas.canvas.height = viewport.height;
 
 		this._segmentRenderer.onViewportChanged(viewport);
 	}
