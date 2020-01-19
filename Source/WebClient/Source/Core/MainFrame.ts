@@ -10,7 +10,7 @@ import MapRenderSegment from "../Graphics/MapRenderSegment";
 import { vec2 } from "gl-matrix";
 import * as Debug from "./DebugInformation";
 import FramesPerSecondCounter from "./FramesPerSecondCounter";
-import { SpeedyModule, isElementVisible } from "./Index";
+import { isElementVisible } from "./Index";
 import * as jDataView from "jdataview";
 import Mathx from "../Utility/Mathx";
 
@@ -23,7 +23,6 @@ export default class MainFrame {
 	public static readonly isWeakUserAgent = false;
 	
 	public readonly gl: WebGLRenderingContext;
-	public readonly speedyModule: SpeedyModule;
 	public readonly debugCanvas: CanvasRenderingContext2D;
 	public readonly content: AppContent;
 
@@ -72,19 +71,16 @@ export default class MainFrame {
 
 	constructor(
 		gl: WebGLRenderingContext,
-		speedyModule: SpeedyModule,
 		debugCanvas: CanvasRenderingContext2D,
 		onLoad?: Content.LoadCallback) {
 
-		if (gl == null) throw new TypeError("GL context is undefined.");
-		if (speedyModule == null) throw new TypeError("Speedy module is undefined.");
-		if (debugCanvas == null) throw new TypeError("Canvas rendering context is undefined.");
+		if (gl == null) throw new SyntaxError("'gl' is null.");
+		if (debugCanvas == null) throw new SyntaxError("'debugCanvas' is null.");
 
 		this.gl = gl;
-		this.speedyModule = speedyModule;
 		this.debugCanvas = debugCanvas;
 
-		this._mapChannel = ChannelSocket.create("map", this.speedyModule, false);
+		this._mapChannel = ChannelSocket.create("map", false);
 		this._mapChannel.subscribeToEvent("ready", this.onMapChannelReady);
 		this._mapChannel.subscribeToEvent("message", this.onMapChannelMessage);
 		this._mapChannel.connect();
@@ -93,21 +89,10 @@ export default class MainFrame {
 		this._frameDispatcher = new FrameDispatcher(this.update, this.draw);
 		this._segmentRenderer = new MapSegmentRenderer(this);
 
-		const fpsCounterDiv = document.getElementById("fps-counter") as HTMLDivElement;
-		const fpsCounterSpan = fpsCounterDiv.firstElementChild as HTMLSpanElement;
-		this._fpsCounter = new FramesPerSecondCounter(fpsCounterSpan);
-		
-		this._debugFieldMap = new Map<string, HTMLElement>();
-		this._debugInfoDiv = document.getElementById("debug-info") as HTMLDivElement;
-		const debugFieldAttributeName = "data-debugfield";
-		const debugFields = this._debugInfoDiv.querySelectorAll(`[${debugFieldAttributeName}]`);
-		debugFields.forEach((debugField) => {
-			const name = debugField.getAttribute(debugFieldAttributeName);
-			this._debugFieldMap.set(name, debugField as HTMLElement);
-		});
+		this.setupDebugInfo();
 	}
 
-	private contentLoadCallback = (manager: Content.Manager, onLoad?: Content.LoadCallback) => {
+	private contentLoadCallback(manager: Content.Manager, onLoad?: Content.LoadCallback) {
 		let prepareErrored = false;
 		try {
 			this._segmentRenderer.loadContent(manager);
@@ -126,6 +111,21 @@ export default class MainFrame {
 			throw new Error("Prepare Errored (TODO: Add an error message box for the user)");
 		}
 	};
+
+	private setupDebugInfo() {
+		const fpsCounterDiv = document.getElementById("fps-counter") as HTMLDivElement;
+		const fpsCounterSpan = fpsCounterDiv.firstElementChild as HTMLSpanElement;
+		this._fpsCounter = new FramesPerSecondCounter(fpsCounterSpan);
+
+		this._debugFieldMap = new Map<string, HTMLElement>();
+		this._debugInfoDiv = document.getElementById("debug-info") as HTMLDivElement;
+		const debugFieldAttributeName = "data-debugfield";
+		const debugFields = this._debugInfoDiv.querySelectorAll(`[${debugFieldAttributeName}]`);
+		debugFields.forEach((debugField) => {
+			const name = debugField.getAttribute(debugFieldAttributeName);
+			this._debugFieldMap.set(name, debugField as HTMLElement);
+		});
+	}
 
 	private onMapChannelReady = (ev: Event) => {
 		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -2]);
@@ -201,8 +201,8 @@ export default class MainFrame {
 
 		const w = 8 // 118 / 4  //108 - 12 + 16 * 6; //66;
 		const h = 8 // 57  / 4 // 48 + 16 * 3; //57;
-		const halfW = 0 // w / 2;
-		const halfH = 0 // h / 2;
+		const halfW = w / 2;
+		const halfH = h / 2;
 
 		this.ViewCullDistance = Math.max(w * w, h * h);
 		//const timeout = 2;

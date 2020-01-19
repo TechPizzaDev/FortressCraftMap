@@ -2,8 +2,6 @@ import MainFrame from "./MainFrame";
 
 let mainFrame: MainFrame;
 
-export type SpeedyModule = typeof import('../../../fcmap-speedy/pkg/fcmap_speedy');
-
 async function setup() {
     const canvasLayerMain = document.getElementById("canvas-layer-main"); // main rendering canvas
     const canvasLayerDebug = document.getElementById("canvas-layer-debug"); // canvas for debugging
@@ -29,10 +27,7 @@ async function setup() {
 
         console.log("Initialized canvas contexts.");
 
-        const speedyModule: SpeedyModule = await import('../../../fcmap-speedy/pkg/fcmap_speedy');
-        speedyModule.init();
-
-        mainFrame = new MainFrame(glContext, speedyModule, debugCanvas, () => {
+        mainFrame = new MainFrame(glContext, debugCanvas, () => {
             setupFullscreenElements();
             setupDebugInfoElements();
 

@@ -131,7 +131,7 @@ export default class MapSegmentRenderer extends RendererBase {
 
 		this._viewport = viewport;
 		this.gl.viewport(0, 0, viewport.width, viewport.height);
-
+		
 		//const s = 1 / zoom; i don't really have access to a zoom value yet ;/
 
 		const w = viewport.width;

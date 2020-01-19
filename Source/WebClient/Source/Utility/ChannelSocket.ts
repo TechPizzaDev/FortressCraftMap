@@ -1,23 +1,22 @@
 type CodeType = string | number;
 
 import EventEmitter from "./EventEmitter";
-import { SpeedyModule } from "../Core/Index";
 import * as jDataView from "jdataview";
 import jDataViewExtensions from "./Extensions/jDataViewExtensions";
 
 interface KeyValuePair {
-    key: string;
-    value: number;
+	key: string;
+	value: number;
 }
 
 function readPairCodeMap(message: jDataView): MessageCodeMap {
-    const pairs = new Array<KeyValuePair>(message.getInt32());
-    for (let i = 0; i < pairs.length; i++) {
-        const key = jDataViewExtensions.getDotNetString(message);
-        const value = message.getUint16();
-        pairs[i] = { key, value };
-    }
-    return MessageCodeMap.fromPairs(pairs);
+	const pairs = new Array<KeyValuePair>(message.getInt32());
+	for (let i = 0; i < pairs.length; i++) {
+		const key = jDataViewExtensions.getDotNetString(message);
+		const value = message.getUint16();
+		pairs[i] = { key, value };
+	}
+	return MessageCodeMap.fromPairs(pairs);
 }
 
 /** 
@@ -27,7 +26,6 @@ function readPairCodeMap(message: jDataView): MessageCodeMap {
 export default class ChannelSocket extends EventEmitter {
 	private _channel: string;
 	private _url: string;
-	private _speedyModule: SpeedyModule;
 	private _socket: WebSocket;
 	private _isReady: boolean;
 
@@ -39,7 +37,7 @@ export default class ChannelSocket extends EventEmitter {
 	 * Constructs the ChannelSocket.
 	 * @param channelUrl The channel URL used for communication.
 	 */
-	constructor(channelUrl: string, speedyModule: SpeedyModule) {
+	constructor(channelUrl: string) {
 		super();
 		this.registerEvent("open");
 		this.registerEvent("ready");
@@ -49,7 +47,6 @@ export default class ChannelSocket extends EventEmitter {
 
 		this._channel = ChannelSocket.nameFromUrl(channelUrl);
 		this._url = channelUrl;
-		this._speedyModule = speedyModule;
 	}
 
 	public get isConnected(): boolean {
@@ -99,9 +96,9 @@ export default class ChannelSocket extends EventEmitter {
 	}
 
 	// special handler for the first initialization message
-    private onInitMessage = (ev: MessageEvent) => {
-        const message = new jDataView(ev.data as jDataView.Bytes, 0, ev.data.length, true);
-        this.initCodeInfo(message);
+	private onInitMessage = (ev: MessageEvent) => {
+		const message = new jDataView(ev.data as jDataView.Bytes, 0, ev.data.length, true);
+		this.initCodeInfo(message);
 
 		// re-register the "message" event to the new handler
 		this._socket.removeEventListener("message", this.onInitMessage);
@@ -111,47 +108,47 @@ export default class ChannelSocket extends EventEmitter {
 		this.triggerEvent("ready", null);
 	};
 
-    private initCodeInfo(message: jDataView) {
-        this._useNumericCodes = message.getUint8() == 1 ? true : false;
-        if (this._useNumericCodes) {
-            this._clientCodeMap = readPairCodeMap(message);
-            this._serverCodeMap = readPairCodeMap(message);
-        } else {
-            throw new Error("not implemented");
-        }
+	private initCodeInfo(message: jDataView) {
+		this._useNumericCodes = message.getUint8() == 1 ? true : false;
+		if (this._useNumericCodes) {
+			this._clientCodeMap = readPairCodeMap(message);
+			this._serverCodeMap = readPairCodeMap(message);
+		} else {
+			throw new Error("not implemented");
+		}
 	}
 
 	// the actual message handler used after initialization
-    private onMessage = (ev: MessageEvent) => {
-        const message = new jDataView(ev.data as jDataView.Bytes, 0, ev.data.length, true);
-        const code = message.getUint16();
+	private onMessage = (ev: MessageEvent) => {
+		const message = new jDataView(ev.data as jDataView.Bytes, 0, ev.data.length, true);
+		const code = message.getUint16();
 
-        if (code == MessageCode.error.number) {
-            const text = jDataViewExtensions.getDotNetString(message);
-            console.warn("Error message: ", text);
+		if (code == MessageCode.error.number) {
+			const text = jDataViewExtensions.getDotNetString(message);
+			console.warn("Error message: ", text);
 			return;
 		}
 
-        this.processMessage(ev, code, message);
-    };
+		this.processMessage(ev, code, message);
+	};
 
-    private processMessage(ev: MessageEvent, code: CodeType, message: jDataView) {
-        const serverCode = this.getServerCode(code);
-        if (!serverCode.isValid) {
-            console.warn("Server sent a message with an unknown code.", ev);
-            return;
-        }
+	private processMessage(ev: MessageEvent, code: CodeType, message: jDataView) {
+		const serverCode = this.getServerCode(code);
+		if (!serverCode.isValid) {
+			console.warn("Server sent a message with an unknown code.", ev);
+			return;
+		}
 		
-        if (serverCode == MessageCode.stringCode) {
-            const code = jDataViewExtensions.getDotNetString(message);
-            this.processMessage(ev, code, message);
-            return;
-        }
+		if (serverCode == MessageCode.stringCode) {
+			const code = jDataViewExtensions.getDotNetString(message);
+			this.processMessage(ev, code, message);
+			return;
+		}
 
-        const evData = new ChannelMessage(this, ev, serverCode, message);
-        if (!this.tryTriggerEvent("message", evData))
-            console.log(`[Channel '${this._channel}'] Message:`, evData);
-    }
+		const evData = new ChannelMessage(this, ev, serverCode, message);
+		if (!this.tryTriggerEvent("message", evData))
+			console.log(`[Channel '${this._channel}'] Message:`, evData);
+	}
 
 	/**
 	 * Creates a MessagePack message that can be sent later.
@@ -163,15 +160,15 @@ export default class ChannelSocket extends EventEmitter {
 		if (!clientCode.isValid)
 			throw new Error(`Client code is invalid.`);
 
-        const codeLength = this._useNumericCodes ? 2 : clientCode.nameByteLength;
-        const viewLength = length + codeLength;
-        const view = new jDataView(viewLength, 0, viewLength, true);
-        if (this._useNumericCodes)
-            view.writeUint16(clientCode.number);
-        else
-            jDataViewExtensions.writeDotNetString(view, clientCode.name, "utf8");
-        return view;
-    }
+		const codeLength = this._useNumericCodes ? 2 : clientCode.nameByteLength;
+		const viewLength = length + codeLength;
+		const view = new jDataView(viewLength, 0, viewLength, true);
+		if (this._useNumericCodes)
+			view.writeUint16(clientCode.number);
+		else
+			jDataViewExtensions.writeDotNetString(view, clientCode.name, "utf8");
+		return view;
+	}
 
 	public getServerCode(code: CodeType): MessageCode {
 		return this.getMessageCode(this._serverCodeMap, code);
@@ -195,12 +192,12 @@ export default class ChannelSocket extends EventEmitter {
 	 * Sends data through the underlying socket.
 	 * @param data The data to send.
 	 */
-    public send(data: string | ArrayBufferLike | Blob | ArrayBufferView | jDataView) {
+	public send(data: string | ArrayBufferLike | Blob | ArrayBufferView | jDataView) {
 		if (!this.isConnected)
-            throw new Error(`[Channel '${this.channel}'] Failed to send data; channel is disconnected.`);
+			throw new Error(`[Channel '${this.channel}'] Failed to send data; channel is disconnected.`);
 
-        if (data instanceof jDataView)
-            data = new Uint8Array(data.buffer as ArrayBuffer);
+		if (data instanceof jDataView)
+			data = new Uint8Array(data.buffer as ArrayBuffer);
 		this._socket.send(data);
 	}
 
@@ -232,9 +229,9 @@ export default class ChannelSocket extends EventEmitter {
 		return location.substring(lastSlashIndex + 1);
 	}
 
-	public static create(channelName: string, speedyModule: SpeedyModule, secure: boolean = true): ChannelSocket {
+	public static create(channelName: string, secure: boolean = true): ChannelSocket {
 		const url = ChannelSocket.createUrl(channelName, secure);
-		return new ChannelSocket(url, speedyModule);
+		return new ChannelSocket(url);
 	}
 }
 
@@ -242,35 +239,35 @@ class MessageCodeMap {
 	public readonly byName: Map<string, MessageCode>;
 	public readonly byValue: Map<number, MessageCode>;
 
-    constructor() {
+	constructor() {
 		this.byName = new Map<string, MessageCode>();
 		this.byValue = new Map<number, MessageCode>();
-    }
+	}
 
-    public static fromNames(names: string[]): MessageCodeMap {
-        if (names == null)
-            throw new SyntaxError("'names' may not be null.");
+	public static fromNames(names: string[]): MessageCodeMap {
+		if (names == null)
+			throw new SyntaxError("'names' may not be null.");
 		
-        const map = new MessageCodeMap();
-        for (const name of names) {
-            const msgCode = new MessageCode(name, 0);
-            map.byName.set(name, msgCode);
-        }
-        return map;
-    }
+		const map = new MessageCodeMap();
+		for (const name of names) {
+			const msgCode = new MessageCode(name, 0);
+			map.byName.set(name, msgCode);
+		}
+		return map;
+	}
 
-    public static fromPairs(pairs: KeyValuePair[]): MessageCodeMap {
-        if (pairs == null)
-            throw new SyntaxError("'pairs' may not be null.");
+	public static fromPairs(pairs: KeyValuePair[]): MessageCodeMap {
+		if (pairs == null)
+			throw new SyntaxError("'pairs' may not be null.");
 
-        const map = new MessageCodeMap();
-        for (const pair of pairs) {
-            const msgCode = new MessageCode(pair.key, pair.value);
-            map.byName.set(pair.key, msgCode);
-            map.byValue.set(pair.value, msgCode);
-        }
-        return map;
-    }
+		const map = new MessageCodeMap();
+		for (const pair of pairs) {
+			const msgCode = new MessageCode(pair.key, pair.value);
+			map.byName.set(pair.key, msgCode);
+			map.byValue.set(pair.value, msgCode);
+		}
+		return map;
+	}
 
 	public has(code: CodeType): boolean {
 		if (MessageCodeMap.isString(code))
@@ -309,17 +306,17 @@ class MessageCodeMap {
  * These codes are dictated by an initialization message from the server.
  * */
 export class MessageCode {
-    public static reserved = new MessageCode(null, 0);
-    public static stringCode = new MessageCode("stringCode", 1);
+	public static reserved = new MessageCode(null, 0);
+	public static stringCode = new MessageCode("stringCode", 1);
 	public static error = new MessageCode("error", 2);
 
 	/** The name of the code. */
 	public readonly name: string;
 
 	/** The numeric representation of this code. */
-    public readonly number: number;
+	public readonly number: number;
 
-    public readonly nameByteLength: number;
+	public readonly nameByteLength: number;
 
 	/**
 	 * Gets if this code is valid. Error codes use the code number -1.
@@ -331,12 +328,12 @@ export class MessageCode {
 
 	constructor(name: string, code: number) {
 		this.name = name;
-        this.number = code;
+		this.number = code;
 
-        if (name)
-            this.nameByteLength = 0;
-        else
-            this.nameByteLength = -1;
+		if (name)
+			this.nameByteLength = 0;
+		else
+			this.nameByteLength = -1;
 	}
 }
 
@@ -355,9 +352,9 @@ export class ChannelMessage {
 	public readonly code: MessageCode;
 
 	/** The message body. */
-    public readonly body: jDataView;
+	public readonly body: jDataView;
 
-    constructor(channel: ChannelSocket, event: MessageEvent, code: MessageCode, body: jDataView) {
+	constructor(channel: ChannelSocket, event: MessageEvent, code: MessageCode, body: jDataView) {
 		this.channel = channel;
 		this.event = event;
 		this.code = code;
