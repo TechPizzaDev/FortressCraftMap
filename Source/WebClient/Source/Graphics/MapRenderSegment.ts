@@ -1,16 +1,16 @@
-import MapSegment, { MapSegmentPos, NumberOrPos } from "../Core/World/MapSegment";
+import MapSegment, { MapSegmentPosition } from "../Core/World/MapSegment";
 import { mat4, vec3 } from "gl-matrix";
-import GLResource from "../Graphics/GLResource";
+import GLResource from "./GLResource";
 import GLHelper from "./GLHelper";
 import { BakedRenderSegmentQuads } from "./Renderers/MapSegmentRenderer";
 
-export default class RenderSegment extends GLResource {
+export default class MapRenderSegment extends GLResource {
 
 	/** The dimensions of a RenderSegment. */
-	public static readonly size = 8;
+	public static readonly size = 7;
 
 	/** The amount of segments that can be stored in a RenderSegment. */
-	public static readonly blockSize = RenderSegment.size * RenderSegment.size;
+	public static readonly blockSize = MapRenderSegment.size * MapRenderSegment.size;
 
 	private _segments: MapSegment[];
 	private _segmentCount: number;
@@ -28,14 +28,14 @@ export default class RenderSegment extends GLResource {
 	constructor(
 		gl: WebGLRenderingContext,
 		quads: BakedRenderSegmentQuads,
-		x: number | MapSegmentPos,
+		x: number | MapSegmentPosition,
 		z?: number) {
 
-		if (!(x instanceof MapSegmentPos) && z == null)
+		if (!(x instanceof MapSegmentPosition) && z == null)
 			throw new SyntaxError("'z' may not be null if 'x' is not a MapSegmentPos.");
 
 		super(gl);
-		if (x instanceof MapSegmentPos) {
+		if (x instanceof MapSegmentPosition) {
 			this.x = x.renderX;
 			this.z = x.renderZ;
 		}
@@ -50,15 +50,15 @@ export default class RenderSegment extends GLResource {
 		this.isDirty = false;
 		this.genCount = 0;
 
-		const vertexBytes = RenderSegment.blockSize * quads.metricsPerSegment.vertexCount * 2 * Float32Array.BYTES_PER_ELEMENT;
+		const vertexBytes = MapRenderSegment.blockSize * quads.metricsPerSegment.vertexCount * 2 * Float32Array.BYTES_PER_ELEMENT;
 		this._vertexBuffer = GLHelper.createBufferWithLength(gl, gl.ARRAY_BUFFER, vertexBytes, gl.DYNAMIC_DRAW);
-		const renderDataBytes = RenderSegment.blockSize * quads.metricsPerSegment.vertexCount * 3 * Float32Array.BYTES_PER_ELEMENT;
+		const renderDataBytes = MapRenderSegment.blockSize * quads.metricsPerSegment.vertexCount * 3 * Float32Array.BYTES_PER_ELEMENT;
 		this._renderDataBuffer = GLHelper.createBufferWithLength(gl, gl.ARRAY_BUFFER, renderDataBytes, gl.DYNAMIC_DRAW);
 		
 		this.matrix = mat4.create();
 		mat4.translate(this.matrix, this.matrix, vec3.fromValues(
-			this.x * MapSegment.size * RenderSegment.size,
-			this.z * MapSegment.size * RenderSegment.size,
+			this.x * MapSegment.size * MapRenderSegment.size,
+			this.z * MapSegment.size * MapRenderSegment.size,
 			0));
 	}
 
@@ -78,7 +78,7 @@ export default class RenderSegment extends GLResource {
 	}
 
 	public setSegment(x: number, z: number, segment: MapSegment) {
-		const i = RenderSegment.getIndex(x, z);
+		const i = MapRenderSegment.getIndex(x, z);
 		this.setSegmentAt(i, segment);
 	}
 
@@ -92,23 +92,23 @@ export default class RenderSegment extends GLResource {
 	 * @param z The z coordinate.
 	 */
 	public getSegment(x: number, z: number): MapSegment {
-		const i = RenderSegment.getIndex(x, z);
+		const i = MapRenderSegment.getIndex(x, z);
 		return this.getSegmentAt(i);
 	}
 
 	public static getIndex(x: number, z: number): number {
-		const rMinOne = RenderSegment.size - 1;
+		const rMinOne = MapRenderSegment.size - 1;
 		if (x < 0)
-			x = rMinOne - Math.abs(x - rMinOne) % RenderSegment.size;
+			x = rMinOne - Math.abs(x - rMinOne) % MapRenderSegment.size;
 		else
-			x = Math.abs(x) % RenderSegment.size;
+			x = Math.abs(x) % MapRenderSegment.size;
 
 		if (z < 0)
-			z = rMinOne - Math.abs(z - rMinOne) % RenderSegment.size;
+			z = rMinOne - Math.abs(z - rMinOne) % MapRenderSegment.size;
 		else
-			z = Math.abs(z) % RenderSegment.size;
+			z = Math.abs(z) % MapRenderSegment.size;
 
-		return x + z * RenderSegment.size;
+		return x + z * MapRenderSegment.size;
 	}
 
 	//private static getIndex(x: NumberOrPos, z?: number): number {

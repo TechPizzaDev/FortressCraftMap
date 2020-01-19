@@ -1,12 +1,12 @@
-import RenderSegment from "./RenderSegment";
+import MapRenderSegment from "./MapRenderSegment";
 
 /** Row containing segments indexed by their X coordinate. */
-type Row = Map<number, RenderSegment>;
+type Row = Map<number, MapRenderSegment>;
 
 /**
  * Collection used for storing render segments in rows.
  * */
-export default class RenderSegmentCollection {
+export default class MapRenderSegmentCollection {
 	private _rows: Map<number, Row>;
 	private _version: number;
 
@@ -51,17 +51,17 @@ export default class RenderSegmentCollection {
 		return row.has(x);
 	}
 
-	public get(x: number, z: number): RenderSegment {
+	public get(x: number, z: number): MapRenderSegment {
 		let row = this.getRow(z);
 		if (!row)
 			return null;
 		return row.get(x);
 	}
 
-	public set(x: number, z: number, segment: RenderSegment) {
+	public set(x: number, z: number, segment: MapRenderSegment) {
 		let row = this.getRow(z);
 		if (!row) {
-			row = new Map<number, RenderSegment>();
+			row = new Map<number, MapRenderSegment>();
 			this._rows.set(z, row);
 		}
 		row.set(x, segment);

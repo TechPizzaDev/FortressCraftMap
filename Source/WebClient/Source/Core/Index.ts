@@ -36,7 +36,7 @@ async function setup() {
             setupFullscreenElements();
             setupDebugInfoElements();
 
-            setVisibility(document.getElementById("app-container"), true);
+            setElementVisibility(document.getElementById("app-container"), true);
             mainFrame.run();
         });
     }
@@ -50,7 +50,7 @@ function setupFullscreenElements() {
     const fullscreenIcon = fullscreenButton.firstElementChild;
 
     if (!document.fullscreenEnabled) {
-        setVisibility(fullscreenButton, false);
+        setElementVisibility(fullscreenButton, false);
         return;
     }
 
@@ -72,7 +72,7 @@ function setupFullscreenElements() {
         });
     }
     else {
-        setVisibility(fullscreenButton, false);
+        setElementVisibility(fullscreenButton, false);
     }
 }
 
@@ -81,8 +81,8 @@ function setupDebugInfoElements() {
     const debugInfoDiv = document.getElementById("debug-info");
 
     fpsCounterDiv.onclick = (ev) => {
-        const wasVisible = isVisible(debugInfoDiv);
-        setVisibility(debugInfoDiv, !wasVisible, true);
+        const wasVisible = isElementVisible(debugInfoDiv);
+        setElementVisibility(debugInfoDiv, !wasVisible, true);
 
         if (mainFrame != null) {
             if (!wasVisible) // clear to prevent stacked values
@@ -94,21 +94,25 @@ function setupDebugInfoElements() {
     fpsCounterDiv.click();
 }
 
-function isVisible(element: HTMLElement) {
+export function isElementVisible(element: HTMLElement) {
     if (element.classList.contains("hidden"))
         return false;
     return true;
 }
 
-function setVisibility(element: HTMLElement, visible: boolean, updateVisibleClass: boolean = false) {
+export function setElementVisibility(
+    element: HTMLElement,
+    visible: boolean,
+    addVisibleClass: boolean = false) {
+
     if (visible) {
         element.classList.remove("hidden");
-        if (updateVisibleClass)
+        if (addVisibleClass)
             element.classList.add("visible");
     }
     else {
         element.classList.add("hidden");
-        if (updateVisibleClass)
+        if (addVisibleClass)
             element.classList.remove("visible");
     }
 }

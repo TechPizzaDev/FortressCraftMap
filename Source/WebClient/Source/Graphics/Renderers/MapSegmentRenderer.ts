@@ -8,9 +8,9 @@ import ShaderProgram from "../Shaders/ShaderProgram";
 import { ShaderAttribPointer } from "../Shaders/ShaderAttribPointer";
 import ShapeGenerator, { QuadDataMetrics } from "../ShapeGenerator";
 import Texture2D from "../Texture2D";
-import RenderSegmentCollection from "../RenderSegmentCollection";
+import MapRenderSegmentCollection from "../MapRenderSegmentCollection";
 import MapSegment from "../../Core/World/MapSegment";
-import RenderSegment from "../RenderSegment";
+import MapRenderSegment from "../MapRenderSegment";
 import GLHelper from "../GLHelper";
 import ContentRegistry from "../../Content/ContentRegistry";
 
@@ -38,15 +38,15 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _defaultTileDescription: TileDescription;
 	private _tileDescGetFailures = new Set<number>();
 
-	private _renderSegments: RenderSegmentCollection;
-	private _viewport: Rectangle;
+	private _renderSegments: MapRenderSegmentCollection;
+	private _viewport = Rectangle.empty;
 	private _segmentTint = new Float32Array([1, 1, 1, 1]);
 
 	private _segmentsDrawnLastFrame = 0;
 	private _renderSegmentsDrawnLastFrame = 0;
 
 	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
-	public readonly _zoom = 1 / 0.75 * (4 / 2) * 1;
+	public readonly _zoom = 1 / 4;
 	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();
@@ -58,7 +58,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		super(frame.gl);
 		this._frame = frame;
 
-		this._renderSegments = new RenderSegmentCollection();
+		this._renderSegments = new MapRenderSegmentCollection();
 
 		this._bakedRenderSegmentQuads = this.bakeRenderSegmentQuads();
 
@@ -66,7 +66,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		this._renderDataBuffer = new Float32Array(this._bakedRenderSegmentQuads.metricsPerSegment.vertexCount * 3);
 	}
 
-	public get segments(): RenderSegmentCollection { return this._renderSegments; }
+	public get segments(): MapRenderSegmentCollection { return this._renderSegments; }
 	public get viewport(): Rectangle { return this._viewport; }
 	public get bakedSegmentQuads(): BakedRenderSegmentQuads { return this._bakedRenderSegmentQuads; }
 
@@ -149,6 +149,8 @@ export default class MapSegmentRenderer extends RendererBase {
 		this.gl.clearColor(0, 0, 0, 0);
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
+		this.clearDebugCanvas();
+
 		this.updateMatrices();
 		this.drawSegments(time);
 	}
@@ -190,7 +192,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		dataAttribPtr.disable();
 	}
 
-	private clearDrawCtx() {
+	private clearDebugCanvas() {
 		this._frame.debugCanvas.setTransform(1, 0, 0, 1, 0, 0);
 
 		this._frame.debugCanvas.clearRect(
@@ -202,10 +204,10 @@ export default class MapSegmentRenderer extends RendererBase {
 	}
 
 	private drawVisibleSegments(
-		view: Rectangle, shader: ShaderProgram,
-		posAttrib: ShaderAttribPointer, dataAttrib: ShaderAttribPointer) {
-
-		//this.clearDrawCtx();
+		view: Rectangle,
+		shader: ShaderProgram,
+		posAttrib: ShaderAttribPointer,
+		dataAttrib: ShaderAttribPointer) {
 
 		// TODO: currently draws every render segment, needs to draw in visible rect
 		for (const rowMap of this._renderSegments.rows()) {
@@ -240,7 +242,7 @@ export default class MapSegmentRenderer extends RendererBase {
 	}
 
 	private drawRenderSegment(
-		renderSegment: RenderSegment,
+		renderSegment: MapRenderSegment,
 		shader: ShaderProgram,
 		posAttrib: ShaderAttribPointer,
 		dataAttrib: ShaderAttribPointer) {
@@ -248,18 +250,19 @@ export default class MapSegmentRenderer extends RendererBase {
 		const metrics = this._bakedRenderSegmentQuads.metricsPerSegment;
 
 		const debugCanvas = this._frame.debugCanvas;
-		//debugCanvas.lineWidth = 1;
+		debugCanvas.lineWidth = 1;
+
 		//debugCanvas.beginPath();
 		//debugCanvas.strokeStyle = "rgba(0, 255, 0, 1)";
-		//for (let z = 0; z < RenderSegment.size; z++) {
-		//	for (let x = 0; x < RenderSegment.size; x++) {
+		//for (let z = 0; z < MapRenderSegment.size; z++) {
+		//	for (let x = 0; x < MapRenderSegment.size; x++) {
 		//		const segment = renderSegment.getSegment(x, z);
 		//		if (segment == null)
 		//			continue;
 		//
 		//		debugCanvas.rect(
-		//			(x * MapSegment.size + renderSegment.x * RenderSegment.size * MapSegment.size) / this._zoom + 2,
-		//			(z * MapSegment.size + renderSegment.z * RenderSegment.size * MapSegment.size) / this._zoom + 2,
+		//			(x * MapSegment.size + renderSegment.x * MapRenderSegment.size * MapSegment.size) / this._zoom + 2,
+		//			(z * MapSegment.size + renderSegment.z * MapRenderSegment.size * MapSegment.size) / this._zoom + 2,
 		//			16 / this._zoom - 4,
 		//			16 / this._zoom - 4);
 		//	}
@@ -268,7 +271,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		//debugCanvas.stroke();
 
 		if (renderSegment.isDirty) {
-			for (let i = 0; i < RenderSegment.blockSize; i++) {
+			for (let i = 0; i < MapRenderSegment.blockSize; i++) {
 				const segment = renderSegment.getSegmentAt(i);
 				if (segment == null || !segment.isDirty)
 					continue;
@@ -277,12 +280,12 @@ export default class MapSegmentRenderer extends RendererBase {
 				if (isNew) {
 					segment.renderSegmentIndex = renderSegment.genCount;
 					renderSegment.genCount++;
-				
+
 					// upload baked data for the segment
 					const count = metrics.vertexCount * 2;
 					const data = this._bakedRenderSegmentQuads.vertexData;
 					
-					const segmentPositionIndex = RenderSegment.getIndex(segment.position.x, segment.position.z);
+					const segmentPositionIndex = MapRenderSegment.getIndex(segment.position.x, segment.position.z);
 					const bakedOffset = segmentPositionIndex * count;
 					const sliceEnd = bakedOffset + count;
 					const slice = data.subarray(bakedOffset, sliceEnd);
@@ -313,7 +316,7 @@ export default class MapSegmentRenderer extends RendererBase {
 		}
 
 		// only draw if there are segments in the batch
-		const showNonFull = true; // renderSegment.genCount != RenderSegment.blockSize;
+		const showNonFull = true; // renderSegment.genCount != MapRenderSegment.blockSize;
 		if (renderSegment.genCount > 0 && showNonFull) {
 
 			mat4.multiply(this._mvpMatrix, this._projViewMatrix, renderSegment.matrix);
@@ -327,16 +330,16 @@ export default class MapSegmentRenderer extends RendererBase {
 
 			const elementCount = renderSegment.genCount * metrics.indexCount;
 			this.gl.drawElements(this.gl.TRIANGLES, elementCount, this.gl.UNSIGNED_SHORT, 0);
-
+			
 			this._segmentsDrawnLastFrame += renderSegment.genCount;
 			this._renderSegmentsDrawnLastFrame++;
 		}
 
-		//debugCanvas.strokeStyle = "rgba(200, 0, 0, 0.5)";
-		//debugCanvas.strokeRect(
-		//	renderSegment.x * RenderSegment.size * MapSegment.size / this._zoom,
-		//	renderSegment.z * RenderSegment.size * MapSegment.size / this._zoom,
-		//	16 / this._zoom * RenderSegment.size, 16 / this._zoom * RenderSegment.size);
+		debugCanvas.strokeStyle = "rgba(200, 0, 0, 0.5)";
+		debugCanvas.strokeRect(
+			renderSegment.x * MapRenderSegment.size * MapSegment.size / this._zoom,
+			renderSegment.z * MapRenderSegment.size * MapSegment.size / this._zoom,
+			16 / this._zoom * MapRenderSegment.size, 16 / this._zoom * MapRenderSegment.size);
 	}
 
 	/** Binds the needed texture and binds the shader program for textured segments. */
@@ -359,14 +362,14 @@ export default class MapSegmentRenderer extends RendererBase {
 
 	private bakeRenderSegmentQuads(): BakedRenderSegmentQuads {
 		const segmentMetrics = ShapeGenerator.getQuadMetrics(MapSegment.size, MapSegment.size);
-		const vertexData = new Float32Array(segmentMetrics.vertexCount * 2 * RenderSegment.blockSize);
-		const indexData = new Uint16Array(segmentMetrics.indexCount * RenderSegment.blockSize);
+		const vertexData = new Float32Array(segmentMetrics.vertexCount * 2 * MapRenderSegment.blockSize);
+		const indexData = new Uint16Array(segmentMetrics.indexCount * MapRenderSegment.blockSize);
 
 		const planeBuffer = ShapeGenerator.createPlane(MapSegment.size, MapSegment.size);
-		for (let z = 0; z < RenderSegment.size; z++) {
-			for (let x = 0; x < RenderSegment.size; x++) {
+		for (let z = 0; z < MapRenderSegment.size; z++) {
+			for (let x = 0; x < MapRenderSegment.size; x++) {
 				const posOffset = vec2.fromValues(x * MapSegment.size, z * MapSegment.size);
-				const i = x + z * RenderSegment.size;
+				const i = x + z * MapRenderSegment.size;
 				const vertexOffset = i * segmentMetrics.vertexCount;
 				const plane = ShapeGenerator.generatePlane(
 					MapSegment.size, MapSegment.size, posOffset, vertexOffset, 1, planeBuffer);

@@ -1,8 +1,8 @@
 import Constants from "../Constants";
-import RenderSegment from "../../Graphics/RenderSegment";
+import MapRenderSegment from "../../Graphics/MapRenderSegment";
 import * as jDataView from "jdataview";
 
-export type NumberOrPos = number | MapSegmentPos;
+export type NumberOrPos = number | MapSegmentPosition;
 
 /**
  * Data container for a 2D map segment layer.
@@ -15,13 +15,13 @@ export default class MapSegment {
 	/** The amount of blocks in a MapSegment. */
 	public static readonly blocks = MapSegment.size * MapSegment.size;
 
-	public readonly position: MapSegmentPos;
+	public readonly position: MapSegmentPosition;
 	public readonly tiles: Uint16Array;
 
 	public renderSegmentIndex: number;
 	public isDirty: boolean;
 
-	constructor(position: MapSegmentPos, tiles: Uint16Array) {
+	constructor(position: MapSegmentPosition, tiles: Uint16Array) {
 		this.position = position;
 		this.tiles = tiles;
 
@@ -33,9 +33,9 @@ export default class MapSegment {
 /**
  * Segment position without the default base offset.
  * */
-export class MapSegmentPos {
+export class MapSegmentPosition {
 
-    public static readonly byteSize = 8 * 3;
+	public static readonly byteSize = 8 * 3;
 
 	/** The x coordinate of the segment (minus default base offset).*/
 	public readonly x: number;
@@ -48,12 +48,12 @@ export class MapSegmentPos {
 
 	/** Gets the x coordinate for the corresponding RenderSegment. */
 	public get renderX(): number {
-		return MapSegmentPos.toRenderCoord(this.x);
+		return MapSegmentPosition.toRenderCoord(this.x);
 	}
 
 	/** Gets the z coordinate for the corresponding RenderSegment. */
 	public get renderZ(): number {
-		return MapSegmentPos.toRenderCoord(this.z);
+		return MapSegmentPosition.toRenderCoord(this.z);
 	}
 
 	/**
@@ -87,23 +87,23 @@ export class MapSegmentPos {
 				this.z = z;
 			}
 		}
-    }
+	}
 
-    public writeTo(view: jDataView) {
-        view.writeInt64(jDataView.Int64.fromNumber(this.x));
-        view.writeInt64(jDataView.Int64.fromNumber(this.y));
-        view.writeInt64(jDataView.Int64.fromNumber(this.z));
-    }
+	public writeTo(view: jDataView) {
+		view.writeInt64(jDataView.Int64.fromNumber(this.x));
+		view.writeInt64(jDataView.Int64.fromNumber(this.y));
+		view.writeInt64(jDataView.Int64.fromNumber(this.z));
+	}
 
-    public static read(view: jDataView): MapSegmentPos {
-        const x = view.getInt64().valueOf();
-        const y = view.getInt64().valueOf();
-        const z = view.getInt64().valueOf();
-        return new MapSegmentPos(x, y, z);
-    }
+	public static read(view: jDataView): MapSegmentPosition {
+		const x = view.getInt64().valueOf();
+		const y = view.getInt64().valueOf();
+		const z = view.getInt64().valueOf();
+		return new MapSegmentPosition(x, y, z);
+	}
 
 	public static toRenderCoord(coord: number): number {
-		return Math.floor(coord / RenderSegment.size);
+		return Math.floor(coord / MapRenderSegment.size);
 	}
 
 	/**
@@ -116,7 +116,7 @@ export class MapSegmentPos {
 		callback: (x: number, z: number) => TResult,
 		x: NumberOrPos,
 		z?: number): TResult {
-		if (x instanceof MapSegmentPos)
+		if (x instanceof MapSegmentPosition)
 			return callback(x.x, x.z);
 		else if (z != null)
 			return callback(x, z);

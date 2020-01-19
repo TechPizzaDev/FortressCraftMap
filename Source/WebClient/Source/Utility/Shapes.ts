@@ -10,6 +10,11 @@ export class Size {
 }
 
 export class Rectangle {
+
+	public static get empty(): Rectangle {
+		return new Rectangle(0, 0, 0, 0);
+	}
+
 	public readonly x: number;
 	public readonly y: number;
 	public readonly width: number;
