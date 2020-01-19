@@ -45,8 +45,8 @@ export default class MapSegmentRenderer extends RendererBase {
 	private _segmentsDrawnLastFrame = 0;
 	private _renderSegmentsDrawnLastFrame = 0;
 
-	// TODO: texture-to-color threshold should be around less than 6 pixels per quad
-	public readonly _zoom = 1 / 4;
+	// TODO: texture-vs-color threshold should be around less than 6 pixels per quad
+	public readonly _zoom = 1 / 2;
 	public _mapTranslation = vec3.create();
 
 	private _viewMatrix = mat4.create();
@@ -288,11 +288,11 @@ export default class MapSegmentRenderer extends RendererBase {
 					const segmentPositionIndex = MapRenderSegment.getIndex(segment.position.x, segment.position.z);
 					const bakedOffset = segmentPositionIndex * count;
 					const sliceEnd = bakedOffset + count;
-					const slice = data.subarray(bakedOffset, sliceEnd);
+					const bufferSlice = data.subarray(bakedOffset, sliceEnd);
 
 					const bufferOffset = segment.renderSegmentIndex * count * data.BYTES_PER_ELEMENT;
 					this.gl.bindBuffer(this.gl.ARRAY_BUFFER, renderSegment.vertexBuffer);
-					this.gl.bufferSubData(this.gl.ARRAY_BUFFER, bufferOffset, slice);
+					this.gl.bufferSubData(this.gl.ARRAY_BUFFER, bufferOffset, bufferSlice);
 				}
 
 				// generate fresh render data for the segment

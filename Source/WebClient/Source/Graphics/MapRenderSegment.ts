@@ -7,7 +7,7 @@ import { BakedRenderSegmentQuads } from "./Renderers/MapSegmentRenderer";
 export default class MapRenderSegment extends GLResource {
 
 	/** The dimensions of a RenderSegment. */
-	public static readonly size = 7;
+	public static readonly size = 4;
 
 	/** The amount of segments that can be stored in a RenderSegment. */
 	public static readonly blockSize = MapRenderSegment.size * MapRenderSegment.size;

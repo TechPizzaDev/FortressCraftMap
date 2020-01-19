@@ -1,18 +1,23 @@
 import MapSegmentRenderer from "../Graphics/Renderers/MapSegmentRenderer";
-import ChannelSocket, { ChannelMessage } from "../Utility/ChannelSocket";
 import TimeEvent from "../Utility/TimeEvent";
 import FrameDispatcher from "../Utility/FrameDispatcher";
-import { Rectangle } from "../Utility/Shapes";
 import AppContent from "../Content/AppContent";
 import MapSegment, { MapSegmentPosition } from "./World/MapSegment";
-import * as Content from "../Namespaces/Content";
 import MapRenderSegment from "../Graphics/MapRenderSegment";
-import { vec2 } from "gl-matrix";
-import * as Debug from "./DebugInformation";
 import FramesPerSecondCounter from "./FramesPerSecondCounter";
-import { isElementVisible } from "./Index";
-import * as jDataView from "jdataview";
+import ChannelSocket, { ChannelMessage } from "../Utility/ChannelSocket";
 import Mathx from "../Utility/Mathx";
+import { Rectangle } from "../Utility/Shapes";
+import { vec2 } from "gl-matrix";
+import * as jDataView from "jdataview";
+import * as Content from "../Namespaces/Content";
+import * as Debug from "./DebugInformation";
+import { isElementVisible } from "./Index";
+
+enum SegmentRequestPickingMethod {
+	Simple,
+	Nearest
+}
 
 /**
  * Loads components and handles document events (input, resizing).
@@ -42,7 +47,7 @@ export default class MainFrame {
 	private _segmentRequestWindup = MainFrame.isWeakUserAgent ? 0.1 : 0.2;
 	private _requestIdleTime = 0;
 
-	private _segmentRequestPickingMethod = 0;
+	private _segmentRequestPickingMethod = SegmentRequestPickingMethod.Nearest;
 	private _lastRequestPickingMethod = this._segmentRequestPickingMethod;
 
 	private _segmentViewInterval = MainFrame.isWeakUserAgent ? (1 / 10) : (1 / 20);
@@ -128,10 +133,6 @@ export default class MainFrame {
 	}
 
 	private onMapChannelReady = (ev: Event) => {
-		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -2]);
-		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, -1]);
-		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, 0]);
-		//this._mapChannel.sendMessage(ClientMessageCode.GetSegment, [0, 1]);
 	}
 
 	private onMapChannelMessage = (message: ChannelMessage) => {
@@ -199,8 +200,8 @@ export default class MainFrame {
 	// update request priorities based on a new distance.
 	private requestSegmentsInView(time: TimeEvent) {
 
-		const w = 8 // 118 / 4  //108 - 12 + 16 * 6; //66;
-		const h = 8 // 57  / 4 // 48 + 16 * 3; //57;
+		const w = 32 // 118 / 4  //108 - 12 + 16 * 6; //66;
+		const h = 32 // 57  / 4 // 48 + 16 * 3; //57;
 		const halfW = w / 2;
 		const halfH = h / 2;
 
@@ -319,6 +320,8 @@ export default class MainFrame {
 			this.MinSegmentRequestRate, this.MaxSegmentRequestRate, amount));
 	}
 
+
+
 	private sendSegmentRequests() {
 
 		this.updateSegmentRequestWindup();
@@ -343,11 +346,11 @@ export default class MainFrame {
 
 		while (this._segmentRequestQueue.length > 0 && requestLimit > 0) {
 			let index = -1;
-			if (this._segmentRequestPickingMethod == 0) {
+			if (this._segmentRequestPickingMethod == SegmentRequestPickingMethod.Simple) {
 				// use simple queue priority; take out the most recently added request
 				index = this._segmentRequestQueue.length - 1;
 			}
-			else {
+			else if (this._segmentRequestPickingMethod == SegmentRequestPickingMethod.Nearest) {
 				// picking requests closest to 'loadCenter' can get expensive if
 				// the queue has a large backlog, use this method sparingly
 
@@ -371,6 +374,8 @@ export default class MainFrame {
 					}
 				}
 			}
+			else
+				throw new Error("Unknown segment request picking method.");
 
 			if (index == -1)
 				break;
