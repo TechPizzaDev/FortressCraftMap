@@ -18,10 +18,10 @@
   },
   "homepage": "https://github.com/TechnologicalPizza/FortressCraftMap#readme",
   "dependencies": {
-    "@msgpack/msgpack": "^1.12.0",
+    "@msgpack/msgpack": "^1.12.1",
     "big-integer": "^1.6.48",
     "fcmap-speedy": "file:../fcmap-speedy/pkg",
-    "gl-matrix": "^3.2.1",
+    "gl-matrix": "^3.3.0",
     "jdataview": "^2.5.0"
   },
   "devDependencies": {
@@ -29,7 +29,7 @@
     "@types/jdataview": "0.0.30",
     "ts-loader": "^5.4.5",
     "typescript": "^3.8.3",
-    "webpack": "^4.42.0",
+    "webpack": "^4.42.1",
     "webpack-cli": "^3.3.11"
   }
 }
