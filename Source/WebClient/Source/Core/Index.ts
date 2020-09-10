@@ -42,7 +42,7 @@ async function setup() {
 
 function setupFullscreenElements() {
     const fullscreenButton = document.getElementById("fullscreen-button");
-    const fullscreenIcon = fullscreenButton.firstElementChild;
+    const fullscreenIcon = fullscreenButton.firstElementChild as HTMLImageElement;
 
     if (!document.fullscreenEnabled) {
         setElementVisibility(fullscreenButton, false);
@@ -54,8 +54,8 @@ function setupFullscreenElements() {
     });
 
     document.addEventListener("fullscreenchange", () => {
-        fullscreenIcon.className = document.fullscreenElement
-            ? "icon-exitfullscreen" : "icon-fullscreen";
+        fullscreenIcon.src = "Icons/" + (document.fullscreenElement
+            ? "exit-fullscreen.png" : "enter-fullscreen.png");
     });
 
     if (document.fullscreenEnabled) {
@@ -79,7 +79,7 @@ function setupDebugInfoElements() {
         const wasVisible = isElementVisible(debugInfoDiv);
         setElementVisibility(debugInfoDiv, !wasVisible, true);
 
-        if (mainFrame != null) {
+        if (mainFrame !== null) {
             if (!wasVisible) // clear to prevent stacked values
                 mainFrame.clearDebugInfo();
             mainFrame.updateDebugInfo();
@@ -98,7 +98,7 @@ export function isElementVisible(element: HTMLElement) {
 export function setElementVisibility(
     element: HTMLElement,
     visible: boolean,
-    addVisibleClass: boolean = false) {
+    addVisibleClass = false) {
 
     if (visible) {
         element.classList.remove("hidden");
