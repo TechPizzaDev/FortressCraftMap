@@ -487,7 +487,7 @@ export default class MainFrame {
 		const viewport = this._segmentRenderer.viewport;
 		const requestLimit = this.getCurrentRequestLimit();
 
-		setDebugFieldValue("resolution", `${viewport.width}x${viewport.height}`);
+		setDebugFieldValue("viewport", `${viewport.width}x${viewport.height}`);
 		setDebugFieldValue("requestWindup", `${(this._segmentRequestWindup * 100).toFixed(0)}% (${requestLimit})`);
 	}
 
