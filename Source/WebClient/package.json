@@ -28,8 +28,8 @@
     "@types/gl-matrix": "^2.4.5",
     "@types/jdataview": "^0.0.30",
     "ts-loader": "^5.4.5",
-    "typescript": "^3.9.7",
-    "webpack": "^4.44.1",
+    "typescript": "^3.9.9",
+    "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12"
   }
 }
