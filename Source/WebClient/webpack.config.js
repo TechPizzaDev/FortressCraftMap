@@ -2,7 +2,7 @@ const PATH = require('path');
 const FS = require('fs');
 const CHILD_PROCESS = require('child_process');
 
-const fcmapSpeedyPath = PATH.resolve(__dirname, "..", "fcmap-speedy");
+const fcmapSpeedyPath = "../fcmap-speedy";
 
 //#region Webpack Settings
 
@@ -138,12 +138,12 @@ const webpackConfigBase = {
 		ignored: [
 			'node_modules',
 			packDirectoryPath,
-			PATH.resolve(fcmapSpeedyPath, "**/*.rs")
+			fcmapSpeedyPath + "/**/*.rs"
 		],
 		aggregateTimeout: 100
 	},
 	optimization: {
-		namedChunks: true,
+		chunkIds: "named",
 		runtimeChunk: "single",
 		splitChunks: {
 			cacheGroups: {

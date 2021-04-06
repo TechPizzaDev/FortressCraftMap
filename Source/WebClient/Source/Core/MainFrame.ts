@@ -54,7 +54,7 @@ export default class MainFrame {
 	private _segmentViewTick = this._segmentViewInterval;
 	private _cachedPosition = vec2.create();
 
-	private _loadCenterPosition = [0, 0];
+	private _loadCenterPosition = vec2.create();
 	
 	// TODO: split up _segmentRequestQueue into smaller lists (array chunking)
 	private _segmentRequestQueue: number[][] = [];

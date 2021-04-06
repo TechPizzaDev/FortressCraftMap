@@ -10,6 +10,7 @@
 		"downlevelIteration": true,
 		"noFallthroughCasesInSwitch": true,
 		"sourceMap": true,
+		"moduleResolution": "node",
 		"outDir": "Public/"
 	},
 	"include": [
