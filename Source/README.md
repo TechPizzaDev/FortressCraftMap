@@ -7,7 +7,7 @@ Make sure you have the prerequisites before building:
 3. Use "wasm-pack" at the commandline inside 'fcmap-speedy'.
 
 ### How to run:
-1. Make sure that 
+1. Make sure that the project is built and [copied to the game mods folder](https://steamcommunity.com/app/254200/discussions/1/371919771743766319/).
 2. Launch a web server instance by;
   * starting the `WebSocketServer` (custom world data will be used).
   * starting a *FortressCraft* world with the `WebMapMod` enabled.
