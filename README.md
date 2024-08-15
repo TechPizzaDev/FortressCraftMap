@@ -2,6 +2,8 @@
 Simple web map mod for FortressCraft. Client written in TypeScript.  
 Using WebGL and WebSocket messaging abstractions for modular client development.  
 
+https://github.com/user-attachments/assets/a748c073-a84e-4d87-bc9f-7de3468edefe
+
 ### Main Roadmap
 - [x] Rendering
   - [x] Segment mesh batching
